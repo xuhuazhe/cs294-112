@@ -128,6 +128,19 @@ def learn(env,
     ######
     
     # YOUR CODE HERE
+    # The (rapidly updated Q network)
+    q = q_func(obs_t_float, num_actions, scope="q_func", reuse=False)
+    q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='q_func')
+    # The target Q network
+    target_q = q_func(obs_tp1_float, num_actions, scope="target_q_func", reuse=False)
+    target_q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='target_q_func')
+
+    # The DQN update: use Bellman operator over the *target* network outputs
+    # one-step look-ahead using target Q network
+    # do the update in a batch
+    q_act = tf.reduce_sum(q*tf.one_hot(act_t_ph, num_actions), axis=1)
+    q_look_ahead = rew_t_ph + (1-done_mask_ph) * gamma * tf.reduce_max(target_q, axis=1)
+    total_error = tf.nn.l2_loss(q_act-q_look_ahead)*2 / batch_size
 
     ######
 
@@ -157,6 +170,7 @@ def learn(env,
     last_obs = env.reset()
     LOG_EVERY_N_STEPS = 10000
 
+    log_file = sys.argv[1]
     for t in itertools.count():
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
@@ -195,6 +209,21 @@ def learn(env,
         #####
         
         # YOUR CODE HERE
+        idx = replay_buffer.store_frame(last_obs)
+        eps = exploration.value(t)
+        is_greedy = np.random.rand(1) >= eps
+        if is_greedy and model_initialized:
+            recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+            q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+            action = np.argmax(np.squeeze(q_values))
+        else:
+            action = np.random.choice(num_actions)
+
+        obs, reward, done, info = env.step(action)
+        if done:
+            obs = env.reset()
+        replay_buffer.store_effect(idx, action, reward, done)
+        last_obs = obs
 
         #####
 
@@ -245,6 +274,32 @@ def learn(env,
             #####
             
             # YOUR CODE HERE
+            # (a)
+            obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
+                replay_buffer.sample(batch_size)
+
+            # (b)
+            if not model_initialized:
+                initialize_interdependent_variables(session, tf.global_variables(), {
+                    obs_t_ph: obs_t_batch,
+                    obs_tp1_ph: obs_tp1_batch,
+                })
+                model_initialized = True
+
+            # (c)
+            session.run(train_fn, {
+                obs_t_ph: obs_t_batch,
+                act_t_ph: act_t_batch,
+                rew_t_ph: rew_t_batch,
+                obs_tp1_ph: obs_tp1_batch,
+                done_mask_ph: done_mask,
+                learning_rate: optimizer_spec.lr_schedule.value(t)
+            })
+            num_param_updates += 1
+
+            # (d)
+            if num_param_updates % target_update_freq == 0:
+                session.run(update_target_fn)
 
             #####
 
@@ -262,3 +317,6 @@ def learn(env,
             print("exploration %f" % exploration.value(t))
             print("learning_rate %f" % optimizer_spec.lr_schedule.value(t))
             sys.stdout.flush()
+
+            with open(log_file, 'a') as f:
+                print(t, mean_episode_reward, best_mean_episode_reward, file=f)
