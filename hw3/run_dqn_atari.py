@@ -10,7 +10,7 @@ import tensorflow.contrib.layers as layers
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
-
+import sys
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -72,7 +72,7 @@ def atari_learn(env,
         gamma=0.99,
         learning_starts=50000,
         learning_freq=4,
-        frame_history_len=4,
+        frame_history_len=int(sys.argv[2]),
         target_update_freq=10000,
         grad_norm_clipping=10
     )
