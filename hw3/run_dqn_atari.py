@@ -6,11 +6,13 @@ import random
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
+import os
 
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
 import sys
+
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -86,6 +88,7 @@ def get_available_gpus():
 def set_global_seeds(i):
     try:
         import tensorflow as tf
+	os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2'
     except ImportError:
         pass
     else:
@@ -98,6 +101,7 @@ def get_session():
     tf_config = tf.ConfigProto(
         inter_op_parallelism_threads=1,
         intra_op_parallelism_threads=1)
+    tf_config.gpu_options.allow_growth = True
     session = tf.Session(config=tf_config)
     print("AVAILABLE GPUS: ", get_available_gpus())
     return session
@@ -121,7 +125,7 @@ def main():
     benchmark = gym.benchmark_spec('Atari40M')
 
     # Change the index to select a different game.
-    task = benchmark.tasks[3]
+    task = benchmark.tasks[2]
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)

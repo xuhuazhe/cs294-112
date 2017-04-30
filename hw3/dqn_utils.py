@@ -150,7 +150,7 @@ def initialize_interdependent_variables(session, vars_list, feed_dict):
                 # If using an older version of TensorFlow, uncomment the line
                 # below and comment out the line after it.
 		#session.run(tf.initialize_variables([v]), feed_dict)
-                session.run(tf.variables_initializer([v]), feed_dict)
+                session.run(tf.initialize_variables([v]), feed_dict)
             except tf.errors.FailedPreconditionError:
                 new_vars_left.append(v)
         if len(new_vars_left) >= len(vars_left):
