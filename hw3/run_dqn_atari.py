@@ -12,8 +12,24 @@ import dqn
 from dqn_utils import *
 from atari_wrappers import *
 import sys
-
-
+FLAGS = tf.app.flags.FLAGS
+tf.app.flags.DEFINE_boolean('ddqn', False,
+                            """Enable double Q bellman Update""")
+tf.app.flags.DEFINE_string('demo_mode', 'replay',
+                           """hdf: load data from hdf, replay: from replay buffer pickle"""
+                           """no_demo: skip the demo exp pool""")
+tf.app.flags.DEFINE_string('method_name', 'vanilla',
+                           """the method name we want to use""")
+tf.app.flags.DEFINE_boolean('save_model', True,
+                            """save the model of Q""")
+tf.app.flags.DEFINE_string('demo_hdf_dir', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5',
+                           """HDF Demonstration dir""")
+tf.app.flags.DEFINE_string('pickle_dir', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.p',
+                           """pickle Demonstration dir""")
+tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
+                            """Do we want to add Q learning sample to the replay buffer""")
+tf.app.flags.DEFINE_integer('learning_starts', 50000,
+                            """learning_starts point, 50000for Q learning, 0 for demonstration""")
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     with tf.variable_scope(scope, reuse=reuse):
@@ -72,7 +88,7 @@ def atari_learn(env,
         replay_buffer_size=1000000,
         batch_size=32,
         gamma=0.99,
-        learning_starts=50000,
+        learning_starts=FLAGS.learning_starts,
         learning_freq=4,
         frame_history_len=int(sys.argv[2]),
         target_update_freq=10000,
@@ -86,9 +102,9 @@ def get_available_gpus():
     return [x.physical_device_desc for x in local_device_protos if x.device_type == 'GPU']
 
 def set_global_seeds(i):
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
     try:
         import tensorflow as tf
-	os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2'
     except ImportError:
         pass
     else:
@@ -114,14 +130,26 @@ def get_env(task, seed):
     set_global_seeds(seed)
     env.seed(seed)
 
-    expt_dir = '/tmp/hw3_vid_dir2/'
+    expt_dir = os.path.join('/tmp/',FLAGS.method_name,'vid_dir2/')
     env = wrappers.Monitor(env, osp.join(expt_dir, "gym"), force=True)
     env = wrap_deepmind(env)
 
     return env
 
-def main():
+def common_setting():
+    FLAGS.ddqn = False
+    FLAGS.demo_mode = 'hdf'
+    FLAGS.save_model = True #Note: this is only for debug
+    FLAGS.collect_Q_experience = False
+    FLAGS.learning_starts = 0
+def main(_):
     # Get Atari games.
+    common_setting()
+
+    ### set all the names ###  #TODO: set a config file to set flags
+    FLAGS.method_name = 'test_code'
+    FLAGS.demo_hdf_dir = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
+
     benchmark = gym.benchmark_spec('Atari40M')
 
     # Change the index to select a different game.
@@ -134,4 +162,5 @@ def main():
     atari_learn(env, session, num_timesteps=task.max_timesteps)
 
 if __name__ == "__main__":
-    main()
+
+    tf.app.run()

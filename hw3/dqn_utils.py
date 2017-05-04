@@ -4,6 +4,8 @@ import gym
 import tensorflow as tf
 import numpy as np
 import random
+import pickle
+import matplotlib.pyplot as plt
 
 def huber_loss(x, delta=1.0):
     # https://en.wikipedia.org/wiki/Huber_loss
@@ -347,4 +349,34 @@ class ReplayBuffer(object):
         self.action[idx] = action
         self.reward[idx] = reward
         self.done[idx]   = done
+
+def Get_HDF_Demo(hdf_path, replay_buffer, pickle_dir):
+    import h5py
+    filename = hdf_path
+    f = h5py.File(filename, 'r')
+
+    # List all groups
+    #print("Keys: %s" % f.keys())
+    print('Get keys of HDF! Please Wait... Demonstration is huge.')
+    rom, action, reward, version, obs, _, action_set, lives, _, terminal = f.keys()
+    # Get the data
+    _action = list(f[action])
+    _reward = list(f[reward])
+    _obs = list(f[obs])
+    _terminal = list(f[terminal])
+    #_lives = list(f[lives])
+    print('Loaded! Almost there!')
+    for i in range(len(_obs)):
+        idx = replay_buffer.store_frame(_obs[i])
+        replay_buffer.store_effect(idx, _action[i], _reward[i], _terminal[i])
+    #with open(pickle_dir, 'w') as f:
+    #    pickle.dump(replay_buffer, f, protocol=2)
+    return replay_buffer
+
+def Load_Replay_Pickle(pickle_dir):
+    with open(pickle_dir,'r') as f:
+        replay_buffer = pickle.load(f)
+    return replay_buffer
+
+
 

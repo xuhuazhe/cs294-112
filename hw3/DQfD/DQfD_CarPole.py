@@ -25,6 +25,7 @@ LAMBDA_1 = 1.0
 LAMBDA_2 = 10e-5
 PRETRAIN_STEPS = 1000
 MODEL_PATH = 'C:\\Users\\go2sea\\Desktop\\savers\\saver_Double_DQN\\model.ckpt'
+FRAME_HISTORY = 4
 
 
 class DQfD_DDQN():
@@ -37,14 +38,20 @@ class DQfD_DDQN():
         # init some parameters
         self.time_step = 0
         self.epsilon = INITIAL_EPSILON
-        self.state_dim = env.observation_space.shape[0]
+        # self.state_dim = env.observation_space.shape[0]
+        if len(env.observation_space.shape) == 1:
+            # This means we are running on low-dimensional observations (e.g. RAM)
+            self.state_dim = env.observation_space.shape
+        else:
+            img_h, img_w, img_c = env.observation_space.shape
+            self.state_dim = (img_h, img_w, FRAME_HISTORY * img_c)
         self.action_dim = env.action_space.n
         self.demo_mode = demo_mode
 
         self.create_network()
         self.create_training_method()
 
-        self.sess.run(tf.global_variables_initializer())
+        self.sess.run(tf.global_variables_initializer()) #TODO: check version initializer
 
     # use the expert-demo-data to pretrain
     def pre_train(self):
@@ -57,26 +64,26 @@ class DQfD_DDQN():
         print('pre-train finish ...')
 
     def create_network(self):
-        def build_layers(state, c_names, n_l1, n_l2, w_initializer, b_initializer):
-            with tf.variable_scope('l1'):
-                w1 = tf.get_variable('w1', [self.state_dim, n_l1], initializer=w_initializer, collections=c_names)
-                b1 = tf.get_variable('b1', [1, n_l1], initializer=b_initializer, collections=c_names)
-                l1 = tf.nn.relu(tf.matmul(state, w1) + b1)
+        def atari_model(img_in, num_actions, scope, reuse=False):
+            # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
+            with tf.variable_scope(scope, reuse=reuse):
+                out = img_in
+                with tf.variable_scope("convnet"):
+                    # original architecture
+                    out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
+                    out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
+                    out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
+                out = layers.flatten(out)
+                with tf.variable_scope("action_value"):
+                    out = layers.fully_connected(out, num_outputs=512, activation_fn=tf.nn.relu)
+                    out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
-            with tf.variable_scope('l2'):
-                w2 = tf.get_variable('w21', [n_l1, n_l2], initializer=w_initializer, collections=c_names)
-                b2 = tf.get_variable('b2', [1, n_l2], initializer=b_initializer, collections=c_names)
-                l2 = tf.nn.relu(tf.matmul(l1, w2) + b2)
-
-            with tf.variable_scope('l3'):
-                w3 = tf.get_variable('w3', [n_l2, self.action_dim], initializer=w_initializer, collections=c_names)
-                b3 = tf.get_variable('b3', [1, self.action_dim], initializer=b_initializer, collections=c_names)
-                out = tf.matmul(l2, w3) + b3
-
-            return out
+                return out
 
         # --------------------- build select network ----------------------
-        self.select_input = tf.placeholder("float", [None, self.state_dim])
+
+        self.obs_input = tf.placeholder(tf.uint8, [None] + list(input_shape))# tf.placeholder("float", [None, self.state_dim])
+        self.select_input = tf.cast(obs_input, tf.float32) / 255.0
         with tf.variable_scope('select_net'):
             c_names = ['select_net_params', tf.GraphKeys.GLOBAL_VARIABLES, tf.GraphKeys.REGULARIZATION_LOSSES]  # 注意：只有select网络的参数添加到正则化collection中
             w_initializer = tf.random_uniform_initializer(-0.1, 0.1)
@@ -194,7 +201,10 @@ class DQfD_DDQN():
 
 # ---------------------------------------------------------
 # Hyper Parameters
-ENV_NAME = "CartPole-v1"
+benchmark = gym.benchmark_spec('Atari40M')
+# Change the index to select a different game.
+ENV_NAME = benchmark.tasks[2]
+#ENV_NAME = "CartPole-v1"
 EPISODE = 5000  # Episode limitation
 
 

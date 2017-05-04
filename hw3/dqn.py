@@ -10,6 +10,7 @@ from collections import namedtuple
 from dqn_utils import *
 import os
 
+FLAGS = tf.app.flags.FLAGS
 OptimizerSpec = namedtuple("OptimizerSpec", ["constructor", "kwargs", "lr_schedule"])
 
 def learn(env,
@@ -91,6 +92,7 @@ def learn(env,
         input_shape = (img_h, img_w, frame_history_len * img_c)
     num_actions = env.action_space.n
 
+    input_shape = [210, 160, 12]
     # set up placeholders
     # placeholder for current observation (or state)
     obs_t_ph              = tf.placeholder(tf.uint8, [None] + list(input_shape))
@@ -133,6 +135,7 @@ def learn(env,
     # The (rapidly updated Q network)
     q = q_func(obs_t_float, num_actions, scope="q_func", reuse=False)
     q_func_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='q_func')
+    q_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
     # The target Q network
     target_q = q_func(obs_tp1_float, num_actions, scope="target_q_func", reuse=False)
     target_q_func_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='target_q_func')
@@ -141,7 +144,13 @@ def learn(env,
     # one-step look-ahead using target Q network
     # do the update in a batch
     q_act = tf.reduce_sum(q*tf.one_hot(act_t_ph, num_actions), 1)
-    q_look_ahead = rew_t_ph + (1-done_mask_ph) * gamma * tf.reduce_max(target_q, 1)
+
+    if FLAGS.ddqn:
+        print("double Q!")
+        q_next_act = tf.argmax(q_next, 1)
+        q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * tf.reduce_sum(target_q*tf.one_hot(q_next_act, num_actions), 1)
+    else:
+        q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * tf.reduce_max(target_q, 1)
     total_error = tf.nn.l2_loss(q_act-q_look_ahead)*2 / batch_size
 
     ######
@@ -174,6 +183,14 @@ def learn(env,
 
     log_file = sys.argv[1]
     saver = tf.train.Saver()
+
+    if FLAGS.demo_mode == 'hdf':
+        replay_buffer = Get_HDF_Demo(FLAGS.demo_hdf_dir, replay_buffer, FLAGS.pickle_dir)
+    elif FLAGS.demo_mode == 'replay':
+        Load_Replay_Pickle()
+    else:
+        pass
+
     for t in itertools.count():
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
@@ -212,21 +229,22 @@ def learn(env,
         #####
         
         # YOUR CODE HERE
-        idx = replay_buffer.store_frame(last_obs)
-        eps = exploration.value(t)
-        is_greedy = np.random.rand(1) >= eps
-        if is_greedy and model_initialized:
-            recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-            q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-            action = np.argmax(np.squeeze(q_values))
-        else:
-            action = np.random.choice(num_actions)
+        if FLAGS.collect_Q_experience:
+            idx = replay_buffer.store_frame(last_obs)
+            eps = exploration.value(t)
+            is_greedy = np.random.rand(1) >= eps
+            if is_greedy and model_initialized:
+                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                action = np.argmax(np.squeeze(q_values))
+            else:
+                action = np.random.choice(num_actions)
 
-        obs, reward, done, info = env.step(action)
-        if done:
-            obs = env.reset()
-        replay_buffer.store_effect(idx, action, reward, done)
-        last_obs = obs
+            obs, reward, done, info = env.step(action)
+            if done:
+                obs = env.reset()
+            replay_buffer.store_effect(idx, action, reward, done)
+            last_obs = obs
 
         #####
 
@@ -278,8 +296,8 @@ def learn(env,
             
             # YOUR CODE HERE
             # (a)
-            if t % 100000 == 0:
-                save_path=saver.save(session, os.path.join('./', "model_%s.ckpt" %(str(t))))
+            if t % 100000 == 0 and FLAGS.save_model:
+                save_path=saver.save(session, os.path.join('./link_data/', FLAGS.method_name,"model_%s.ckpt" %(str(t))))
                 print('saved at ',save_path)
             obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
                 replay_buffer.sample(batch_size)
