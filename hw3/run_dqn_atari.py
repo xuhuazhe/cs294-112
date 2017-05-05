@@ -12,9 +12,13 @@ import dqn
 from dqn_utils import *
 from atari_wrappers import *
 import sys
+from config import *
+
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_boolean('ddqn', False,
                             """Enable double Q bellman Update""")
+tf.app.flags.DEFINE_boolean('use_env_reward', False,
+                            """do we want to compute reward from the environment?""")
 tf.app.flags.DEFINE_string('demo_mode', 'replay',
                            """hdf: load data from hdf, replay: from replay buffer pickle"""
                            """no_demo: skip the demo exp pool""")
@@ -30,6 +34,13 @@ tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
                             """Do we want to add Q learning sample to the replay buffer""")
 tf.app.flags.DEFINE_integer('learning_starts', 50000,
                             """learning_starts point, 50000for Q learning, 0 for demonstration""")
+tf.app.flags.DEFINE_float('tiny_explore', 0.01,
+                            """the explore rate for evaluating mode""")
+tf.app.flags.DEFINE_integer('eval_freq', -1,
+                            """evaluation frequency""")
+tf.app.flags.DEFINE_string('core_num', '0',
+                           """gpu number""")
+
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     with tf.variable_scope(scope, reuse=reuse):
@@ -102,7 +113,7 @@ def get_available_gpus():
     return [x.physical_device_desc for x in local_device_protos if x.device_type == 'GPU']
 
 def set_global_seeds(i):
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
     try:
         import tensorflow as tf
     except ImportError:
@@ -136,19 +147,13 @@ def get_env(task, seed):
 
     return env
 
-def common_setting():
-    FLAGS.ddqn = False
-    FLAGS.demo_mode = 'hdf'
-    FLAGS.save_model = True #Note: this is only for debug
-    FLAGS.collect_Q_experience = False
-    FLAGS.learning_starts = 0
+
 def main(_):
     # Get Atari games.
     common_setting()
-
+    hard_Q_on_demonstration()
     ### set all the names ###  #TODO: set a config file to set flags
-    FLAGS.method_name = 'test_code'
-    FLAGS.demo_hdf_dir = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
+
 
     benchmark = gym.benchmark_spec('Atari40M')
 

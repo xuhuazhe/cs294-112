@@ -92,7 +92,7 @@ def learn(env,
         input_shape = (img_h, img_w, frame_history_len * img_c)
     num_actions = env.action_space.n
 
-    input_shape = [210, 160, 12]
+
     # set up placeholders
     # placeholder for current observation (or state)
     obs_t_ph              = tf.placeholder(tf.uint8, [None] + list(input_shape))
@@ -178,6 +178,7 @@ def learn(env,
     num_param_updates = 0
     mean_episode_reward      = -float('nan')
     best_mean_episode_reward = -float('inf')
+    best_reward = -float('inf')
     last_obs = env.reset()
     LOG_EVERY_N_STEPS = 10000
 
@@ -187,7 +188,7 @@ def learn(env,
     if FLAGS.demo_mode == 'hdf':
         replay_buffer = Get_HDF_Demo(FLAGS.demo_hdf_dir, replay_buffer, FLAGS.pickle_dir)
     elif FLAGS.demo_mode == 'replay':
-        Load_Replay_Pickle()
+        Load_Replay_Pickle(FLAGS.pickle_dir)
     else:
         pass
 
@@ -297,6 +298,8 @@ def learn(env,
             # YOUR CODE HERE
             # (a)
             if t % 100000 == 0 and FLAGS.save_model:
+                if not os.path.exists(os.path.join('./link_data/', FLAGS.method_name)):
+                    os.mkdir(os.path.join('./link_data/', FLAGS.method_name))
                 save_path=saver.save(session, os.path.join('./link_data/', FLAGS.method_name,"model_%s.ckpt" %(str(t))))
                 print('saved at ',save_path)
             obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
@@ -327,19 +330,59 @@ def learn(env,
             #####
 
         ### 4. Log progress
-        episode_rewards = get_wrapper_by_name(env, "Monitor").get_episode_rewards()
-        if len(episode_rewards) > 0:
-            mean_episode_reward = np.mean(episode_rewards[-100:])
-        if len(episode_rewards) > 100:
-            best_mean_episode_reward = max(best_mean_episode_reward, mean_episode_reward)
+        #print('Now the modular is %d' % int(t%FLAGS.eval_freq) )
+        #print(FLAGS.eval_mode)
+
+        if FLAGS.eval_freq > 0 and t%FLAGS.eval_freq == 0 and model_initialized:
+            print('_'*50)
+            print('Start Evaluating at TimeStep %d' % t)
+            eps = FLAGS.tiny_explore
+            reward_calc = 0
+
+            obs = env.reset()
+            input_obs = obs
+            frame_counter = 0
+            while True:
+                frame_counter += 1
+                is_greedy = np.random.rand(1) >= eps
+                if is_greedy and frame_counter >= frame_history_len:
+                    feed_input_obs = np.reshape(input_obs,[1]+list(input_obs.shape))
+                    q_values = session.run(q, feed_dict={obs_t_ph: feed_input_obs})
+                    action = np.argmax(np.squeeze(q_values))
+                else:
+                    action = np.random.choice(num_actions)
+
+                obs, reward, done, info = env.step(action)
+                input_obs = np.concatenate((input_obs, obs), 2)
+                assert(len(env.observation_space.shape) == 3)
+                if input_obs.shape[2] > frame_history_len*img_c:
+                    input_obs = input_obs[:,:,-frame_history_len*img_c:]
+                reward_calc += reward
+                if done:
+                    break
+            best_reward = np.max([best_reward, reward_calc])
+            with open(log_file, 'a') as f:
+                print(t, reward_calc, best_reward, file=f)
+            print("the frame counter is %f" % frame_counter)
+            print("test reward %f" % reward_calc)
+            print("best test reward %f" % best_reward)
+
+        if FLAGS.use_env_reward:
+            episode_rewards = get_wrapper_by_name(env, "Monitor").get_episode_rewards()
+            if len(episode_rewards) > 0:
+                mean_episode_reward = np.mean(episode_rewards[-100:])
+            if len(episode_rewards) > 100:
+                best_mean_episode_reward = max(best_mean_episode_reward, mean_episode_reward)
+
         if t % LOG_EVERY_N_STEPS == 0 and model_initialized:
-            print("Timestep %d" % (t,))
-            print("mean reward (100 episodes) %f" % mean_episode_reward)
-            print("best mean reward %f" % best_mean_episode_reward)
-            print("episodes %d" % len(episode_rewards))
+            if FLAGS.use_env_reward:
+                print("mean reward (100 episodes) %f" % mean_episode_reward)
+                print("best mean reward %f" % best_mean_episode_reward)
+                print("episodes %d" % len(episode_rewards))
             print("exploration %f" % exploration.value(t))
             print("learning_rate %f" % optimizer_spec.lr_schedule.value(t))
             sys.stdout.flush()
 
-            with open(log_file, 'a') as f:
-                print(t, mean_episode_reward, best_mean_episode_reward, file=f)
+            if FLAGS.use_env_reward:
+                with open(log_file, 'a') as f:
+                    print(t, mean_episode_reward, best_mean_episode_reward, file=f)
