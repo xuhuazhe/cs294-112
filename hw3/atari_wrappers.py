@@ -42,7 +42,9 @@ class EpisodicLifeEnv(gym.Wrapper):
         """
         super(EpisodicLifeEnv, self).__init__(env)
         self.lives = 0
+        # True if all lives were used
         self.was_real_done  = True
+        # This variable is not used, only assigned
         self.was_real_reset = False
 
     def _step(self, action):
@@ -74,6 +76,7 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = self.env.unwrapped.ale.lives()
         return obs
 
+# Warning: Max pool is done across temporal domain, only on recent 2 frames
 class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env=None, skip=4):
         """Return only every `skip`-th frame"""
@@ -137,6 +140,13 @@ def wrap_deepmind_ram(env):
     env = ClippedRewardsWrapper(env)
     return env
 
+# In summary, the following wrapper has been applied to the Env
+# 1. Turn many lives to a single life
+# 2. reset for random number of NOOP
+# 3. Get one frame for every {1,2,3,4} frames, and take max(3,4), accumulate reward
+# 4. FIRE to start if needed
+# 5. convert to Gray image and crop a part.
+# 6. clip reward to -1, 0, +1
 def wrap_deepmind(env):
     assert 'NoFrameskip' in env.spec.id
     env = EpisodicLifeEnv(env)

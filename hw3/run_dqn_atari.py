@@ -22,12 +22,14 @@ tf.app.flags.DEFINE_string('method_name', 'vanilla',
                            """the method name we want to use""")
 tf.app.flags.DEFINE_boolean('save_model', True,
                             """save the model of Q""")
+# TODO: merge demo dir flag into one flag
 tf.app.flags.DEFINE_string('demo_hdf_dir', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5',
                            """HDF Demonstration dir""")
 tf.app.flags.DEFINE_string('pickle_dir', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.p',
                            """pickle Demonstration dir""")
 tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
                             """Do we want to add Q learning sample to the replay buffer""")
+# TODO: make sure this flag is not used in the learning from demonstration case
 tf.app.flags.DEFINE_integer('learning_starts', 50000,
                             """learning_starts point, 50000for Q learning, 0 for demonstration""")
 def atari_model(img_in, num_actions, scope, reuse=False):
@@ -50,26 +52,31 @@ def atari_learn(env,
                 session,
                 num_timesteps):
     # This is just a rough estimate
+    # TODO: replace 4.0 by the framehistory
     num_iterations = float(num_timesteps) / 4.0
 
     lr_multiplier = 1.0
+    # TODO: better learning rate schedules?
     lr_schedule = PiecewiseSchedule([
                                          (0,                   1e-4 * lr_multiplier),
                                          (num_iterations / 10, 1e-4 * lr_multiplier),
                                          (num_iterations / 2,  5e-5 * lr_multiplier),
                                     ],
                                     outside_value=5e-5 * lr_multiplier)
+    # TODO: principle of Adam and more parameters
     optimizer = dqn.OptimizerSpec(
         constructor=tf.train.AdamOptimizer,
         kwargs=dict(epsilon=1e-4),
         lr_schedule=lr_schedule
     )
 
+    # TODO: t input is not used here
     def stopping_criterion(env, t):
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
         return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps
 
+    # TODO: better exploration schedule?
     exploration_schedule = PiecewiseSchedule(
         [
             (0, 1.0),
@@ -78,6 +85,7 @@ def atari_learn(env,
         ], outside_value=0.01
     )
 
+    # TODO: better hyper parameters here
     dqn.learn(
         env,
         q_func=atari_model,
@@ -102,6 +110,7 @@ def get_available_gpus():
     return [x.physical_device_desc for x in local_device_protos if x.device_type == 'GPU']
 
 def set_global_seeds(i):
+    # TODO: cuda visable device should not be set here, and should be provided by a flag
     os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
     try:
         import tensorflow as tf
@@ -129,13 +138,13 @@ def get_env(task, seed):
 
     set_global_seeds(seed)
     env.seed(seed)
-
+    # TODO: the expt_dir might not be available on the machine
     expt_dir = os.path.join('/tmp/',FLAGS.method_name,'vid_dir2/')
     env = wrappers.Monitor(env, osp.join(expt_dir, "gym"), force=True)
     env = wrap_deepmind(env)
 
     return env
-
+# TODO: this should be moved to the seperate config file
 def common_setting():
     FLAGS.ddqn = False
     FLAGS.demo_mode = 'hdf'

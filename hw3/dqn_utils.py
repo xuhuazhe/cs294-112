@@ -151,7 +151,7 @@ def initialize_interdependent_variables(session, vars_list, feed_dict):
             try:
                 # If using an older version of TensorFlow, uncomment the line
                 # below and comment out the line after it.
-		#session.run(tf.initialize_variables([v]), feed_dict)
+                #session.run(tf.initialize_variables([v]), feed_dict)
                 session.run(tf.initialize_variables([v]), feed_dict)
             except tf.errors.FailedPreconditionError:
                 new_vars_left.append(v)
@@ -350,6 +350,7 @@ class ReplayBuffer(object):
         self.reward[idx] = reward
         self.done[idx]   = done
 
+# TODO: polish the two functions below
 def Get_HDF_Demo(hdf_path, replay_buffer, pickle_dir):
     import h5py
     filename = hdf_path
