@@ -126,7 +126,7 @@ def set_global_seeds(i):
     try:
         import tensorflow as tf
     except ImportError:
-        pass
+        raise ValueError("Import tensorflow failed")
     else:
         tf.set_random_seed(i) 
     np.random.seed(i)
