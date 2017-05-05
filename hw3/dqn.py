@@ -135,6 +135,7 @@ def learn(env,
     # The (rapidly updated Q network)
     q = q_func(obs_t_float, num_actions, scope="q_func", reuse=False)
     q_func_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='q_func')
+
     # The target Q network
     target_q = q_func(obs_tp1_float, num_actions, scope="target_q_func", reuse=False)
     target_q_func_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='target_q_func')
@@ -190,13 +191,13 @@ def learn(env,
     saver = tf.train.Saver()
 
     if FLAGS.demo_mode == 'hdf':
-        # TODO: remove the pickle_dir input
-        replay_buffer = Get_HDF_Demo(FLAGS.demo_hdf_dir, replay_buffer, FLAGS.pickle_dir)
+        replay_buffer = Get_HDF_Demo(FLAGS.demo_hdf_dir, replay_buffer)
     elif FLAGS.demo_mode == 'replay':
         Load_Replay_Pickle(FLAGS.pickle_dir)
+    elif FLAGS.demo_mode == 'no_demo':
+        pass
     else:
         raise ValueError("invalid FLAGS.demo_mode = %s" % FLAGS.demo_mode)
-
     for t in itertools.count():
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):

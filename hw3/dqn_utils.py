@@ -7,6 +7,8 @@ import random
 import pickle
 import matplotlib.pyplot as plt
 from atari_wrappers import *
+from collections import deque
+import h5py
 
 def huber_loss(x, delta=1.0):
     # https://en.wikipedia.org/wiki/Huber_loss
@@ -351,9 +353,8 @@ class ReplayBuffer(object):
         self.reward[idx] = reward
         self.done[idx]   = done
 
-# TODO: polish the two functions below
-def Get_HDF_Demo(hdf_path, replay_buffer, pickle_dir):
-    import h5py
+def Get_HDF_Demo(hdf_path, replay_buffer):
+
     filename = hdf_path
     f = h5py.File(filename, 'r')
 
@@ -369,16 +370,20 @@ def Get_HDF_Demo(hdf_path, replay_buffer, pickle_dir):
     #_lives = list(f[lives])
     print('Loaded! Almost there!')
     print('Total Number %d' % len(_obs))
+    _obs_buffer = deque(maxlen=2)
     for i in range(len(_obs)):
         if i % 10000 == 0:
             print('%d are loaded' % i )
-        _new_obs = process_frame84(_obs[i])
-        idx = replay_buffer.store_frame(_new_obs)
-        replay_buffer.store_effect(idx, _action[i], _reward[i], _terminal[i])
+        _obs_buffer.append(_obs[i])
+
+        if i % 4 == 3:
+            max_frame = np.max(np.stack(_obs_buffer), axis=0)
+            max_frame = process_frame84(max_frame)
+            idx = replay_buffer.store_frame(max_frame)
+            replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i])
         #if i == 10000:
         #    break
-    #with open(pickle_dir, 'w') as f:
-    #    pickle.dump(replay_buffer, f)
+
     return replay_buffer
 
 def Load_Replay_Pickle(pickle_dir):
