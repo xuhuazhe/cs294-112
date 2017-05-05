@@ -6,6 +6,7 @@ import numpy as np
 import random
 import pickle
 import matplotlib.pyplot as plt
+from atari_wrappers import *
 
 def huber_loss(x, delta=1.0):
     # https://en.wikipedia.org/wiki/Huber_loss
@@ -367,11 +368,17 @@ def Get_HDF_Demo(hdf_path, replay_buffer, pickle_dir):
     _terminal = list(f[terminal])
     #_lives = list(f[lives])
     print('Loaded! Almost there!')
+    print('Total Number %d' % len(_obs))
     for i in range(len(_obs)):
-        idx = replay_buffer.store_frame(_obs[i])
+        if i % 10000 == 0:
+            print('%d are loaded' % i )
+        _new_obs = process_frame84(_obs[i])
+        idx = replay_buffer.store_frame(_new_obs)
         replay_buffer.store_effect(idx, _action[i], _reward[i], _terminal[i])
+        #if i == 10000:
+        #    break
     #with open(pickle_dir, 'w') as f:
-    #    pickle.dump(replay_buffer, f, protocol=2)
+    #    pickle.dump(replay_buffer, f)
     return replay_buffer
 
 def Load_Replay_Pickle(pickle_dir):
