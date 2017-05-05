@@ -135,6 +135,7 @@ def learn(env,
     # The (rapidly updated Q network)
     q = q_func(obs_t_float, num_actions, scope="q_func", reuse=False)
     q_func_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='q_func')
+    q_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
     # The target Q network
     target_q = q_func(obs_tp1_float, num_actions, scope="target_q_func", reuse=False)
     target_q_func_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='target_q_func')
@@ -142,17 +143,12 @@ def learn(env,
     # The DQN update: use Bellman operator over the *target* network outputs
     # one-step look-ahead using target Q network
     # do the update in a batch
-    # Get out the Q values of the performed actions, using the rapid Q network
     q_act = tf.reduce_sum(q*tf.one_hot(act_t_ph, num_actions), 1)
 
     if FLAGS.ddqn:
         print("double Q!")
-        # The rapid Q values of the next observation
-        q_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
         q_next_act = tf.argmax(q_next, 1)
-        # If we were using the rapid Q network to do the actions, what are the target Q values
-        q_next_act_value = tf.reduce_sum(target_q * tf.one_hot(q_next_act, num_actions), 1)
-        q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * q_next_act_value
+        q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * tf.reduce_sum(target_q*tf.one_hot(q_next_act, num_actions), 1)
     else:
         q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * tf.reduce_max(target_q, 1)
     total_error = tf.nn.l2_loss(q_act-q_look_ahead)*2 / batch_size
@@ -190,13 +186,11 @@ def learn(env,
     saver = tf.train.Saver()
 
     if FLAGS.demo_mode == 'hdf':
-        # TODO: remove the pickle_dir input
-        replay_buffer = Get_HDF_Demo(FLAGS.demo_hdf_dir, replay_buffer, FLAGS.pickle_dir)
+        replay_buffer = Get_HDF_Demo(FLAGS.demo_hdf_dir, replay_buffer)
     elif FLAGS.demo_mode == 'replay':
         Load_Replay_Pickle(FLAGS.pickle_dir)
     else:
-        raise ValueError("invalid FLAGS.demo_mode = %s" % FLAGS.demo_mode)
-
+        pass
     for t in itertools.count():
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
@@ -305,7 +299,6 @@ def learn(env,
             if t % 100000 == 0 and FLAGS.save_model:
                 if not os.path.exists(os.path.join('./link_data/', FLAGS.method_name)):
                     os.mkdir(os.path.join('./link_data/', FLAGS.method_name))
-                # TODO: save path should be set in FLAG
                 save_path=saver.save(session, os.path.join('./link_data/', FLAGS.method_name,"model_%s.ckpt" %(str(t))))
                 print('saved at ',save_path)
             obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
