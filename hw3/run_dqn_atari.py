@@ -29,6 +29,8 @@ tf.app.flags.DEFINE_string('demo_file_path', '/data/hxu/cs294-112/hw3/DQfD/endur
                            """Demonstration file path""")
 tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
                             """Do we want to add Q learning sample to the replay buffer""")
+tf.app.flags.DEFINE_boolean('learning_stage', True,
+                            """Do we want to learn or just collection""")
 
 # evaluation related
 tf.app.flags.DEFINE_integer('eval_freq', -1,
