@@ -156,9 +156,6 @@ def learn(env,
     end_points = tf.get_collection("activation_collection")
     activation_summaries(end_points)
 
-    alpha = 1.0
-    V = alpha*tf.log(tf.reduce_sum(tf.exp(1/alpha*target_q), 1))
-
     # The DQN update: use Bellman operator over the *target* network outputs
     # one-step look-ahead using target Q network
     # do the update in a batch
@@ -177,32 +174,44 @@ def learn(env,
         q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * tf.reduce_max(target_q, 1)
 
     total_error = 0
-    if FLAGS.cross_entropy_loss_weight > 0:
+    if FLAGS.supervise_cross_entropy_loss_weight > 0:
         cross_entropy_loss = tf.nn.softmax_cross_entropy_with_logits(q,tf.one_hot(act_t_ph, num_actions), name='cross_entropy')
         cross_entropy_loss = tf.reduce_mean(cross_entropy_loss)
-        total_error += FLAGS.cross_entropy_loss_weight*cross_entropy_loss
-    if FLAGS.temporal_diff_loss_weight > 0:
+        tf.scalar_summary("loss/supervise_cross_ent", cross_entropy_loss)
+        total_error += FLAGS.supervise_cross_entropy_loss_weight*cross_entropy_loss
+
+    if FLAGS.hard_Q_loss_weight > 0:
         temporal_diff_loss = tf.nn.l2_loss(q_act-q_look_ahead)*2 / batch_size
-        total_error += FLAGS.temporal_diff_loss_weight * temporal_diff_loss
-    if FLAGS.regularization_loss_weight > 0:
+        tf.scalar_summary("loss/hard_Q", temporal_diff_loss)
+        total_error += FLAGS.hard_Q_loss_weight * temporal_diff_loss
+
+    if FLAGS.l2_regularization_loss_weight > 0:
         regularization_loss = tf.add_n([tf.reduce_sum(tf.square(reg_weight)) for reg_weight in q_func_vars])
-        total_error += FLAGS.regularization_loss_weight*regularization_loss
-    if FLAGS.max_ent_loss_weight > 0:
+        tf.scalar_summary("loss/l2_regularization", regularization_loss)
+        total_error += FLAGS.l2_regularization_loss_weight*regularization_loss
+
+    if FLAGS.soft_Q_loss_weight > 0:
+        alpha = FLAGS.soft_Q_alpha
+        V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * target_q), 1))
         q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V
         max_ent_loss = tf.nn.l2_loss(q_act-q_soft_ahead)*2 / batch_size
-        total_error += FLAGS.max_ent_loss_weight*max_ent_loss
-    if FLAGS.large_margin_loss_weight > 0:
+        tf.scalar_summary("loss/soft_Q", max_ent_loss)
+        total_error += FLAGS.soft_Q_loss_weight*max_ent_loss
+
+    if FLAGS.supervise_hinge_DQfD_loss_weight > 0:
         loss_l = 0.8 - 0.8*tf.one_hot(act_t_ph, num_actions)
         large_margin = tf.reduce_max(loss_l + q, 1)
-        hinge_loss =  tf.reduce_sum(large_margin - q_act)
-        total_error += FLAGS.large_margin_loss_weight*hinge_loss
-    if FLAGS.original_large_margin_loss:
-        #q_act is the groundtruth Q
-        #q_non_act = tf.reduce_max(q * (1-tf.one_hot(act_t_ph, num_actions)), 1)
-        #crammer_loss = tf.reduce_sum(tf.maximum(0, 1+q_non_act-q_act))
-        #total_error += FLAGS.original_large_margin_loss * crammer_loss
-        losses.hinge_loss(q, tf.one_hot(act_t_ph, num_actions))
+        hinge_loss =  tf.reduce_mean(large_margin - q_act)
+        tf.scalar_summary("loss/supervise_hinge_DQfD", hinge_loss)
+        total_error += FLAGS.supervise_hinge_DQfD_loss_weight*hinge_loss
 
+    if FLAGS.supervise_hinge_standard_loss_weight:
+        crammer = losses.hinge_loss(q, tf.one_hot(act_t_ph, num_actions))
+        crammer = tf.reduce_mean(crammer)
+        tf.scalar_summary("loss/supervise_hinge_standard", crammer)
+        total_error += FLAGS.supervise_hinge_standard_loss_weight * crammer
+
+    tf.scalar_summary("loss/total", total_error)
 
     # construct optimization op (with gradient clipping)
     learning_rate = tf.placeholder(tf.float32, (), name="learning_rate")
@@ -290,8 +299,8 @@ def learn(env,
         # YOUR CODE HERE
         # TODO: right now the demonstration and dqn share the same buffer
         if FLAGS.collect_Q_experience:
-            assert(np.sign(FLAGS.max_ent_loss_weight) != np.sign(FLAGS.temporal_diff_loss_weight))
-            if FLAGS.max_ent_loss_weigh > 0:
+            assert(np.sign(FLAGS.soft_Q_loss_weight) != np.sign(FLAGS.hard_Q_loss_weight))
+            if FLAGS.hard_Q_loss_weight > 0:
                 idx = replay_buffer.store_frame(last_obs)
                 eps = exploration.value(t)
                 is_greedy = np.random.rand(1) >= eps
@@ -307,7 +316,7 @@ def learn(env,
                     obs = env.reset()
                 replay_buffer.store_effect(idx, action, reward, done)
                 last_obs = obs
-            elif FLAGS.temporal_diff_loss_weight>0 :
+            else:
                 raise NotImplementedError("soft Q sample")
 
 

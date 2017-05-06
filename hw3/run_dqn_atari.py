@@ -42,14 +42,20 @@ tf.app.flags.DEFINE_integer('summary_interval', 10000,
                             """summary frequency""")
 
 ###### weight for losses ##########
-tf.app.flags.DEFINE_float('cross_entropy_loss_weight', -1.0,
+tf.app.flags.DEFINE_float('supervise_cross_entropy_loss_weight', -1.0,
                             """weight for supervised learning""")
-tf.app.flags.DEFINE_float('temporal_diff_loss_weight', -1.0,
+tf.app.flags.DEFINE_float('hard_Q_loss_weight', -1.0,
                             """weight for Q learning""")
-tf.app.flags.DEFINE_float('regularization_loss_weight', -1.0,
+tf.app.flags.DEFINE_float('l2_regularization_loss_weight', -1.0,
                             """weight regularization loss""")
-tf.app.flags.DEFINE_float('max_ent_loss_weight', -1.0,
+tf.app.flags.DEFINE_float('soft_Q_loss_weight', -1.0,
                             """weight regularization loss""")
+tf.app.flags.DEFINE_float('soft_Q_alpha', 1.0,
+                            """""")
+tf.app.flags.DEFINE_float('supervise_hinge_DQfD_loss_weight', -1.0,
+                            """weight for supervised learning""")
+tf.app.flags.DEFINE_float('supervise_hinge_standard_loss_weight', -1.0,
+                            """weight for supervised learning""")
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',

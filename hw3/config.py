@@ -26,7 +26,7 @@ def hard_Q_on_demonstration():
     common_setting()
 
     FLAGS.core_num = '0'
-    FLAGS.temporal_diff_loss_weight = 1
+    FLAGS.hard_Q_loss_weight = 1
     # optionally set: lr_schedule, exploration_schedule
 
 use_this_config = hard_Q_on_demonstration
@@ -38,4 +38,4 @@ def supervised_learning():
     common_setting()
     
     FLAGS.core_num = '1'
-    FLAGS.cross_entropy_loss_weight = 1
+    FLAGS.supervise_cross_entropy_loss_weight = 1
