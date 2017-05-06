@@ -141,6 +141,7 @@ def minimize_and_clip(optimizer, objective, var_list, clip_val=10):
     for i, (grad, var) in enumerate(gradients):
         if grad is not None:
             gradients[i] = (tf.clip_by_norm(grad, clip_val), var)
+            tf.histogram_summary("gradients/"+gradients[i][0].op.name, gradients[i][0])
     return optimizer.apply_gradients(gradients)
 
 def initialize_interdependent_variables(session, vars_list, feed_dict):
@@ -429,3 +430,25 @@ def eval_policy(env, q, obs_t_ph,
             break
 
     return reward_calc, frame_counter
+
+
+def _activation_summary(x):
+  print(x)
+  tensor_name = x.op.name
+  tf.histogram_summary(tensor_name + '/activations', x)
+  tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+
+
+def activation_summaries(endpoints):
+  if isinstance(endpoints, dict):
+    end_values = endpoints.values()
+  elif isinstance(endpoints, list):
+    # throw away the tuple's first entry which is the name
+    end_values = [t if isinstance(t, tf.Tensor) else t[1] for t in endpoints]
+  else:
+    print(endpoints, "unknown endpoint type")
+
+  with tf.name_scope('summaries'):
+    print("-"*40 + "\nAll tensors that will be summarized:")
+    for act in end_values:
+      _activation_summary(act)

@@ -109,6 +109,13 @@ def learn(env,
     # next state Q-value (i.e. target is just rew_t_ph, not rew_t_ph + gamma * q_tp1)
     done_mask_ph          = tf.placeholder(tf.float32, [None])
 
+    # visualize inputs
+    to_vis_format=lambda batch: tf.expand_dims(tf.transpose(batch[0, :, :, :], perm=[2, 0, 1]), 3)
+    tf.image_summary("observation_now", to_vis_format(obs_t_ph), max_images=4)
+    tf.image_summary("observation_next", to_vis_format(obs_tp1_ph), max_images=4)
+    tf.scalar_summary("env_input/action", act_t_ph[0])
+    tf.scalar_summary("env_input/reward", rew_t_ph[0])
+
     # casting to float on GPU ensures lower data transfer times.
     obs_t_float   = tf.cast(obs_t_ph,   tf.float32) / 255.0
     obs_tp1_float = tf.cast(obs_tp1_ph, tf.float32) / 255.0
@@ -140,6 +147,14 @@ def learn(env,
     target_q = q_func(obs_tp1_float, num_actions, scope="target_q_func", reuse=False)
     target_q_func_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='target_q_func')
 
+    # visualize two set of vars
+    for setname, set in [("rapid_net", q_func_vars), ("target_net", target_q_func_vars)]:
+        for v in set:
+            tf.histogram_summary(setname+"/"+v.op.name+"_weights", v)
+    # visualize all activations
+    end_points = tf.get_collection("activation_collection")
+    activation_summaries(end_points)
+
     # The DQN update: use Bellman operator over the *target* network outputs
     # one-step look-ahead using target Q network
     # do the update in a batch
@@ -162,6 +177,7 @@ def learn(env,
 
     # construct optimization op (with gradient clipping)
     learning_rate = tf.placeholder(tf.float32, (), name="learning_rate")
+    tf.scalar_summary("learning_rate", learning_rate)
     optimizer = optimizer_spec.constructor(learning_rate=learning_rate, **optimizer_spec.kwargs)
     train_fn = minimize_and_clip(optimizer, total_error,
                  var_list=q_func_vars, clip_val=grad_norm_clipping)
@@ -172,6 +188,12 @@ def learn(env,
                                sorted(target_q_func_vars, key=lambda v: v.name)):
         update_target_fn.append(var_target.assign(var))
     update_target_fn = tf.group(*update_target_fn)
+
+    summary_op = tf.merge_all_summaries()
+    model_save_path = os.path.join('./link_data/', FLAGS.method_name)
+    summary_writer = tf.train.SummaryWriter(
+        model_save_path,
+        graph_def=session.graph.as_graph_def(add_shapes=True))
 
     # construct the replay buffer
     replay_buffer = ReplayBuffer(replay_buffer_size, frame_history_len)
@@ -265,6 +287,7 @@ def learn(env,
         # note that this is only done if the replay buffer contains enough samples
         # for us to learn something useful -- until then, the model will not be
         # initialized and random actions should be taken
+        summary_value = None
         if (t > learning_starts and
                 t % learning_freq == 0 and
                 replay_buffer.can_sample(batch_size)):
@@ -323,14 +346,18 @@ def learn(env,
                 model_initialized = True
 
             # (c)
-            session.run(train_fn, {
+            feed_dict = {
                 obs_t_ph: obs_t_batch,
                 act_t_ph: act_t_batch,
                 rew_t_ph: rew_t_batch,
                 obs_tp1_ph: obs_tp1_batch,
                 done_mask_ph: done_mask,
                 learning_rate: optimizer_spec.lr_schedule.value(t)
-            })
+            }
+            if t % FLAGS.summary_interval == 0:
+                _, summary_value = session.run([train_fn, summary_op], feed_dict)
+            else:
+                session.run(train_fn, feed_dict)
             num_param_updates += 1
 
             # (d)
@@ -343,6 +370,8 @@ def learn(env,
 
         # evaluating in the environment, when off policy training is used
         # Warning: this evaluation does not use target network!
+        # TODO: make sure the environment Monitor return the undiscounted reward
+        reward_calc = None
         if FLAGS.eval_freq > 0 and t % FLAGS.eval_freq == 0 and model_initialized:
             print('_'*50)
             print('Start Evaluating at TimeStep %d' % t)
@@ -365,6 +394,7 @@ def learn(env,
             episode_rewards = get_wrapper_by_name(env, "Monitor").get_episode_rewards()
             if len(episode_rewards) > 0:
                 mean_episode_reward = np.mean(episode_rewards[-100:])
+                reward_calc = episode_rewards[-1]
             if len(episode_rewards) > 100:
                 best_mean_episode_reward = max(best_mean_episode_reward, mean_episode_reward)
 
@@ -378,3 +408,18 @@ def learn(env,
 
                 with open(log_file, 'a') as f:
                     print(t, mean_episode_reward, best_mean_episode_reward, file=f)
+
+        # adding visualizations to tensorboard
+        # summary condition: train has a summary, eval has a new value(>0), or eval has extended(<0)
+        sum_train = (summary_value is not None)
+        sum_eval  = (reward_calc is not None) and (
+                        (FLAGS.eval_freq> 0) or
+                        (FLAGS.eval_freq<=0 and t % LOG_EVERY_N_STEPS==0 and model_initialized) )
+        if sum_train or sum_eval:
+            summary = tf.Summary()
+            if sum_train:
+                summary.ParseFromString(summary_value)
+            if sum_eval:
+                summary.value.add(tag='exploration', simple_value=exploration.value(t))
+                summary.value.add(tag='reward', simple_value=reward_calc)
+            summary_writer.add_summary(summary, t)

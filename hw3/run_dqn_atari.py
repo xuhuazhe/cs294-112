@@ -6,6 +6,7 @@ import random
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
+import tensorflow.contrib.slim as slim
 import os
 
 import dqn
@@ -34,6 +35,8 @@ tf.app.flags.DEFINE_integer('eval_freq', -1,
                             """evaluation frequency""")
 tf.app.flags.DEFINE_float('tiny_explore', 0.01,
                             """the explore rate for evaluating mode""")
+tf.app.flags.DEFINE_integer('summary_interval', 10000,
+                            """summary frequency""")
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',
@@ -55,19 +58,20 @@ tf.app.flags.DEFINE_integer('learning_starts', 50000,
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
-    with tf.variable_scope(scope, reuse=reuse):
-        out = img_in
-        with tf.variable_scope("convnet"):
-            # original architecture
-            out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
-            out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
-            out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
-        out = layers.flatten(out)
-        with tf.variable_scope("action_value"):
-            out = layers.fully_connected(out, num_outputs=512,         activation_fn=tf.nn.relu)
-            out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
+    with slim.arg_scope([layers.convolution2d, layers.fully_connected], outputs_collections="activation_collection"):
+        with tf.variable_scope(scope, reuse=reuse):
+            out = img_in
+            with tf.variable_scope("convnet"):
+                # original architecture
+                out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
+                out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
+                out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
+            out = layers.flatten(out)
+            with tf.variable_scope("action_value"):
+                out = layers.fully_connected(out, num_outputs=512,         activation_fn=tf.nn.relu)
+                out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
-        return out
+            return out
 
 def atari_learn(env,
                 session,
