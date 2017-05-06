@@ -6,6 +6,7 @@ import numpy as np
 import random
 import tensorflow                as tf
 import tensorflow.contrib.layers as layers
+import tensorflow.contrib.losses as losses
 from collections import namedtuple
 from dqn_utils import *
 import os
@@ -155,6 +156,9 @@ def learn(env,
     end_points = tf.get_collection("activation_collection")
     activation_summaries(end_points)
 
+    alpha = 1.0
+    V = alpha*tf.log(tf.reduce_sum(tf.exp(1/alpha*target_q), 1))
+
     # The DQN update: use Bellman operator over the *target* network outputs
     # one-step look-ahead using target Q network
     # do the update in a batch
@@ -171,9 +175,34 @@ def learn(env,
         q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * q_next_act_value
     else:
         q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * tf.reduce_max(target_q, 1)
-    total_error = tf.nn.l2_loss(q_act-q_look_ahead)*2 / batch_size
 
-    ######
+    total_error = 0
+    if FLAGS.cross_entropy_loss_weight > 0:
+        cross_entropy_loss = tf.nn.softmax_cross_entropy_with_logits(q,tf.one_hot(act_t_ph, num_actions), name='cross_entropy')
+        cross_entropy_loss = tf.reduce_mean(cross_entropy_loss)
+        total_error += FLAGS.cross_entropy_loss_weight*cross_entropy_loss
+    if FLAGS.temporal_diff_loss_weight > 0:
+        temporal_diff_loss = tf.nn.l2_loss(q_act-q_look_ahead)*2 / batch_size
+        total_error += FLAGS.temporal_diff_loss_weight * temporal_diff_loss
+    if FLAGS.regularization_loss_weight > 0:
+        regularization_loss = tf.add_n([tf.reduce_sum(tf.square(reg_weight)) for reg_weight in q_func_vars])
+        total_error += FLAGS.regularization_loss_weight*regularization_loss
+    if FLAGS.max_ent_loss_weight > 0:
+        q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V
+        max_ent_loss = tf.nn.l2_loss(q_act-q_soft_ahead)*2 / batch_size
+        total_error += FLAGS.max_ent_loss_weight*max_ent_loss
+    if FLAGS.large_margin_loss_weight > 0:
+        loss_l = 0.8 - 0.8*tf.one_hot(act_t_ph, num_actions)
+        large_margin = tf.reduce_max(loss_l + q, 1)
+        hinge_loss =  tf.reduce_sum(large_margin - q_act)
+        total_error += FLAGS.large_margin_loss_weight*hinge_loss
+    if FLAGS.original_large_margin_loss:
+        #q_act is the groundtruth Q
+        #q_non_act = tf.reduce_max(q * (1-tf.one_hot(act_t_ph, num_actions)), 1)
+        #crammer_loss = tf.reduce_sum(tf.maximum(0, 1+q_non_act-q_act))
+        #total_error += FLAGS.original_large_margin_loss * crammer_loss
+        losses.hinge_loss(q, tf.one_hot(act_t_ph, num_actions))
+
 
     # construct optimization op (with gradient clipping)
     learning_rate = tf.placeholder(tf.float32, (), name="learning_rate")
@@ -261,21 +290,26 @@ def learn(env,
         # YOUR CODE HERE
         # TODO: right now the demonstration and dqn share the same buffer
         if FLAGS.collect_Q_experience:
-            idx = replay_buffer.store_frame(last_obs)
-            eps = exploration.value(t)
-            is_greedy = np.random.rand(1) >= eps
-            if is_greedy and model_initialized:
-                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                action = np.argmax(np.squeeze(q_values))
-            else:
-                action = np.random.choice(num_actions)
+            assert(np.sign(FLAGS.max_ent_loss_weight) != np.sign(FLAGS.temporal_diff_loss_weight))
+            if FLAGS.max_ent_loss_weigh > 0:
+                idx = replay_buffer.store_frame(last_obs)
+                eps = exploration.value(t)
+                is_greedy = np.random.rand(1) >= eps
+                if is_greedy and model_initialized:
+                    recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+                    q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                    action = np.argmax(np.squeeze(q_values))
+                else:
+                    action = np.random.choice(num_actions)
 
-            obs, reward, done, info = env.step(action)
-            if done:
-                obs = env.reset()
-            replay_buffer.store_effect(idx, action, reward, done)
-            last_obs = obs
+                obs, reward, done, info = env.step(action)
+                if done:
+                    obs = env.reset()
+                replay_buffer.store_effect(idx, action, reward, done)
+                last_obs = obs
+            elif FLAGS.temporal_diff_loss_weight>0 :
+                raise NotImplementedError("soft Q sample")
+
 
         #####
 
@@ -354,6 +388,7 @@ def learn(env,
                 done_mask_ph: done_mask,
                 learning_rate: optimizer_spec.lr_schedule.value(t)
             }
+
             if t % FLAGS.summary_interval == 0:
                 _, summary_value = session.run([train_fn, summary_op], feed_dict)
             else:

@@ -14,6 +14,7 @@ from dqn_utils import *
 from atari_wrappers import *
 import sys
 from config import *
+import Q_expert
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -29,6 +30,8 @@ tf.app.flags.DEFINE_string('demo_file_path', '/data/hxu/cs294-112/hw3/DQfD/endur
                            """Demonstration file path""")
 tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
                             """Do we want to add Q learning sample to the replay buffer""")
+tf.app.flags.DEFINE_boolean('learning_stage', True,
+                            """Do we want to learn or just collection""")
 
 # evaluation related
 tf.app.flags.DEFINE_integer('eval_freq', -1,
@@ -37,6 +40,16 @@ tf.app.flags.DEFINE_float('tiny_explore', 0.01,
                             """the explore rate for evaluating mode""")
 tf.app.flags.DEFINE_integer('summary_interval', 10000,
                             """summary frequency""")
+
+###### weight for losses ##########
+tf.app.flags.DEFINE_float('cross_entropy_loss_weight', -1.0,
+                            """weight for supervised learning""")
+tf.app.flags.DEFINE_float('temporal_diff_loss_weight', -1.0,
+                            """weight for Q learning""")
+tf.app.flags.DEFINE_float('regularization_loss_weight', -1.0,
+                            """weight regularization loss""")
+tf.app.flags.DEFINE_float('max_ent_loss_weight', -1.0,
+                            """weight regularization loss""")
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',
@@ -107,6 +120,39 @@ def atari_learn(env,
         grad_norm_clipping=10
     )
     env.close()
+
+def atari_collect(env,
+                  session,
+                  num_timesteps):
+    # This is just a rough estimate
+    # TODO: replace 4.0 by the framehistory
+    num_iterations = float(num_timesteps) / 4.0
+
+    # TODO: t input is not used here
+    def stopping_criterion(env, t):
+        # notice that here t is the number of steps of the wrapped env,
+        # which is different from the number of steps in the underlying env
+        return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps
+
+    Q_expert.collect(
+        env,
+        q_func=atari_model,
+        optimizer_spec=optimizer,
+        session=session,
+        exploration=exploration_schedule,
+        stopping_criterion=stopping_criterion,
+        replay_buffer_size=1000000,
+        batch_size=32,
+        gamma=0.99,
+        learning_starts=FLAGS.learning_starts,
+        learning_freq=4,
+        frame_history_len=int(sys.argv[2]),
+        target_update_freq=10000,
+        grad_norm_clipping=10
+    )
+    env.close()
+
+
 
 def get_available_gpus():
     from tensorflow.python.client import device_lib
@@ -185,7 +231,10 @@ def main(_):
     default_parameters(num_timesteps=task.max_timesteps)
     use_this_config()
 
-    atari_learn(env, session, num_timesteps=task.max_timesteps)
+    if FLAGS.learning_stage:
+        atari_learn(env, session, num_timesteps=task.max_timesteps)
+    else:
+        atari_collect(env, session, num_timesteps=task.max_timesteps)
 
 if __name__ == "__main__":
     tf.app.run()
