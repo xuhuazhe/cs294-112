@@ -13,6 +13,7 @@ from dqn_utils import *
 from atari_wrappers import *
 import sys
 from config import *
+import Q_expert
 
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_boolean('ddqn', False,
@@ -42,6 +43,16 @@ tf.app.flags.DEFINE_integer('eval_freq', -1,
                             """evaluation frequency""")
 tf.app.flags.DEFINE_string('core_num', '0',
                            """gpu number""")
+###### weight for losses ##########
+tf.app.flags.DEFINE_float('cross_entropy_loss_weight', -1.0,
+                            """weight for supervised learning""")
+tf.app.flags.DEFINE_float('temporal_diff_loss_weight', -1.0,
+                            """weight for Q learning""")
+tf.app.flags.DEFINE_float('regularization_loss_weight', -1.0,
+                            """weight regularization loss""")
+tf.app.flags.DEFINE_float('max_ent_loss_weight', -1.0,
+                            """weight regularization loss""")
+#######end of weight for losses #####
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -115,6 +126,39 @@ def atari_learn(env,
     )
     env.close()
 
+def atari_collect(env,
+                  session,
+                  num_timesteps):
+    # This is just a rough estimate
+    # TODO: replace 4.0 by the framehistory
+    num_iterations = float(num_timesteps) / 4.0
+
+    # TODO: t input is not used here
+    def stopping_criterion(env, t):
+        # notice that here t is the number of steps of the wrapped env,
+        # which is different from the number of steps in the underlying env
+        return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps
+
+    Q_expert.collect(
+        env,
+        q_func=atari_model,
+        optimizer_spec=optimizer,
+        session=session,
+        exploration=exploration_schedule,
+        stopping_criterion=stopping_criterion,
+        replay_buffer_size=1000000,
+        batch_size=32,
+        gamma=0.99,
+        learning_starts=FLAGS.learning_starts,
+        learning_freq=4,
+        frame_history_len=int(sys.argv[2]),
+        target_update_freq=10000,
+        grad_norm_clipping=10
+    )
+    env.close()
+
+
+
 def get_available_gpus():
     from tensorflow.python.client import device_lib
     local_device_protos = device_lib.list_local_devices()
@@ -158,14 +202,15 @@ def get_env(task, seed):
 
 
 def main(_):
-    # Get Atari games.
     common_setting()
-    hard_Q_on_demonstration()
-    ### set all the names ###  #TODO: set a config file to set flags
+
+    ### set all the names ###
+    # hard_Q_on_demonstration()
+    supervised_learning()
+
 
 
     benchmark = gym.benchmark_spec('Atari40M')
-
     # Change the index to select a different game.
     task = benchmark.tasks[2]
 
@@ -173,7 +218,10 @@ def main(_):
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     env = get_env(task, seed)
     session = get_session()
-    atari_learn(env, session, num_timesteps=task.max_timesteps)
+    if FLAGS.learning_stage:
+        atari_learn(env, session, num_timesteps=task.max_timesteps)
+    else:
+        atari_collect(env, session, num_timesteps=task.max_timesteps)
 
 if __name__ == "__main__":
 
