@@ -15,33 +15,43 @@ import sys
 from config import *
 
 FLAGS = tf.app.flags.FLAGS
+
+# DQN types
 tf.app.flags.DEFINE_boolean('ddqn', False,
                             """Enable double Q bellman Update""")
-tf.app.flags.DEFINE_boolean('use_env_reward', False,
-                            """do we want to compute reward from the environment?""")
-tf.app.flags.DEFINE_string('demo_mode', 'replay',
+
+# demonstration related
+tf.app.flags.DEFINE_string('demo_mode', 'hdf',
                            """hdf: load data from hdf, replay: from replay buffer pickle"""
                            """no_demo: skip the demo exp pool""")
-tf.app.flags.DEFINE_string('method_name', 'vanilla',
-                           """the method name we want to use""")
-tf.app.flags.DEFINE_boolean('save_model', True,
-                            """save the model of Q""")
-# TODO: merge demo dir flag into one flag
-tf.app.flags.DEFINE_string('demo_hdf_dir', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5',
-                           """HDF Demonstration dir""")
-tf.app.flags.DEFINE_string('pickle_dir', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.p',
-                           """pickle Demonstration dir""")
+tf.app.flags.DEFINE_string('demo_file_path', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5',
+                           """Demonstration file path""")
 tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
                             """Do we want to add Q learning sample to the replay buffer""")
-# TODO: make sure this flag is not used in the learning from demonstration case
-tf.app.flags.DEFINE_integer('learning_starts', 50000,
-                            """learning_starts point, 50000for Q learning, 0 for demonstration""")
-tf.app.flags.DEFINE_float('tiny_explore', 0.01,
-                            """the explore rate for evaluating mode""")
+
+# evaluation related
 tf.app.flags.DEFINE_integer('eval_freq', -1,
                             """evaluation frequency""")
+tf.app.flags.DEFINE_float('tiny_explore', 0.01,
+                            """the explore rate for evaluating mode""")
+
+# resource related
 tf.app.flags.DEFINE_string('core_num', '0',
                            """gpu number""")
+tf.app.flags.DEFINE_string('method_name', 'vanilla',
+                           """the method name we want to use, should be set automatically by config func""")
+
+# optimization related hyperparams
+tf.app.flags.DEFINE_integer('batch_size', 32,
+                           """optimization batch size""")
+tf.app.flags.DEFINE_integer('frame_history_len', 4,
+                           """frame_history_len""")
+
+# Other hyper parameters
+tf.app.flags.DEFINE_boolean('save_model', True,
+                            """save the model of Q""")
+tf.app.flags.DEFINE_integer('learning_starts', 50000,
+                            """learning_starts point, 50000for Q learning, 0 for demonstration""")
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -62,23 +72,11 @@ def atari_model(img_in, num_actions, scope, reuse=False):
 def atari_learn(env,
                 session,
                 num_timesteps):
-    # This is just a rough estimate
-    # TODO: replace 4.0 by the framehistory
-    num_iterations = float(num_timesteps) / 4.0
-
-    lr_multiplier = 1.0
-    # TODO: better learning rate schedules?
-    lr_schedule = PiecewiseSchedule([
-                                         (0,                   1e-4 * lr_multiplier),
-                                         (num_iterations / 10, 1e-4 * lr_multiplier),
-                                         (num_iterations / 2,  5e-5 * lr_multiplier),
-                                    ],
-                                    outside_value=5e-5 * lr_multiplier)
     # TODO: principle of Adam and more parameters
     optimizer = dqn.OptimizerSpec(
         constructor=tf.train.AdamOptimizer,
         kwargs=dict(epsilon=1e-4),
-        lr_schedule=lr_schedule
+        lr_schedule=FLAGS.lr_schedule
     )
 
     # TODO: t input is not used here
@@ -87,29 +85,20 @@ def atari_learn(env,
         # which is different from the number of steps in the underlying env
         return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps
 
-    # TODO: better exploration schedule?
-    exploration_schedule = PiecewiseSchedule(
-        [
-            (0, 1.0),
-            (1e6, 0.1),
-            (num_iterations / 2, 0.01),
-        ], outside_value=0.01
-    )
-
     # TODO: better hyper parameters here
     dqn.learn(
         env,
         q_func=atari_model,
         optimizer_spec=optimizer,
         session=session,
-        exploration=exploration_schedule,
+        exploration=FLAGS.exploration_schedule,
         stopping_criterion=stopping_criterion,
         replay_buffer_size=1000000,
-        batch_size=32,
+        batch_size=FLAGS.batch_size,
         gamma=0.99,
         learning_starts=FLAGS.learning_starts,
         learning_freq=4,
-        frame_history_len=int(sys.argv[2]),
+        frame_history_len=FLAGS.frame_history_len,
         target_update_freq=10000,
         grad_norm_clipping=10
     )
@@ -121,8 +110,6 @@ def get_available_gpus():
     return [x.physical_device_desc for x in local_device_protos if x.device_type == 'GPU']
 
 def set_global_seeds(i):
-    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
-    # TODO: cuda visable device should not be set here, and should be provided by a flag
     try:
         import tensorflow as tf
     except ImportError:
@@ -149,23 +136,40 @@ def get_env(task, seed):
 
     set_global_seeds(seed)
     env.seed(seed)
-    # TODO: the expt_dir might not be available on the machine
-    expt_dir = os.path.join('/tmp/',FLAGS.method_name,'vid_dir2/')
-    env = wrappers.Monitor(env, osp.join(expt_dir, "gym"), force=True)
+
+    model_save_path = os.path.join('./link_data/', FLAGS.method_name)
+    env = wrappers.Monitor(env, model_save_path, force=True)
     env = wrap_deepmind(env)
 
     return env
 
 
-def main(_):
-    # Get Atari games.
-    common_setting()
-    hard_Q_on_demonstration()
-    ### set all the names ###  #TODO: set a config file to set flags
+def default_parameters(**kwargs):
+    # This is just a rough estimate
+    num_timesteps = kwargs["num_timesteps"]
+    num_iterations = float(num_timesteps) / 4.0
 
+    lr_multiplier = 1.0
+
+    FLAGS.lr_schedule = PiecewiseSchedule([
+                                         (0,                   1e-4 * lr_multiplier),
+                                         (num_iterations / 10, 1e-4 * lr_multiplier),
+                                         (num_iterations / 2,  5e-5 * lr_multiplier),
+                                    ],
+                                    outside_value=5e-5 * lr_multiplier)
+
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 1.0),
+            (1e6, 0.1),
+            (num_iterations / 2, 0.01),
+        ], outside_value=0.01
+    )
+
+def main(_):
+    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 
     benchmark = gym.benchmark_spec('Atari40M')
-
     # Change the index to select a different game.
     task = benchmark.tasks[2]
 
@@ -173,8 +177,11 @@ def main(_):
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     env = get_env(task, seed)
     session = get_session()
+
+    default_parameters(num_timesteps=task.max_timesteps)
+    use_this_config()
+
     atari_learn(env, session, num_timesteps=task.max_timesteps)
 
 if __name__ == "__main__":
-
     tf.app.run()
