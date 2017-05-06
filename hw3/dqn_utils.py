@@ -353,23 +353,31 @@ class ReplayBuffer(object):
         self.reward[idx] = reward
         self.done[idx]   = done
 
-def Get_HDF_Demo(hdf_path, replay_buffer):
 
-    filename = hdf_path
+def get_hdf_demo(filename, replay_buffer):
     f = h5py.File(filename, 'r')
 
     # List all groups
     #print("Keys: %s" % f.keys())
     print('Get keys of HDF! Please Wait... Demonstration is huge.')
-    rom, action, reward, version, obs, _, action_set, lives, _, terminal = f.keys()
+    action = "A"
+    reward = "R"
+    obs = "S"
+    terminal = "terminal"
+    lives = "lives"
+
     # Get the data
     _action = list(f[action])
     _reward = list(f[reward])
     _obs = list(f[obs])
     _terminal = list(f[terminal])
     #_lives = list(f[lives])
-    print('Loaded! Almost there!')
-    print('Total Number %d' % len(_obs))
+    assert (len(_action) == len(_reward))
+    assert (len(_action) == len(_obs))
+    assert (len(_action) == len(_terminal))
+
+    print('Loaded! Almost there! Total Number of observations is %d' % len(_obs))
+    assert(replay_buffer.size >= (len(_obs) / 4))
     _obs_buffer = deque(maxlen=2)
     for i in range(len(_obs)):
         if i % 10000 == 0:
@@ -386,10 +394,38 @@ def Get_HDF_Demo(hdf_path, replay_buffer):
 
     return replay_buffer
 
-def Load_Replay_Pickle(pickle_dir):
-    with open(pickle_dir,'r') as f:
+
+def load_replay_pickle(pickle_dir):
+    with open(pickle_dir, 'r') as f:
         replay_buffer = pickle.load(f)
     return replay_buffer
 
 
+def eval_policy(env, q, obs_t_ph,
+                session,
+                eps, frame_history_len, num_actions, img_c):
+    # TODO: we could probably use Replay buffer to get rid of frame_history_len issue
+    reward_calc = 0
 
+    input_obs = env.reset()
+    frame_counter = 0
+    while True:
+        frame_counter += 1
+        is_greedy = np.random.rand(1) >= eps
+        if is_greedy and frame_counter >= frame_history_len:
+            feed_input_obs = np.reshape(input_obs,[1]+list(input_obs.shape))
+            q_values = session.run(q, feed_dict={obs_t_ph: feed_input_obs})
+            action = np.argmax(np.squeeze(q_values))
+        else:
+            action = np.random.choice(num_actions)
+
+        obs, reward, done, info = env.step(action)
+        input_obs = np.concatenate((input_obs, obs), 2)
+        assert(len(env.observation_space.shape) == 3)
+        if input_obs.shape[2] > frame_history_len*img_c:
+            input_obs = input_obs[:, :, -frame_history_len*img_c:]
+        reward_calc += reward
+        if done:
+            break
+
+    return reward_calc, frame_counter
