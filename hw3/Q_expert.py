@@ -87,7 +87,7 @@ def collect(env,
         if is_greedy:
             recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
             q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-            q_values = np.exp((q_values - np.max(q_values)) / FLAGS.temperature_tau)
+            q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
             dist = q_values / np.sum(q_values)
             action = np.random.choice(num_actions, p=np.squeeze(dist))
             #action = np.argmax(np.squeeze(q_values))

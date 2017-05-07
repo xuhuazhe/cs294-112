@@ -323,11 +323,10 @@ def learn(env,
                 if is_greedy and model_initialized:
                     recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
                     q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                    q_values = np.exp(q_values / FLAGS.soft_Q_alpha)
+                    q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
                     dist = q_values / np.sum(q_values)
                     action = np.random.choice(num_actions, p=np.squeeze(dist))
-                    #q_norm = np.linalg.norm(q_values, axis=1)
-                    #q_norm = q_values/q_norm[:, np.newaxis]
+
                     #action = np.random.choice(num_actions, p=np.squeeze(q_norm))
                 else:
                     action = np.random.choice(num_actions)
