@@ -18,13 +18,7 @@ def collect(env,
           session,
           stopping_criterion=None,
           replay_buffer_size=1000000,
-          batch_size=32,
-          gamma=0.99,
-          learning_starts=50000,
-          learning_freq=4,
-          frame_history_len=4,
-          target_update_freq=10000,
-          grad_norm_clipping=10):
+          frame_history_len=4):
 
     assert type(env.observation_space) == gym.spaces.Box
     assert type(env.action_space) == gym.spaces.Discrete
@@ -87,6 +81,7 @@ def collect(env,
         if is_greedy:
             recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
             q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+            # TODO: find an appropriate soft_Q_alpha for the sampling
             q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
             dist = q_values / np.sum(q_values)
             action = np.random.choice(num_actions, p=np.squeeze(dist))
@@ -120,14 +115,11 @@ def collect(env,
                 print("episode length %d" % episode_length[-1])
             sys.stdout.flush()
 
-            if FLAGS.use_env_reward:
+            with open(log_file, 'a') as f:
+                print(t, mean_episode_reward, best_mean_episode_reward, file=f)
 
-                with open(log_file, 'a') as f:
-                    print(t, mean_episode_reward, best_mean_episode_reward, file=f)
-        if t!=0 and t % (30*LOG_EVERY_N_STEPS) == 0:
-            print('save pickle!')
-            FLAGS.Q_expert_path = './link_data/' + 'softQ_expert_' + str(t).zfill(7) + '.p'
-            with open(FLAGS.Q_expert_path, 'w') as f:
-                p.dump(replay_buffer, f, protocol=-1)
-
-
+    # save the replay buffer
+    print('save pickle!')
+    FLAGS.Q_expert_path = './link_data/' + 'softQ_expert.p'
+    with open(FLAGS.Q_expert_path, 'w') as f:
+        p.dump(replay_buffer, f, protocol=-1)
