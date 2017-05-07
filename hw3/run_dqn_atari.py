@@ -32,6 +32,10 @@ tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
                             """Do we want to add Q learning sample to the replay buffer""")
 tf.app.flags.DEFINE_boolean('learning_stage', True,
                             """Do we want to learn or just collection""")
+tf.app.flags.DEFINE_string('ckpt_path', '/data/hxu/cs294-112/hw3/link_data/',
+                           """where did we save the checkpoints""")
+tf.app.flags.DEFINE_float('temperature_tau', 1.0,
+                            """the temperature for randomness""")
 
 # evaluation related
 tf.app.flags.DEFINE_integer('eval_freq', -1,
@@ -72,8 +76,10 @@ tf.app.flags.DEFINE_integer('frame_history_len', 4,
 # Other hyper parameters
 tf.app.flags.DEFINE_boolean('save_model', True,
                             """save the model of Q""")
+tf.app.flags.DEFINE_boolean('load_model', True,
+                            """load the model of Q""")
 tf.app.flags.DEFINE_integer('learning_starts', 50000,
-                            """learning_starts point, 50000for Q learning, 0 for demonstration""")
+                            """learning_starts point, 50000 for Q learning, 0 for demonstration""")
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -143,16 +149,14 @@ def atari_collect(env,
     Q_expert.collect(
         env,
         q_func=atari_model,
-        optimizer_spec=optimizer,
         session=session,
-        exploration=exploration_schedule,
         stopping_criterion=stopping_criterion,
-        replay_buffer_size=1000000,
+        replay_buffer_size=300000,
         batch_size=32,
         gamma=0.99,
         learning_starts=FLAGS.learning_starts,
         learning_freq=4,
-        frame_history_len=int(sys.argv[2]),
+        frame_history_len=FLAGS.frame_history_len,
         target_update_freq=10000,
         grad_norm_clipping=10
     )
@@ -223,24 +227,28 @@ def default_parameters(**kwargs):
     )
 
 def main(_):
-    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 
     benchmark = gym.benchmark_spec('Atari40M')
     # Change the index to select a different game.
     task = benchmark.tasks[2]
+    default_parameters(num_timesteps=task.max_timesteps)
+    use_this_config()
+    #collect_demonstration()
+    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
+
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     env = get_env(task, seed)
     session = get_session()
 
-    default_parameters(num_timesteps=task.max_timesteps)
-    use_this_config()
+
+
 
     if FLAGS.learning_stage:
         atari_learn(env, session, num_timesteps=task.max_timesteps)
     else:
-        atari_collect(env, session, num_timesteps=task.max_timesteps)
+        atari_collect(env, session, num_timesteps=task.max_timesteps)#
 
 if __name__ == "__main__":
     tf.app.run()

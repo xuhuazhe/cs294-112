@@ -247,7 +247,7 @@ def learn(env,
     last_obs = env.reset()
     LOG_EVERY_N_STEPS = 10000
 
-    log_file = sys.argv[1]
+    log_file = FLAGS.method_name+'.log'
     saver = tf.train.Saver()
 
     if FLAGS.demo_mode == 'hdf':
@@ -317,7 +317,25 @@ def learn(env,
                 replay_buffer.store_effect(idx, action, reward, done)
                 last_obs = obs
             else:
-                raise NotImplementedError("soft Q sample")
+                idx = replay_buffer.store_frame(last_obs)
+                eps = FLAGS.tiny_explore #TODO: make sure we can reuse tiny explore
+                is_greedy = np.random.rand(1) >= eps
+                if is_greedy and model_initialized:
+                    recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+                    q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                    q_values = np.exp(q_values / FLAGS.soft_Q_alpha)
+                    dist = q_values / np.sum(q_values)
+                    action = np.random.choice(num_actions, p=np.squeeze(dist))
+                    #q_norm = np.linalg.norm(q_values, axis=1)
+                    #q_norm = q_values/q_norm[:, np.newaxis]
+                    #action = np.random.choice(num_actions, p=np.squeeze(q_norm))
+                else:
+                    action = np.random.choice(num_actions)
+                obs, reward, done, info = env.step(action)
+                if done:
+                    obs = env.reset()
+                replay_buffer.store_effect(idx, action, reward, done)
+                last_obs = obs
 
 
         #####

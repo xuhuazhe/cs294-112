@@ -29,7 +29,7 @@ def hard_Q_on_demonstration():
     FLAGS.hard_Q_loss_weight = 1
     # optionally set: lr_schedule, exploration_schedule
 
-use_this_config = hard_Q_on_demonstration
+
 
 def supervised_learning():
     tag = inspect.stack()[0][3]
@@ -39,3 +39,20 @@ def supervised_learning():
     
     FLAGS.core_num = '1'
     FLAGS.supervise_cross_entropy_loss_weight = 1
+
+def collect_demonstration():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    common_setting()
+
+    FLAGS.core_num = '5'
+    FLAGS.learning_starts = 0
+    FLAGS.learning_stage = False
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/data/'
+    FLAGS.use_env_reward = True
+    FLAGS.tiny_explore = 0.01
+
+
+
+use_this_config = collect_demonstration
