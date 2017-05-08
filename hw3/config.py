@@ -40,6 +40,15 @@ def supervised_learning():
     FLAGS.core_num = '1'
     FLAGS.supervise_cross_entropy_loss_weight = 1
 
+def soft_Q_on_demonstration():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    common_setting()
+
+    FLAGS.core_num = '6'
+    FLAGS.soft_Q_loss_weight = 1
+
 def collect_demonstration():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
@@ -55,4 +64,4 @@ def collect_demonstration():
 
 
 
-use_this_config = collect_demonstration
+use_this_config = soft_Q_on_demonstration

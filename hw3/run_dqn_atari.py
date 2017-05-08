@@ -236,14 +236,10 @@ def main(_):
     #collect_demonstration()
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 
-
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     env = get_env(task, seed)
     session = get_session()
-
-
-
 
     if FLAGS.learning_stage:
         atari_learn(env, session, num_timesteps=task.max_timesteps)

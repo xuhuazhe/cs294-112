@@ -120,10 +120,8 @@ def collect(env,
                 print("episode length %d" % episode_length[-1])
             sys.stdout.flush()
 
-            if FLAGS.use_env_reward:
-
-                with open(log_file, 'a') as f:
-                    print(t, mean_episode_reward, best_mean_episode_reward, file=f)
+            with open(log_file, 'a') as f:
+                print(t, mean_episode_reward, best_mean_episode_reward, file=f)
         if t!=0 and t % (30*LOG_EVERY_N_STEPS) == 0:
             print('save pickle!')
             FLAGS.Q_expert_path = './link_data/' + 'softQ_expert_' + str(t).zfill(7) + '.p'
