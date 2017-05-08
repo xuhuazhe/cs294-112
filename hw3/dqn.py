@@ -151,7 +151,8 @@ def learn(env,
     # visualize two set of vars
     for setname, set in [("rapid_net", q_func_vars), ("target_net", target_q_func_vars)]:
         for v in set:
-            tf.histogram_summary(setname + "/" + v.op.name + "_weights", v)
+            if v is not float('nan'):
+                tf.histogram_summary(setname + "/" + v.op.name + "_weights", v)
     # visualize all activations
     end_points = tf.get_collection("activation_collection")
     activation_summaries(end_points)
