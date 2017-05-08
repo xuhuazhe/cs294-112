@@ -59,7 +59,6 @@ def collect_demonstration():
     FLAGS.learning_starts = 0
     FLAGS.learning_stage = False
     FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/data/'
-    FLAGS.use_env_reward = True
     FLAGS.tiny_explore = 0.01
 
 

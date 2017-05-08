@@ -34,8 +34,6 @@ tf.app.flags.DEFINE_boolean('learning_stage', True,
                             """Do we want to learn or just collection""")
 tf.app.flags.DEFINE_string('ckpt_path', '/data/hxu/cs294-112/hw3/link_data/',
                            """where did we save the checkpoints""")
-tf.app.flags.DEFINE_float('temperature_tau', 1.0,
-                            """the temperature for randomness""")
 
 # evaluation related
 tf.app.flags.DEFINE_integer('eval_freq', -1,
@@ -76,8 +74,6 @@ tf.app.flags.DEFINE_integer('frame_history_len', 4,
 # Other hyper parameters
 tf.app.flags.DEFINE_boolean('save_model', True,
                             """save the model of Q""")
-tf.app.flags.DEFINE_boolean('load_model', True,
-                            """load the model of Q""")
 tf.app.flags.DEFINE_integer('learning_starts', 50000,
                             """learning_starts point, 50000 for Q learning, 0 for demonstration""")
 
@@ -136,30 +132,21 @@ def atari_learn(env,
 def atari_collect(env,
                   session,
                   num_timesteps):
-    # This is just a rough estimate
-    # TODO: replace 4.0 by the framehistory
-    num_iterations = float(num_timesteps) / 4.0
+    num_steps = 300000
 
     # TODO: t input is not used here
     def stopping_criterion(env, t):
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
-        return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps
+        return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_steps*4
 
     Q_expert.collect(
         env,
         q_func=atari_model,
         session=session,
         stopping_criterion=stopping_criterion,
-        replay_buffer_size=300000,
-        batch_size=32,
-        gamma=0.99,
-        learning_starts=FLAGS.learning_starts,
-        learning_freq=4,
-        frame_history_len=FLAGS.frame_history_len,
-        target_update_freq=10000,
-        grad_norm_clipping=10
-    )
+        replay_buffer_size=num_steps,
+        frame_history_len=FLAGS.frame_history_len)
     env.close()
 
 
@@ -244,7 +231,7 @@ def main(_):
     if FLAGS.learning_stage:
         atari_learn(env, session, num_timesteps=task.max_timesteps)
     else:
-        atari_collect(env, session, num_timesteps=task.max_timesteps)#
+        atari_collect(env, session, num_timesteps=task.max_timesteps)
 
 if __name__ == "__main__":
     tf.app.run()
