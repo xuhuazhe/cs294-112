@@ -60,6 +60,7 @@ def collect_demonstration():
     FLAGS.learning_stage = False
     FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/data/'
     FLAGS.tiny_explore = 0.01
+    #FLAGS.summary_interval = 10
 
 
 

@@ -10,6 +10,7 @@ import tensorflow.contrib.losses as losses
 from collections import namedtuple
 from dqn_utils import *
 import os
+import math
 
 FLAGS = tf.app.flags.FLAGS
 OptimizerSpec = namedtuple("OptimizerSpec", ["constructor", "kwargs", "lr_schedule"])
@@ -151,8 +152,7 @@ def learn(env,
     # visualize two set of vars
     for setname, set in [("rapid_net", q_func_vars), ("target_net", target_q_func_vars)]:
         for v in set:
-            if v is not float('nan'):
-                tf.histogram_summary(setname + "/" + v.op.name + "_weights", v)
+            tf.histogram_summary(setname + "/" + v.op.name + "_weights", v)
     # visualize all activations
     end_points = tf.get_collection("activation_collection")
     activation_summaries(end_points)
@@ -196,7 +196,9 @@ def learn(env,
         # TODO: relative weight between entropy and reward has to be included
         alpha = FLAGS.soft_Q_alpha
         # TODO: might be numerical unstable if using this vanilla implementation
-        V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * target_q), 1))
+        q_max = tf.reduce_max(target_q, 1, keep_dims=True)
+        V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * (target_q-q_max)), 1)) \
+            + tf.squeeze(q_max)
         q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V
         max_ent_loss = tf.nn.l2_loss(q_act - q_soft_ahead) * 2 / batch_size
         tf.scalar_summary("loss/soft_Q", max_ent_loss)
@@ -209,7 +211,7 @@ def learn(env,
         tf.scalar_summary("loss/supervise_hinge_DQfD", hinge_loss)
         total_error += FLAGS.supervise_hinge_DQfD_loss_weight * hinge_loss
 
-    if FLAGS.supervise_hinge_standard_loss_weight:
+    if FLAGS.supervise_hinge_standard_loss_weight > 0:
         crammer = losses.hinge_loss(q, tf.one_hot(act_t_ph, num_actions))
         crammer = tf.reduce_mean(crammer)
         tf.scalar_summary("loss/supervise_hinge_standard", crammer)
