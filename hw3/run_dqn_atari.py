@@ -58,6 +58,8 @@ tf.app.flags.DEFINE_float('supervise_hinge_DQfD_loss_weight', -1.0,
                             """weight for supervised learning""")
 tf.app.flags.DEFINE_float('supervise_hinge_standard_loss_weight', -1.0,
                             """weight for supervised learning""")
+tf.app.flags.DEFINE_float('policy_gradient_soft_1_step', -1.0,
+                            """""")
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',

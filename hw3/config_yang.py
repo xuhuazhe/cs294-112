@@ -89,4 +89,13 @@ def yang_DQfD_full():
     FLAGS.l2_regularization_loss_weight = 1.0e-5
     FLAGS.core_num = '3'
 
-use_this_config = yang_DQfD_full
+def yang_policy_gradient_soft_1_step():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.policy_gradient_soft_1_step = 1.0
+    FLAGS.core_num = '0'
+
+use_this_config = yang_policy_gradient_soft_1_step
