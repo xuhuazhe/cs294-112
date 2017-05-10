@@ -192,14 +192,16 @@ def learn(env,
         tf.scalar_summary("loss/l2_regularization", regularization_loss)
         total_error += FLAGS.l2_regularization_loss_weight * regularization_loss
 
-    if FLAGS.soft_Q_loss_weight > 0:
-        # TODO: relative weight between entropy and reward has to be included
-        alpha = FLAGS.soft_Q_alpha
-        # TODO: might be numerical unstable if using this vanilla implementation
+    # TODO: relative weight between entropy and reward has to be included
+    alpha = FLAGS.soft_Q_alpha
+    def Q2V(target_q, alpha):
         q_max = tf.reduce_max(target_q, 1, keep_dims=True)
-        V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * (target_q-q_max)), 1)) \
+        V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * (target_q - q_max)), 1)) \
             + tf.squeeze(q_max)
-        q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V
+        return V
+    V = Q2V(target_q, alpha)
+    q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V
+    if FLAGS.soft_Q_loss_weight > 0:
         max_ent_loss = tf.nn.l2_loss(q_act - q_soft_ahead) * 2 / batch_size
         tf.scalar_summary("loss/soft_Q", max_ent_loss)
         total_error += FLAGS.soft_Q_loss_weight * max_ent_loss
@@ -216,6 +218,19 @@ def learn(env,
         crammer = tf.reduce_mean(crammer)
         tf.scalar_summary("loss/supervise_hinge_standard", crammer)
         total_error += FLAGS.supervise_hinge_standard_loss_weight * crammer
+
+    if FLAGS.policy_gradient_soft_1_step > 0:
+        Vrapid = Q2V(q, alpha)
+        node_grad = q_act - Vrapid
+        node_no_grad = q_act - q_soft_ahead
+        node_no_grad = tf.stop_gradient(node_no_grad)
+        pg1_output = tf.reduce_mean(node_grad * node_no_grad)
+        tf.scalar_summary("loss/policy_gradient_soft_1_step", pg1_output)
+        # surrogate loss, not used, for vis only
+        pg1_surrogate = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead))
+        tf.scalar_summary("loss/policy_gradient_soft_1_step_surrogate", pg1_surrogate)
+
+        total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
 
     tf.scalar_summary("loss/total", total_error)
 
@@ -253,7 +268,7 @@ def learn(env,
     last_obs = env.reset()
     LOG_EVERY_N_STEPS = 10000
 
-    log_file = FLAGS.method_name+'.log'
+    log_file = os.path.join(model_save_path, "log.txt")
     saver = tf.train.Saver()
 
     if FLAGS.demo_mode == 'hdf':
