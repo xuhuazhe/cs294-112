@@ -230,7 +230,8 @@ def learn(env,
         pg1_surrogate = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead))
         tf.scalar_summary("loss/policy_gradient_soft_1_step_surrogate", pg1_surrogate)
 
-        total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
+        #total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
+        total_error += FLAGS.policy_gradient_soft_1_step * pg1_surrogate
 
     tf.scalar_summary("loss/total", total_error)
 
