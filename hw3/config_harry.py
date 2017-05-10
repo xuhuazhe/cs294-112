@@ -62,6 +62,4 @@ def collect_demonstration():
     FLAGS.tiny_explore = 0.01
     #FLAGS.summary_interval = 10
 
-
-
 use_this_config = soft_Q_on_demonstration
