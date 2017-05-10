@@ -89,3 +89,5 @@ ENV/
 .ropeproject
 
 .idea/
+hw3/link_data
+hw3/config.py
