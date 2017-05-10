@@ -60,6 +60,19 @@ def collect_demonstration():
     FLAGS.learning_stage = False
     FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/data/'
     FLAGS.tiny_explore = 0.01
+    FLAGS.soft_Q_alpha = 0.01
     #FLAGS.summary_interval = 10
 
+
+def DQfD():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    common_setting()
+
+    FLAGS.core_num = '0'
+    FLAGS.learning_starts = 0
+
+
 use_this_config = soft_Q_on_demonstration
+
