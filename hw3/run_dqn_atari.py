@@ -13,7 +13,7 @@ import dqn
 from dqn_utils import *
 from atari_wrappers import *
 import sys
-from config import *
+from config_harry import *
 import Q_expert
 
 FLAGS = tf.app.flags.FLAGS

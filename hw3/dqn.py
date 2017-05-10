@@ -259,7 +259,7 @@ def learn(env,
     if FLAGS.demo_mode == 'hdf':
         replay_buffer = get_hdf_demo(FLAGS.demo_file_path, replay_buffer)
     elif FLAGS.demo_mode == 'replay':
-        load_replay_pickle(FLAGS.demo_file_path)
+        replay_buffer = load_replay_pickle(FLAGS.demo_file_path)
     elif FLAGS.demo_mode == 'no_demo':
         pass
     else:
