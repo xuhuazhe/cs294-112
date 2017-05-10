@@ -76,18 +76,19 @@ def collect(env,
             break
 
         idx = replay_buffer.store_frame(last_obs)
-        eps = 0 #FLAGS.tiny_explore
+        eps = FLAGS.tiny_explore
         is_greedy = np.random.rand(1) >= eps
         if is_greedy:
             recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
             q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
             # TODO: find an appropriate soft_Q_alpha for the sampling
-            q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
-            dist = q_values / np.sum(q_values)
-            action = np.random.choice(num_actions, p=np.squeeze(dist))
-            #action = np.argmax(np.squeeze(q_values))
+            #q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
+            #dist = q_values / np.sum(q_values)
+            #action = np.random.choice(num_actions, p=np.squeeze(dist))
+            action = np.argmax(np.squeeze(q_values))
         else:
-            action = np.random.choice(num_actions)
+            #action = np.random.choice(num_actions)
+            action = np.argsort(np.squeeze(q_values))[-2]
 
         obs, reward, done, info = env.step(action)
         if done:
@@ -105,14 +106,14 @@ def collect(env,
             best_mean_episode_reward = max(best_mean_episode_reward, mean_episode_reward)
 
         if t % LOG_EVERY_N_STEPS == 0:
-
             print('printing log!!!___________________________________________')
+            print('Q_Values', q_values)
             print('time_step %d' % t)
             print("mean reward (100 episodes) %f" % mean_episode_reward)
             print("best mean reward %f" % best_mean_episode_reward)
             print("episodes %d" % len(episode_rewards))
             if episode_length != []:
-                print("episode length %d" % episode_length[-1])
+                print("episode length ", episode_length)
             sys.stdout.flush()
 
             with open(log_file, 'a') as f:
@@ -121,6 +122,6 @@ def collect(env,
 
     # save the replay buffer
     print('save pickle!')
-    FLAGS.Q_expert_path = './link_data/' + 'softQ_expert.p'
+    FLAGS.Q_expert_path = './link_data/' + 'hardQ_expert.p'
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
