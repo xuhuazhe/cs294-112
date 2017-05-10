@@ -63,6 +63,7 @@ def collect_demonstration():
     FLAGS.soft_Q_alpha = 0.01
     #FLAGS.summary_interval = 10
 
+
 def DQfD():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
@@ -73,5 +74,5 @@ def DQfD():
     FLAGS.learning_starts = 0
 
 
+use_this_config = soft_Q_on_demonstration
 
-use_this_config = collect_demonstration
