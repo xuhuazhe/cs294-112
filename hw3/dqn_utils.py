@@ -404,6 +404,8 @@ def load_replay_pickle(pickle_dir, step_num):
     replay_buffer.action = replay_buffer.action[0:step_num]
     replay_buffer.reward = replay_buffer.reward[0:step_num]
     replay_buffer.done = replay_buffer.done[0:step_num]
+    replay_buffer.size = step_num
+    replay_buffer.num_in_buffer = step_num
     assert(step_num <= 300000)
     print('loaded! truncate at %d' % step_num)
     return replay_buffer
@@ -438,6 +440,16 @@ def eval_policy(env, q, obs_t_ph,
 
     return reward_calc, frame_counter
 
+def eps_scheduler(t, good_step, m_bad, m_good):
+    if t< good_step:
+        should_save = True
+        return 0, should_save
+    elif (t-good_step) % (m_good+m_bad) <= m_bad:
+        should_save = True
+        return 1, should_save
+    elif (t-good_step) % (m_good+m_bad) > m_bad:
+        should_save = False
+        return 0, should_save
 
 def _activation_summary(x):
   print(x)
