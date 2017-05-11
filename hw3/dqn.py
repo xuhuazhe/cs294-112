@@ -281,13 +281,15 @@ def learn(env,
     if FLAGS.demo_mode == 'hdf':
         replay_buffer = get_hdf_demo(FLAGS.demo_file_path, replay_buffer)
     elif FLAGS.demo_mode == 'replay':
-        replay_buffer = load_replay_pickle(FLAGS.demo_file_path)
+        replay_buffer = load_replay_pickle(FLAGS.demo_file_path, FLAGS.dataset_size)
     elif FLAGS.demo_mode == 'no_demo':
         pass
     else:
         raise ValueError("invalid FLAGS.demo_mode = %s" % FLAGS.demo_mode)
-
+    #print(replay_buffer.obs.shape, replay_buffer.reward.shape, replay_buffer.action.shape, replay_buffer.done.shape)
     for t in itertools.count():
+        #if 1:
+        #    break
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
             break

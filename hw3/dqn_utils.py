@@ -396,9 +396,16 @@ def get_hdf_demo(filename, replay_buffer):
     return replay_buffer
 
 
-def load_replay_pickle(pickle_dir):
+def load_replay_pickle(pickle_dir, step_num):
+    print('loading replay buffer...')
     with open(pickle_dir, 'r') as f:
         replay_buffer = pickle.load(f)
+    replay_buffer.obs = replay_buffer.obs[0:step_num]
+    replay_buffer.action = replay_buffer.action[0:step_num]
+    replay_buffer.reward = replay_buffer.reward[0:step_num]
+    replay_buffer.done = replay_buffer.done[0:step_num]
+    assert(step_num <= 300000)
+    print('loaded! truncate at %d' % step_num)
     return replay_buffer
 
 
