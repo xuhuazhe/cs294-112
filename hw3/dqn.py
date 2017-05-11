@@ -222,12 +222,18 @@ def learn(env,
     if FLAGS.policy_gradient_soft_1_step > 0:
         Vrapid = Q2V(q, alpha)
         node_grad = q_act - Vrapid
-        node_no_grad = q_act - q_soft_ahead
-        node_no_grad = tf.stop_gradient(node_no_grad)
+        node_no_grad = tf.stop_gradient(q_act - q_soft_ahead)
         pg1_output = tf.reduce_mean(node_grad * node_no_grad)
         tf.scalar_summary("loss/policy_gradient_soft_1_step", pg1_output)
         # surrogate loss, not used, for vis only
         pg1_surrogate = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead))
+
+        '''
+        # stop gradient implementation of pg1_surrogate
+        node_grad = q_act - Vrapid
+        node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead)
+        pg1_surrogate = tf.reduce_mean(node_grad * node_no_grad)
+        '''
         tf.scalar_summary("loss/policy_gradient_soft_1_step_surrogate", pg1_surrogate)
 
         #total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
@@ -340,7 +346,9 @@ def learn(env,
                 last_obs = obs
             else:
                 idx = replay_buffer.store_frame(last_obs)
-                eps = FLAGS.tiny_explore #TODO: make sure we can reuse tiny explore
+                #eps = FLAGS.tiny_explore #TODO: make sure we can reuse tiny explore
+                eps = exploration.value(t)
+
                 is_greedy = np.random.rand(1) >= eps
                 if is_greedy and model_initialized:
                     recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
