@@ -10,6 +10,8 @@ from atari_wrappers import *
 from collections import deque
 import h5py
 
+FLAGS = tf.app.flags.FLAGS
+
 def huber_loss(x, delta=1.0):
     # https://en.wikipedia.org/wiki/Huber_loss
     return tf.select(
@@ -229,7 +231,7 @@ class ReplayBuffer(object):
         return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask
 
 
-    def sample(self, batch_size):
+    def sample(self, batch_size, name='rl'):
         """Sample `batch_size` different transitions.
 
         i-th sample transition is the following:
@@ -244,7 +246,6 @@ class ReplayBuffer(object):
         ----------
         batch_size: int
             How many transitions to sample.
-
         Returns
         -------
         obs_batch: np.array
@@ -262,9 +263,24 @@ class ReplayBuffer(object):
         done_mask: np.array
             Array of shape (batch_size,) and dtype np.float32
         """
+        need_hinge = 1
         assert self.can_sample(batch_size)
-        idxes = sample_n_unique(lambda: random.randint(0, self.num_in_buffer - 2), batch_size)
-        return self._encode_sample(idxes)
+        if name == 'rl':
+            idxes = sample_n_unique(lambda: random.randint(0, self.num_in_buffer - 2), batch_size)
+        elif name == 'supervised':
+            idxes = sample_n_unique(lambda: random.randint(0, int(self.num_in_buffer*(1-FLAGS.bad_portion)) - 2), batch_size)
+        elif name == 'dqfd':
+            p = FLAGS.bad_portion
+            is_bad = np.random.rand(1) <= p
+            if is_bad:
+                idxes = sample_n_unique(
+                    lambda: random.randint(int(self.num_in_buffer * (1 - FLAGS.bad_portion)) - 1,
+                                           self.num_in_buffer - 2), batch_size)
+                need_hinge = 0
+            else:
+                idxes = sample_n_unique(
+                    lambda: random.randint(0, int(self.num_in_buffer * (1 - FLAGS.bad_portion)) - 2), batch_size)
+        return [self._encode_sample(idxes), need_hinge]
 
     def encode_recent_observation(self):
         """Return the most recent `frame_history_len` frames.
@@ -396,16 +412,33 @@ def get_hdf_demo(filename, replay_buffer):
     return replay_buffer
 
 
-def load_replay_pickle(pickle_dir, step_num):
+def load_replay_pickle(pickle_dir, step_num, bad_dir=''):
+    bad_dir = FLAGS.bad_dir
     print('loading replay buffer...')
-    with open(pickle_dir, 'r') as f:
-        replay_buffer = pickle.load(f)
-    replay_buffer.obs = replay_buffer.obs[0:step_num]
-    replay_buffer.action = replay_buffer.action[0:step_num]
-    replay_buffer.reward = replay_buffer.reward[0:step_num]
-    replay_buffer.done = replay_buffer.done[0:step_num]
-    replay_buffer.size = step_num
-    replay_buffer.num_in_buffer = step_num
+    if FLAGS.bad_portion > 0:
+        p = (1-FLAGS.bad_portion)
+        with open(pickle_dir, 'r') as f:
+            replay_buffer = pickle.load(f)
+        with open(bad_dir, 'r') as f:
+            replay_buffer_bad = pickle.load(f)
+        size = replay_buffer.size
+        replay_buffer.obs = np.concatenate((replay_buffer.obs[0:int(size*p)],
+                            replay_buffer_bad.obs[0:size-int(size*p)]))
+        replay_buffer.action = np.concatenate((replay_buffer.action[0:int(size*p)],
+                            replay_buffer_bad.action[0:size - int(size * p)]))
+        replay_buffer.reward = np.concatenate((replay_buffer.reward[0:int(size*p)],
+                            replay_buffer_bad.reward[0:size - int(size * p)]))
+        replay_buffer.done = np.concatenate((replay_buffer.done[0:int(size*p)],
+                            replay_buffer_bad.done[0:size - int(size * p)]))
+    else:
+        with open(pickle_dir, 'r') as f:
+            replay_buffer = pickle.load(f)
+        replay_buffer.obs = replay_buffer.obs[0:step_num]
+        replay_buffer.action = replay_buffer.action[0:step_num]
+        replay_buffer.reward = replay_buffer.reward[0:step_num]
+        replay_buffer.done = replay_buffer.done[0:step_num]
+        replay_buffer.size = step_num
+        replay_buffer.num_in_buffer = step_num
     assert(step_num <= 300000)
     print('loaded! truncate at %d' % step_num)
     return replay_buffer
@@ -441,15 +474,18 @@ def eval_policy(env, q, obs_t_ph,
     return reward_calc, frame_counter
 
 def eps_scheduler(t, good_step, m_bad, m_good):
-    if t< good_step:
-        should_save = True
-        return 0, should_save
-    elif (t-good_step) % (m_good+m_bad) <= m_bad:
-        should_save = True
-        return 1, should_save
-    elif (t-good_step) % (m_good+m_bad) > m_bad:
-        should_save = False
-        return 0, should_save
+    if m_bad > 0:
+        if t< good_step:
+            should_save = True
+            return 0, should_save
+        elif (t-good_step) % (m_good+m_bad) <= m_good:
+            should_save = False
+            return 0, should_save
+        elif (t-good_step) % (m_good+m_bad) > m_good:
+            should_save = True
+            return 1, should_save
+    else:
+        return FLAGS.tiny_explore, True
 
 def _activation_summary(x):
   print(x)

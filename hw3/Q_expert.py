@@ -58,8 +58,12 @@ def collect(env,
     log_file = FLAGS.method_name+'.log'
     saver = tf.train.Saver()
 
-    replay_buffer = ReplayBuffer(replay_buffer_size, frame_history_len)
-
+    if FLAGS.m_bad > 0:
+        replay_buffer_obs = ReplayBuffer(replay_buffer_size, frame_history_len)
+        replay_buffer = ReplayBuffer(int(replay_buffer_size*(np.float(FLAGS.m_bad)/(FLAGS.m_bad+FLAGS.m_good))),
+                                     frame_history_len)
+    else:
+        replay_buffer = ReplayBuffer(replay_buffer_size , frame_history_len)
     ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_path)
     if ckpt and ckpt.model_checkpoint_path:
         ckpt_path = ckpt.model_checkpoint_path
@@ -74,12 +78,22 @@ def collect(env,
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
             break
+        eps, should_save = eps_scheduler(t, FLAGS.good_step, FLAGS.m_bad, FLAGS.m_good)
+        if FLAGS.m_bad > 0:
+            idx_obs = replay_buffer_obs.store_frame(last_obs)
+            if should_save:
+                idx = replay_buffer.store_frame(last_obs)
+        else:
+            idx = replay_buffer.store_frame(last_obs)
+        #eps = FLAGS.tiny_explore
 
-        idx = replay_buffer.store_frame(last_obs)
-        eps = FLAGS.tiny_explore
+
         is_greedy = np.random.rand(1) >= eps
         if is_greedy:
-            recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+            if FLAGS.m_bad > 0:
+                recent_obs = replay_buffer_obs.encode_recent_observation()[np.newaxis, ...]
+            else:
+                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
             q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
             # TODO: find an appropriate soft_Q_alpha for the sampling
             #q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
@@ -87,14 +101,19 @@ def collect(env,
             #action = np.random.choice(num_actions, p=np.squeeze(dist))
             action = np.argmax(np.squeeze(q_values))
         else:
-            #action = np.random.choice(num_actions)
-            action = np.argsort(np.squeeze(q_values))[-2]
+            action = np.random.choice(num_actions)
+            #q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+            #action = np.argsort(np.squeeze(q_values))[-2]
 
         obs, reward, done, info = env.step(action)
         if done:
             obs = env.reset()
-
-        replay_buffer.store_effect(idx, action, reward, done)
+        if FLAGS.m_bad > 0:
+            replay_buffer_obs.store_effect(idx_obs, action, reward, done)
+            if should_save:
+                replay_buffer.store_effect(idx, action, reward, done)
+        else:
+            replay_buffer.store_effect(idx, action, reward, done)
         last_obs = obs
 
         ### 4. Log progress
@@ -122,6 +141,6 @@ def collect(env,
 
     # save the replay buffer
     print('save pickle!')
-    FLAGS.Q_expert_path = './link_data/' + 'hardQ_expert.p'
+    FLAGS.Q_expert_path = './link_data/' + 'bad_demo.p'
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
