@@ -101,9 +101,11 @@ def collect(env,
             #action = np.random.choice(num_actions, p=np.squeeze(dist))
             action = np.argmax(np.squeeze(q_values))
         else:
-            action = np.random.choice(num_actions)
-            #q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-            #action = np.argsort(np.squeeze(q_values))[-2]
+            if FLAGS.m_bad > 0:
+                action = np.random.choice(num_actions)
+            else:
+                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                action = np.argsort(np.squeeze(q_values))[-2]
 
         obs, reward, done, info = env.step(action)
         if done:
