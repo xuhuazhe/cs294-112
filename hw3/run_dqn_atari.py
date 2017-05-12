@@ -36,6 +36,17 @@ tf.app.flags.DEFINE_string('ckpt_path', '/data/hxu/cs294-112/hw3/link_data/',
                            """where did we save the checkpoints""")
 tf.app.flags.DEFINE_integer('dataset_size',300000,
                             """dataset size to try for all method.""")
+tf.app.flags.DEFINE_float('bad_portion', -1.0,
+                            """bad portion for mediocre data.""") # 0.2, 0.8 inverse
+tf.app.flags.DEFINE_integer('good_step', 0,
+                            """starting good steps """)
+tf.app.flags.DEFINE_integer('m_bad', -1,
+                            "bad steps every interval")
+tf.app.flags.DEFINE_integer('m_good', -1,
+                            "good steps every_interval")
+tf.app.flags.DEFINE_string('bad_dir', '/data/hxu/cs294-112/hw3/link_data/bad_demo.p',
+                           """dir for bad demo""")
+
 
 # evaluation related
 tf.app.flags.DEFINE_integer('eval_freq', -1,
@@ -80,7 +91,10 @@ tf.app.flags.DEFINE_boolean('save_model', True,
                             """save the model of Q""")
 tf.app.flags.DEFINE_integer('learning_starts', 50000,
                             """learning_starts point, 50000 for Q learning, 0 for demonstration""")
-
+tf.app.flags.DEFINE_string('config', 'test_test()',
+                           """run config name""")
+tf.app.flags.DEFINE_string('group_name', 'rl',
+                           """which group does it belong to""")
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     with slim.arg_scope([layers.convolution2d, layers.fully_connected], outputs_collections="activation_collection"):
@@ -136,7 +150,7 @@ def atari_learn(env,
 def atari_collect(env,
                   session,
                   num_timesteps):
-    num_steps = 300000
+    num_steps = 600000
 
     # TODO: t input is not used here
     def stopping_criterion(env, t):
@@ -223,7 +237,8 @@ def main(_):
     # Change the index to select a different game.
     task = benchmark.tasks[2]
     default_parameters(num_timesteps=task.max_timesteps)
-    use_this_config()
+    #use_this_config = sys.argv[1]
+    eval(FLAGS.config)
     #collect_demonstration()
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 

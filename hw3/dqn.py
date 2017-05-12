@@ -111,6 +111,8 @@ def learn(env,
     # next state Q-value (i.e. target is just rew_t_ph, not rew_t_ph + gamma * q_tp1)
     done_mask_ph = tf.placeholder(tf.float32, [None])
 
+    need_hinge_ph = tf.placeholder(tf.float32, shape=())
+
     # visualize inputs
     to_vis_format = lambda batch: tf.expand_dims(tf.transpose(batch[0, :, :, :], perm=[2, 0, 1]), 3)
     tf.image_summary("observation_now", to_vis_format(obs_t_ph), max_images=4)
@@ -211,7 +213,7 @@ def learn(env,
         large_margin = tf.reduce_max(loss_l + q, 1)
         hinge_loss = tf.reduce_mean(large_margin - q_act)
         tf.scalar_summary("loss/supervise_hinge_DQfD", hinge_loss)
-        total_error += FLAGS.supervise_hinge_DQfD_loss_weight * hinge_loss
+        total_error += FLAGS.supervise_hinge_DQfD_loss_weight * hinge_loss * need_hinge_ph
 
     if FLAGS.supervise_hinge_standard_loss_weight > 0:
         crammer = losses.hinge_loss(q, tf.one_hot(act_t_ph, num_actions))
@@ -286,10 +288,8 @@ def learn(env,
         pass
     else:
         raise ValueError("invalid FLAGS.demo_mode = %s" % FLAGS.demo_mode)
-    #print(replay_buffer.obs.shape, replay_buffer.reward.shape, replay_buffer.action.shape, replay_buffer.done.shape)
+    print(replay_buffer.obs.shape, replay_buffer.reward.shape, replay_buffer.action.shape, replay_buffer.done.shape)
     for t in itertools.count():
-        #if 1:
-        #    break
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
             break
@@ -426,9 +426,11 @@ def learn(env,
                 save_path = saver.save(session,
                                        os.path.join(model_save_path, "model_%s.ckpt" % str(t)))
                 print('saved at: ', save_path)
-            obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
-                replay_buffer.sample(batch_size)
-            # (b)
+
+            package, need_hinge = \
+                replay_buffer.sample(batch_size, FLAGS.group_name)
+            obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = package
+                # (b)
             if not model_initialized:
                 initialize_interdependent_variables(session, tf.all_variables(), {
                     obs_t_ph: obs_t_batch,
@@ -443,6 +445,7 @@ def learn(env,
                 rew_t_ph: rew_t_batch,
                 obs_tp1_ph: obs_tp1_batch,
                 done_mask_ph: done_mask,
+                need_hinge_ph: need_hinge,
                 learning_rate: optimizer_spec.lr_schedule.value(t)
             }
 
