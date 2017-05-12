@@ -137,7 +137,7 @@ def yang_soft_Q_in_env():
     FLAGS.method_name = tag
     yang_common_setting()
 
-    FLAGS.core_num = '5'
+    FLAGS.core_num = '0'
 
     # Q learning specific
     FLAGS.eval_freq = -1
@@ -145,6 +145,167 @@ def yang_soft_Q_in_env():
     FLAGS.soft_Q_loss_weight = 1.0
     FLAGS.collect_Q_experience = True
     FLAGS.learning_starts = 50000
+    FLAGS.soft_Q_alpha = 0.1
 
 
-use_this_config = yang_soft_Q_in_env
+def yang_soft_Q_in_env_tinyExplore():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.soft_Q_alpha = 0.1
+
+    FLAGS.tiny_explore = 0.01
+
+def yang_soft_Q_in_env_lowtemp():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.core_num = '1'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.soft_Q_alpha = 0.01
+
+
+def yang_soft_Q_in_env_tinyExplore_lowtemp():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.core_num = '1'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.soft_Q_alpha = 0.01
+
+    FLAGS.tiny_explore = 0.01
+
+def yang_hard_Q_in_env():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+def yang_DQfD_no_l2_softQ():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.core_num = '0'
+
+
+def yang_exp_soft_Q_bellman_alpha01():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.exp_soft_Q_bellman = 1.0
+    FLAGS.core_num = '2'
+    FLAGS.soft_Q_alpha = 0.1
+
+def yang_exp_soft_Q_bellman_alpha10():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.exp_soft_Q_bellman = 1.0
+    FLAGS.core_num = '2'
+    FLAGS.soft_Q_alpha = 1.0
+
+def yang_exp_soft_Q_bellman_mixed():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.exp_soft_Q_bellman = 1.0
+    FLAGS.core_num = '2'
+    FLAGS.soft_Q_alpha = 1.0
+
+def yang_exp_policy_grad_weighting():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = '0'
+    FLAGS.soft_Q_alpha = 1.0
+
+def yang_exp_policy_grad_weighting_01():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = '0'
+    FLAGS.soft_Q_alpha = 0.1
+
+def yang_exp_policy_grad_weighting_001():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = '0'
+    FLAGS.soft_Q_alpha = 0.01
+
+def yang_exp_policy_grad_weighting_batch512():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = '0'
+    FLAGS.soft_Q_alpha = 1.0
+    FLAGS.batch_size = 512
+
+def yang_exp_policy_grad_weighting_surrogate():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    yang_common_setting()
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = '0'
+    FLAGS.soft_Q_alpha = 1.0
+
+use_this_config = yang_exp_policy_grad_weighting_surrogate

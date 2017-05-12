@@ -163,7 +163,10 @@ def learn(env,
     # one-step look-ahead using target Q network
     # do the update in a batch
     # Get out the Q values of the performed actions, using the rapid Q network
-    q_act = tf.reduce_sum(q * tf.one_hot(act_t_ph, num_actions), 1)
+    def select_each_row(q, act_t_ph, num_actions):
+        with tf.variable_scope("select_each_row"):
+            return tf.reduce_sum(q * tf.one_hot(act_t_ph, num_actions), 1)
+    q_act = select_each_row(q, act_t_ph, num_actions)
 
     if FLAGS.ddqn:
         print("double Q!")
@@ -197,9 +200,10 @@ def learn(env,
     # TODO: relative weight between entropy and reward has to be included
     alpha = FLAGS.soft_Q_alpha
     def Q2V(target_q, alpha):
-        q_max = tf.reduce_max(target_q, 1, keep_dims=True)
-        V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * (target_q - q_max)), 1)) \
-            + tf.squeeze(q_max)
+        with tf.variable_scope("Q2V"):
+            q_max = tf.reduce_max(target_q, 1, keep_dims=True)
+            V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * (target_q - q_max)), 1)) \
+                + tf.squeeze(q_max)
         return V
     V = Q2V(target_q, alpha)
     q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V
@@ -240,6 +244,35 @@ def learn(env,
 
         #total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
         total_error += FLAGS.policy_gradient_soft_1_step * pg1_surrogate
+
+    if FLAGS.exp_soft_Q_bellman > 0:
+        Vrapid = Q2V(q, alpha)
+        exp_q_soft = rew_t_ph + (1 - done_mask_ph) * gamma * Vrapid
+        tderror = tf.reduce_mean(tf.square(q_act - exp_q_soft*0.5 - q_soft_ahead*0.5))
+        tf.scalar_summary("loss/exp_soft_Q_bellman", tderror)
+        total_error += FLAGS.exp_soft_Q_bellman * tderror
+
+    def QV2pi(q, v, alpha):
+        with tf.variable_scope("QV2pi"):
+            v = tf.expand_dims(v, 1)
+            return tf.exp((q-v) / (1.0*alpha))
+
+    if FLAGS.exp_policy_grad_weighting > 0:
+        with tf.variable_scope("exp_policy_grad_weighting"):
+            Vrapid = Q2V(q, alpha)
+            pi_rapid = QV2pi(q, Vrapid, alpha)
+            pi_selected = select_each_row(pi_rapid, act_t_ph, num_actions)
+
+            node_grad = q_act - Vrapid
+            #node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
+            node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead, name="q_yStar")
+
+            weighting = tf.stop_gradient(pi_selected, name="weighting")
+            weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting, name="grad_final")
+            tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
+            total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
+
+            tf.histogram_summary("weighting_of_grad", weighting)
 
     tf.scalar_summary("loss/total", total_error)
 
@@ -348,8 +381,8 @@ def learn(env,
                 last_obs = obs
             else:
                 idx = replay_buffer.store_frame(last_obs)
-                #eps = FLAGS.tiny_explore #TODO: make sure we can reuse tiny explore
-                eps = exploration.value(t)
+                eps = FLAGS.tiny_explore #TODO: make sure we can reuse tiny explore
+                #eps = exploration.value(t)
 
                 is_greedy = np.random.rand(1) >= eps
                 if is_greedy and model_initialized:

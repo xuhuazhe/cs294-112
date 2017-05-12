@@ -65,13 +65,17 @@ tf.app.flags.DEFINE_float('l2_regularization_loss_weight', -1.0,
                             """weight regularization loss""")
 tf.app.flags.DEFINE_float('soft_Q_loss_weight', -1.0,
                             """weight regularization loss""")
-tf.app.flags.DEFINE_float('soft_Q_alpha', 1.0,
+tf.app.flags.DEFINE_float('soft_Q_alpha', 0.1,
                             """""")
 tf.app.flags.DEFINE_float('supervise_hinge_DQfD_loss_weight', -1.0,
                             """weight for supervised learning""")
 tf.app.flags.DEFINE_float('supervise_hinge_standard_loss_weight', -1.0,
                             """weight for supervised learning""")
 tf.app.flags.DEFINE_float('policy_gradient_soft_1_step', -1.0,
+                            """""")
+tf.app.flags.DEFINE_float('exp_soft_Q_bellman', -1.0,
+                            """""")
+tf.app.flags.DEFINE_float('exp_policy_grad_weighting', -1.0,
                             """""")
 
 # resource related
