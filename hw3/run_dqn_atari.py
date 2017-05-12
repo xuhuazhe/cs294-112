@@ -34,6 +34,8 @@ tf.app.flags.DEFINE_boolean('learning_stage', True,
                             """Do we want to learn or just collection""")
 tf.app.flags.DEFINE_string('ckpt_path', '/data/hxu/cs294-112/hw3/link_data/',
                            """where did we save the checkpoints""")
+tf.app.flags.DEFINE_integer('dataset_size',300000,
+                            """dataset size to try for all method.""")
 
 # evaluation related
 tf.app.flags.DEFINE_integer('eval_freq', -1,

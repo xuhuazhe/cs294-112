@@ -107,6 +107,16 @@ def policy_gradient_soft_1_step_new_T():
     FLAGS.policy_gradient_soft_1_step = 1.0
     FLAGS.core_num = '7'
 
+def test_test():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    common_setting()
+
+    FLAGS.dataset_size = 100
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+
 
 def collect_demonstration():
     tag = inspect.stack()[0][3]
@@ -123,5 +133,5 @@ def collect_demonstration():
     #FLAGS.summary_interval = 10
 
 
-use_this_config = policy_gradient_soft_1_step_new_T
+use_this_config = test_test
 
