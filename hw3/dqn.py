@@ -450,8 +450,6 @@ def learn(env,
             # variable num_param_updates useful for this (it was initialized to 0)
             #####
 
-            # YOUR CODE HERE
-            # (a)
             if t % 100000 == 0 and FLAGS.save_model:
                 model_save_path = os.path.join('./link_data/', FLAGS.method_name)
                 if not os.path.exists(model_save_path):

@@ -485,7 +485,7 @@ def eps_scheduler(t, good_step, m_bad, m_good):
             should_save = True
             return 1, should_save
     else:
-        return FLAGS.tiny_explore, True
+        return 0.1, True
 
 def _activation_summary(x):
   print(x)
