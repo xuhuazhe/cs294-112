@@ -282,6 +282,7 @@ class ReplayBuffer(object):
                     lambda: random.randint(0, int(self.num_in_buffer * (1 - FLAGS.bad_portion)) - 2), batch_size)
         return [self._encode_sample(idxes), need_hinge]
 
+
     def encode_recent_observation(self):
         """Return the most recent `frame_history_len` frames.
 

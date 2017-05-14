@@ -145,5 +145,36 @@ def collect_demonstration():
     #FLAGS.summary_interval = 10
 
 
+def hard_Q_in_env():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 10000
+
+def soft_Q_in_env():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 10000
+    FLAGS.soft_Q_alpha = 0.1
+
+
 use_this_config = test_test
 
