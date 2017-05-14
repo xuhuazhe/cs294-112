@@ -163,21 +163,67 @@ def learn(env,
     # one-step look-ahead using target Q network
     # do the update in a batch
     # Get out the Q values of the performed actions, using the rapid Q network
-    def select_each_row(q, act_t_ph, num_actions):
+    def select_each_row(q, act_t_ph, num_actions, keep_dims=False):
         with tf.variable_scope("select_each_row"):
-            return tf.reduce_sum(q * tf.one_hot(act_t_ph, num_actions), 1)
+            return tf.reduce_sum(q * tf.one_hot(act_t_ph, num_actions), 1, keep_dims=keep_dims)
     q_act = select_each_row(q, act_t_ph, num_actions)
 
+    # TODO: relative weight between entropy and reward has to be included
+    alpha = FLAGS.soft_Q_alpha
+    def Q2V(target_q, alpha):
+        with tf.variable_scope("Q2V"):
+            q_max = tf.reduce_max(target_q, 1, keep_dims=True)
+            V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * (target_q - q_max)), 1)) + tf.squeeze(q_max)
+        return V
+
+    def doubleQ2V(target_q_next, rapid_q_next, alpha):
+        # similar to double Q, use the rapid net to get the maximum
+        max_rapid_ind = tf.argmax(rapid_q_next, 1)
+        max_values = select_each_row(target_q_next, max_rapid_ind, num_actions, keep_dims=True)
+
+        valid = tf.less_equal(target_q_next, max_values)
+        valid = tf.cast(valid, tf.float32)
+
+        # then call the previous code before
+        MAX = 1e5
+        target_q_next -= (1.0-valid) * MAX
+        return Q2V(target_q_next, alpha)
+
+    V_hardmax = tf.reduce_max(target_q, 1)
     if FLAGS.ddqn:
-        print("double Q!")
+        # q: rapid, now
+        rapid_now = q
+        # q_next: rapid, next
+        rapid_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
+
+        # target_q_now: target, now
+        target_now = q_func(obs_t_float, num_actions, scope="target_q_func", reuse=True)
+        # target_q: target, next
+        target_next = target_q
+
+        V_target = doubleQ2V(target_next, rapid_next, alpha)
+        V_target = tf.stop_gradient(V_target)
+        Vrapid = doubleQ2V(rapid_now, target_now, alpha)
+    else:
+        V_target = Q2V(target_q, alpha)
+        Vrapid = Q2V(q, alpha)
+    q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V_target
+
+    if FLAGS.ddqn:
+        print("double Q! only apply to hard Q learning")
         # The rapid Q values of the next observation
         q_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
         q_next_act = tf.argmax(q_next, 1)
         # If we were using the rapid Q network to do the actions, what are the target Q values
-        q_next_act_value = tf.reduce_sum(target_q * tf.one_hot(q_next_act, num_actions), 1)
+        q_next_act_value = select_each_row(target_q, q_next_act, num_actions)
         q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * q_next_act_value
+
+        # added, prevent from backprop through Q-rapid
+        q_look_ahead = tf.stop_gradient(q_look_ahead)
+        #print("Warning: when using double Q learning, soft Q estimates are not soft anymore")
+        #q_soft_ahead = q_look_ahead
     else:
-        q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * tf.reduce_max(target_q, 1)
+        q_look_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V_hardmax
 
     total_error = 0
     if FLAGS.supervise_cross_entropy_loss_weight > 0:
@@ -197,16 +243,6 @@ def learn(env,
         tf.scalar_summary("loss/l2_regularization", regularization_loss)
         total_error += FLAGS.l2_regularization_loss_weight * regularization_loss
 
-    # TODO: relative weight between entropy and reward has to be included
-    alpha = FLAGS.soft_Q_alpha
-    def Q2V(target_q, alpha):
-        with tf.variable_scope("Q2V"):
-            q_max = tf.reduce_max(target_q, 1, keep_dims=True)
-            V = alpha * tf.log(tf.reduce_sum(tf.exp(1 / alpha * (target_q - q_max)), 1)) \
-                + tf.squeeze(q_max)
-        return V
-    V = Q2V(target_q, alpha)
-    q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V
     if FLAGS.soft_Q_loss_weight > 0:
         max_ent_loss = tf.nn.l2_loss(q_act - q_soft_ahead) * 2 / batch_size
         tf.scalar_summary("loss/soft_Q", max_ent_loss)
@@ -226,29 +262,22 @@ def learn(env,
         total_error += FLAGS.supervise_hinge_standard_loss_weight * crammer
 
     if FLAGS.policy_gradient_soft_1_step > 0:
-        Vrapid = Q2V(q, alpha)
         node_grad = q_act - Vrapid
         node_no_grad = tf.stop_gradient(q_act - q_soft_ahead)
         pg1_output = tf.reduce_mean(node_grad * node_no_grad)
         tf.scalar_summary("loss/policy_gradient_soft_1_step", pg1_output)
-        # surrogate loss, not used, for vis only
+        total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
+
+    if FLAGS.policy_gradient_soft_1_step_surrogate > 0:
         pg1_surrogate = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead))
-
-        '''
-        # stop gradient implementation of pg1_surrogate
-        node_grad = q_act - Vrapid
-        node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead)
-        pg1_surrogate = tf.reduce_mean(node_grad * node_no_grad)
-        '''
         tf.scalar_summary("loss/policy_gradient_soft_1_step_surrogate", pg1_surrogate)
-
-        #total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
-        total_error += FLAGS.policy_gradient_soft_1_step * pg1_surrogate
+        total_error += FLAGS.policy_gradient_soft_1_step_surrogate * pg1_surrogate
 
     if FLAGS.exp_soft_Q_bellman > 0:
-        Vrapid = Q2V(q, alpha)
+        # abandoned, doesn't work at all
         exp_q_soft = rew_t_ph + (1 - done_mask_ph) * gamma * Vrapid
         tderror = tf.reduce_mean(tf.square(q_act - exp_q_soft*0.5 - q_soft_ahead*0.5))
+        #tderror = tf.reduce_mean(tf.square(q_act - exp_q_soft))
         tf.scalar_summary("loss/exp_soft_Q_bellman", tderror)
         total_error += FLAGS.exp_soft_Q_bellman * tderror
 
@@ -259,13 +288,12 @@ def learn(env,
 
     if FLAGS.exp_policy_grad_weighting > 0:
         with tf.variable_scope("exp_policy_grad_weighting"):
-            Vrapid = Q2V(q, alpha)
             pi_rapid = QV2pi(q, Vrapid, alpha)
             pi_selected = select_each_row(pi_rapid, act_t_ph, num_actions)
 
             node_grad = q_act - Vrapid
-            #node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
-            node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead, name="q_yStar")
+            node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
+            #node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead, name="q_yStar")
 
             weighting = tf.stop_gradient(pi_selected, name="weighting")
             weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting, name="grad_final")
@@ -273,6 +301,11 @@ def learn(env,
             total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
 
             tf.histogram_summary("weighting_of_grad", weighting)
+
+    if FLAGS.exp_advantage_diff_learning > 0:
+        adv_diff = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead + V_target))
+        tf.scalar_summary("loss/exp_advantage_diff_learning", adv_diff)
+        total_error += FLAGS.exp_advantage_diff_learning * adv_diff
 
     tf.scalar_summary("loss/total", total_error)
 

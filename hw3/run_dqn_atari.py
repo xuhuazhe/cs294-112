@@ -77,6 +77,9 @@ tf.app.flags.DEFINE_float('exp_soft_Q_bellman', -1.0,
                             """""")
 tf.app.flags.DEFINE_float('exp_policy_grad_weighting', -1.0,
                             """""")
+tf.app.flags.DEFINE_float('policy_gradient_soft_1_step_surrogate', -1.0,
+                            """""")
+
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',
@@ -99,6 +102,10 @@ tf.app.flags.DEFINE_string('config', 'test_test()',
                            """run config name""")
 tf.app.flags.DEFINE_string('group_name', 'rl',
                            """which group does it belong to""")
+
+tf.app.flags.DEFINE_string('tag_prefix', '',
+                           """""")
+
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     with slim.arg_scope([layers.convolution2d, layers.fully_connected], outputs_collections="activation_collection"):
@@ -236,12 +243,14 @@ def default_parameters(**kwargs):
     )
 
 def main(_):
-
     benchmark = gym.benchmark_spec('Atari40M')
     # Change the index to select a different game.
     task = benchmark.tasks[2]
     default_parameters(num_timesteps=task.max_timesteps)
-    #use_this_config = sys.argv[1]
+
+    if not FLAGS.config.endswith("()"):
+        FLAGS.config += "()"
+
     eval(FLAGS.config)
     #collect_demonstration()
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
