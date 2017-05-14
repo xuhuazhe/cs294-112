@@ -10,6 +10,7 @@ from collections import namedtuple
 from dqn_utils import *
 import pickle as p
 import os
+import h5py
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -75,6 +76,7 @@ def collect(env,
     print('loaded model of Q from', ckpt_path)
 
     for t in itertools.count():
+        #break
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
             break
@@ -146,3 +148,6 @@ def collect(env,
     FLAGS.Q_expert_path = './link_data/' + 'bad_demo.p'
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
+
+
+

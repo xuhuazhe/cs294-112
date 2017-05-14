@@ -248,11 +248,21 @@ def learn(env,
         tf.scalar_summary("loss/soft_Q", max_ent_loss)
         total_error += FLAGS.soft_Q_loss_weight * max_ent_loss
 
+    def compute_hinge(act_t, q_t, q_act_t, num_actions):
+        loss_l = 0.8 - 0.8 * tf.one_hot(act_t, num_actions)
+        large_margin = tf.reduce_max(loss_l + q_t, 1)
+        return tf.reduce_mean(large_margin - q_act_t)
     if FLAGS.supervise_hinge_DQfD_loss_weight > 0:
-        loss_l = 0.8 - 0.8 * tf.one_hot(act_t_ph, num_actions)
-        large_margin = tf.reduce_max(loss_l + q, 1)
-        hinge_loss = tf.reduce_mean(large_margin - q_act)
-        tf.scalar_summary("loss/supervise_hinge_DQfD", hinge_loss)
+        if FLAGS.demo_mode == 'dqfd':
+            indices = tf.constant(range(0, int(batch_size*FLAGS.demo_portion)))
+            act_t_hinge = tf.gather(act_t_ph, indices)
+            obs_t_hinge = tf.gather(obs_t_float, indices)
+            q_hinge = q_func(obs_t_hinge, num_actions, scope="q_func", reuse=True)
+            q_act_hinge = select_each_row(q_hinge, act_t_hinge, num_actions)
+            hinge_loss = compute_hinge(act_t_hinge, q_hinge, q_act_hinge, num_actions)
+        else:
+            hinge_loss = compute_hinge(act_t_ph, q, q_act, num_actions)
+            tf.scalar_summary("loss/supervise_hinge_DQfD", hinge_loss)
         total_error += FLAGS.supervise_hinge_DQfD_loss_weight * hinge_loss * need_hinge_ph
 
     if FLAGS.supervise_hinge_standard_loss_weight > 0:
@@ -350,11 +360,33 @@ def learn(env,
         replay_buffer = get_hdf_demo(FLAGS.demo_file_path, replay_buffer)
     elif FLAGS.demo_mode == 'replay':
         replay_buffer = load_replay_pickle(FLAGS.demo_file_path, FLAGS.dataset_size)
+    elif FLAGS.demo_mode == 'dqfd':
+        replay_buffer_demo = load_replay_pickle(FLAGS.demo_file_path, FLAGS.dataset_size)
     elif FLAGS.demo_mode == 'no_demo':
         pass
     else:
         raise ValueError("invalid FLAGS.demo_mode = %s" % FLAGS.demo_mode)
-    print(replay_buffer.obs.shape, replay_buffer.reward.shape, replay_buffer.action.shape, replay_buffer.done.shape)
+    #print(replay_buffer.obs.shape, replay_buffer.reward.shape, replay_buffer.action.shape, replay_buffer.done.shape)
+    if FLAGS.inenv_finetune:
+        print('*'*30)
+        print(FLAGS.ckpt_path)
+        ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_path)
+        if ckpt and ckpt.model_checkpoint_path:
+            ckpt_path = ckpt.model_checkpoint_path
+        else:
+            print('No checkpoint file found')
+            session.close()
+            return
+        saver.restore(session, ckpt_path)
+        print('model loaded!!!! %s' % ckpt_path)
+        print('*'*30)
+        model_initialized = True
+
+
+
+
+
+
     for t in itertools.count():
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
@@ -399,6 +431,7 @@ def learn(env,
             if FLAGS.hard_Q_loss_weight > 0:
                 idx = replay_buffer.store_frame(last_obs)
                 eps = exploration.value(t)
+                #eps = FLAGS.tiny_explore
                 is_greedy = np.random.rand(1) >= eps
                 if is_greedy and model_initialized:
                     recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
@@ -414,9 +447,8 @@ def learn(env,
                 last_obs = obs
             else:
                 idx = replay_buffer.store_frame(last_obs)
-                eps = FLAGS.tiny_explore #TODO: make sure we can reuse tiny explore
+                eps = FLAGS.tiny_explore
                 #eps = exploration.value(t)
-
                 is_greedy = np.random.rand(1) >= eps
                 if is_greedy and model_initialized:
                     recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
@@ -424,7 +456,6 @@ def learn(env,
                     q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
                     dist = q_values / np.sum(q_values)
                     action = np.random.choice(num_actions, p=np.squeeze(dist))
-
                     #action = np.random.choice(num_actions, p=np.squeeze(q_norm))
                 else:
                     action = np.random.choice(num_actions)
@@ -491,9 +522,28 @@ def learn(env,
                                        os.path.join(model_save_path, "model_%s.ckpt" % str(t)))
                 print('saved at: ', save_path)
 
-            package, need_hinge = \
-                replay_buffer.sample(batch_size, FLAGS.group_name)
-            obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = package
+
+            if FLAGS.demo_mode == 'dqfd':
+                demo_size = int(batch_size * FLAGS.demo_portion)
+                package_demo, need_hinge_demo = \
+                    replay_buffer_demo.sample(demo_size, FLAGS.group_name)
+                obs_t_batch_demo, act_t_batch_demo, rew_t_batch_demo, obs_tp1_batch_demo, done_mask_demo = \
+                    package_demo
+                package, need_hinge = \
+                    replay_buffer.sample(batch_size-demo_size, FLAGS.group_name)
+                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
+                    package
+                obs_t_batch   = np.concatenate((obs_t_batch_demo, obs_t_batch))
+                act_t_batch   = np.concatenate((act_t_batch_demo, act_t_batch))
+                rew_t_batch   = np.concatenate((rew_t_batch_demo, rew_t_batch))
+                obs_tp1_batch = np.concatenate((obs_tp1_batch_demo, obs_tp1_batch))
+                done_mask     = np.concatenate((done_mask_demo  , done_mask))
+            else:
+                package, need_hinge = \
+                    replay_buffer.sample(batch_size, FLAGS.group_name)
+                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
+                    package
+
                 # (b)
             if not model_initialized:
                 initialize_interdependent_variables(session, tf.all_variables(), {

@@ -46,6 +46,8 @@ tf.app.flags.DEFINE_integer('m_good', -1,
                             "good steps every_interval")
 tf.app.flags.DEFINE_string('bad_dir', '/data/hxu/cs294-112/hw3/link_data/bad_demo.p',
                            """dir for bad demo""")
+tf.app.flags.DEFINE_float('demo_portion', 0.1,
+                          """in dqfd, how much demonstration do we want to add to the replay buffer""")
 
 
 # evaluation related
@@ -102,7 +104,8 @@ tf.app.flags.DEFINE_string('config', 'test_test()',
                            """run config name""")
 tf.app.flags.DEFINE_string('group_name', 'rl',
                            """which group does it belong to""")
-
+tf.app.flags.DEFINE_boolean('inenv_finetune', False,
+                            """finetune in the interactive environment""")
 tf.app.flags.DEFINE_string('tag_prefix', '',
                            """""")
 
