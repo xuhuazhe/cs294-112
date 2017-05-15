@@ -373,43 +373,57 @@ class ReplayBuffer(object):
 
 
 def get_hdf_demo(filename, replay_buffer):
-    f = h5py.File(filename, 'r')
-
     # List all groups
-    #print("Keys: %s" % f.keys())
+    # print("Keys: %s" % f.keys())
     print('Get keys of HDF! Please Wait... Demonstration is huge.')
     action = "A"
     reward = "R"
     obs = "S"
     terminal = "terminal"
     lives = "lives"
+    if isinstance(filename, list):
+        assert(len(filename) == 2)
+        f1 = h5py.File(filename[0], 'r')
+        f2 = h5py.File(filename[1], 'r')
+        _action   = list(f1[action])  + list(f2[action]  )
+        _reward   = list(f1[reward])  + list(f2[reward]  )
+        _obs      = list(f1[obs]   )  + list(f2[obs]     )
+        _terminal = list(f1[terminal])+ list(f2[terminal])
+        assert (len(_action) == len(_reward))
+        assert (len(_action) == len(_obs))
+        assert (len(_action) == len(_terminal))
+        print(len(_obs),'*'*30)
+        for i in range(len(_obs)):
+            if i % 5000 == 0:
+                print('%d are loaded' % i)
+            idx = replay_buffer.store_frame(_obs[i][:,:,3][..., np.newaxis])
+            replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i])
+    else:
+        f = h5py.File(filename, 'r')
+        # Get the data
+        _action = list(f[action])
+        _reward = list(f[reward])
+        _obs = list(f[obs])
+        _terminal = list(f[terminal])
+        #_lives = list(f[lives])
+        assert (len(_action) == len(_reward))
+        assert (len(_action) == len(_obs))
+        assert (len(_action) == len(_terminal))
 
-    # Get the data
-    _action = list(f[action])
-    _reward = list(f[reward])
-    _obs = list(f[obs])
-    _terminal = list(f[terminal])
-    #_lives = list(f[lives])
-    assert (len(_action) == len(_reward))
-    assert (len(_action) == len(_obs))
-    assert (len(_action) == len(_terminal))
+        assert(replay_buffer.size >= (len(_obs) / 4))
+        _obs_buffer = deque(maxlen=2)
+        for i in range(len(_obs)):
+            if i % 10000 == 0:
+                print('%d are loaded' % i )
+            _obs_buffer.append(_obs[i])
+
+            if i % 4 == 3:
+                max_frame = np.max(np.stack(_obs_buffer), axis=0)
+                max_frame = process_frame84(max_frame)
+                idx = replay_buffer.store_frame(max_frame)
+                replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i])
 
     print('Loaded! Almost there! Total Number of observations is %d' % len(_obs))
-    assert(replay_buffer.size >= (len(_obs) / 4))
-    _obs_buffer = deque(maxlen=2)
-    for i in range(len(_obs)):
-        if i % 10000 == 0:
-            print('%d are loaded' % i )
-        _obs_buffer.append(_obs[i])
-
-        if i % 4 == 3:
-            max_frame = np.max(np.stack(_obs_buffer), axis=0)
-            max_frame = process_frame84(max_frame)
-            idx = replay_buffer.store_frame(max_frame)
-            replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i])
-        #if i == 10000:
-        #    break
-
     return replay_buffer
 
 
