@@ -8,13 +8,16 @@ FLAGS = tf.app.flags.FLAGS
 
 def common_setting():
     FLAGS.demo_mode = 'hdf'
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
+    #FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
+    FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+    #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro.h5'
     FLAGS.collect_Q_experience = False
 
     FLAGS.eval_freq = 10000
     FLAGS.tiny_explore = 0.01
 
     FLAGS.learning_starts = 0
+    print(FLAGS.demo_file_path)
 
 def yang_common_setting(tag=None):
     common_setting()
@@ -23,25 +26,21 @@ def yang_common_setting(tag=None):
 
     if tag is not None:
         print("config name = ", tag)
-        FLAGS.method_name = FLAGS.tag_prefix + tag + "_" + str(FLAGS.ddqn)
+        FLAGS.method_name = FLAGS.tag_prefix + tag + "_" + str(FLAGS.ddqn) + "_" + str(FLAGS.soft_Q_alpha)
 
 def yang_cross_entropy():
     tag = inspect.stack()[0][3]
-    print("config name=", tag)
-    FLAGS.method_name = tag
-    yang_common_setting()
+    yang_common_setting(tag)
 
     FLAGS.supervise_cross_entropy_loss_weight = 1.0
-    FLAGS.core_num = '0'
+    FLAGS.core_num = '2'
 
 def yang_hinge_dqfd():
     tag = inspect.stack()[0][3]
-    print("config name=", tag)
-    FLAGS.method_name = tag
-    yang_common_setting()
+    yang_common_setting(tag)
 
     FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
-    FLAGS.core_num = '0'
+    FLAGS.core_num = '3'
 
 def yang_hinge_standard():
     tag = inspect.stack()[0][3]
@@ -328,36 +327,6 @@ def redo_soft_Q():
     FLAGS.soft_Q_loss_weight = 1.0
     FLAGS.core_num = '0'
 
-def redo_policy_gradient_soft_1_step():
-    tag = inspect.stack()[0][3]
-    yang_common_setting(tag)
-
-    FLAGS.policy_gradient_soft_1_step = 1.0
-    FLAGS.core_num = '0'
-
-def redo_policy_gradient_soft_1_step_surrogate():
-    tag = inspect.stack()[0][3]
-    yang_common_setting(tag)
-
-    FLAGS.policy_gradient_soft_1_step_surrogate = 1.0
-    FLAGS.core_num = '0'
-
-def redo_DQfD_no_l2_softQ():
-    tag = inspect.stack()[0][3]
-    yang_common_setting(tag)
-
-    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
-    FLAGS.soft_Q_loss_weight = 1.0
-    FLAGS.core_num = '1'
-
-def redo_DQfD_no_l2():
-    tag = inspect.stack()[0][3]
-    yang_common_setting(tag)
-
-    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
-    FLAGS.hard_Q_loss_weight = 1.0
-    FLAGS.core_num = '1'
-
 def redo_exp_soft_Q_bellman():
     tag = inspect.stack()[0][3]
     yang_common_setting(tag)
@@ -372,12 +341,43 @@ def redo_exp_soft_Q_bellman_mixed():
     FLAGS.exp_soft_Q_bellman = 1.0
     FLAGS.core_num = '1'
 
+def redo_policy_gradient_soft_1_step_surrogate():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.policy_gradient_soft_1_step_surrogate = 1.0
+    FLAGS.core_num = '0'
+
+# comparison experiments
+def redo_DQfD_no_l2():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.core_num = '0'
+
+def redo_DQfD_no_l2_softQ():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.core_num = '1'
+
+def redo_policy_gradient_soft_1_step():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.policy_gradient_soft_1_step = 1.0
+    FLAGS.core_num = '2'
+
 def redo_exp_policy_grad_weighting():
     tag = inspect.stack()[0][3]
     yang_common_setting(tag)
 
     FLAGS.exp_policy_grad_weighting = 1.0
-    FLAGS.core_num = '2'
+    FLAGS.core_num = '3'
 
 # new sets of experiments
 def exp_advantage_diff_learning():
@@ -385,4 +385,31 @@ def exp_advantage_diff_learning():
     yang_common_setting(tag)
 
     FLAGS.exp_advantage_diff_learning = 1.0
-    FLAGS.core_num = '2'
+    FLAGS.core_num = '1'
+
+# tune soft Q learning with force_original_exploration=True
+def yang_soft_Q_in_env_original_explore():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.force_original_exploration = True
+
+def DQfD_no_l2_official_double():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.core_num = '0'
+
+    FLAGS.target_update_freq = 30000
+    FLAGS.ddqn = True

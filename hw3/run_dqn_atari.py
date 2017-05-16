@@ -28,8 +28,6 @@ tf.app.flags.DEFINE_string('demo_mode', 'hdf',
                            """no_demo: skip the demo exp pool""")
 tf.app.flags.DEFINE_string('demo_file_path', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5',
                            """Demonstration file path""")
-tf.app.flags.DEFINE_string('demo_file_path_1', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5',
-                           """Demonstration file path""")
 tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
                             """Do we want to add Q learning sample to the replay buffer""")
 tf.app.flags.DEFINE_boolean('learning_stage', True,
@@ -111,6 +109,11 @@ tf.app.flags.DEFINE_boolean('inenv_finetune', False,
                             """finetune in the interactive environment""")
 tf.app.flags.DEFINE_string('tag_prefix', '',
                            """""")
+tf.app.flags.DEFINE_boolean('force_original_exploration', False,
+                           """""")
+tf.app.flags.DEFINE_integer('target_update_freq', 10000,
+                            """""")
+
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -125,7 +128,13 @@ def atari_model(img_in, num_actions, scope, reuse=False):
             out = layers.flatten(out)
             with tf.variable_scope("action_value"):
                 out = layers.fully_connected(out, num_outputs=512,         activation_fn=tf.nn.relu)
-                out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
+                if FLAGS.ddqn:
+                    out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None, biases_initializer=None)
+                    # add a shared bias
+                    shared_bias = tf.get_variable("shared_bias", shape=[1])
+                    out += shared_bias
+                else:
+                    out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
             return out
 
@@ -159,7 +168,7 @@ def atari_learn(env,
         learning_starts=FLAGS.learning_starts,
         learning_freq=4,
         frame_history_len=FLAGS.frame_history_len,
-        target_update_freq=10000,
+        target_update_freq=FLAGS.target_update_freq,
         grad_norm_clipping=10
     )
     env.close()
