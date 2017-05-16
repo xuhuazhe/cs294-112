@@ -206,6 +206,7 @@ def learn(env,
         Vrapid = doubleQ2V(rapid_now, target_now, alpha)
     else:
         V_target = Q2V(target_q, alpha)
+        # TODO: output V_target and target_q to make sure we get the impl correct
         Vrapid = Q2V(q, alpha)
     q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V_target
 
@@ -366,6 +367,7 @@ def learn(env,
         pass
     else:
         raise ValueError("invalid FLAGS.demo_mode = %s" % FLAGS.demo_mode)
+
     #print(replay_buffer.obs.shape, replay_buffer.reward.shape, replay_buffer.action.shape, replay_buffer.done.shape)
     if FLAGS.inenv_finetune:
         print('*'*30)
@@ -381,11 +383,6 @@ def learn(env,
         print('model loaded!!!! %s' % ckpt_path)
         print('*'*30)
         model_initialized = True
-
-
-
-
-
 
     for t in itertools.count():
         ### 1. Check stopping criterion
@@ -428,7 +425,7 @@ def learn(env,
         # TODO: right now the demonstration and dqn share the same buffer
         if FLAGS.collect_Q_experience:
             assert (np.sign(FLAGS.soft_Q_loss_weight) != np.sign(FLAGS.hard_Q_loss_weight))
-            if FLAGS.hard_Q_loss_weight > 0:
+            if FLAGS.hard_Q_loss_weight > 0 or FLAGS.force_original_exploration:
                 idx = replay_buffer.store_frame(last_obs)
                 eps = exploration.value(t)
                 #eps = FLAGS.tiny_explore
@@ -456,7 +453,7 @@ def learn(env,
                     q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
                     dist = q_values / np.sum(q_values)
                     action = np.random.choice(num_actions, p=np.squeeze(dist))
-                    #action = np.random.choice(num_actions, p=np.squeeze(q_norm))
+
                 else:
                     action = np.random.choice(num_actions)
                 obs, reward, done, info = env.step(action)

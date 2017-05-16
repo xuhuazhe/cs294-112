@@ -9,7 +9,7 @@ FLAGS = tf.app.flags.FLAGS
 def common_setting():
     FLAGS.demo_mode = 'hdf'
     #FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
-    #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+    FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
     #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro.h5'
     FLAGS.collect_Q_experience = False
 
@@ -386,3 +386,30 @@ def exp_advantage_diff_learning():
 
     FLAGS.exp_advantage_diff_learning = 1.0
     FLAGS.core_num = '1'
+
+# tune soft Q learning with force_original_exploration=True
+def yang_soft_Q_in_env_original_explore():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.force_original_exploration = True
+
+def DQfD_no_l2_official_double():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.core_num = '0'
+
+    FLAGS.target_update_freq = 30000
+    FLAGS.ddqn = True
