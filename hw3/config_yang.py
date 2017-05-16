@@ -9,14 +9,15 @@ FLAGS = tf.app.flags.FLAGS
 def common_setting():
     FLAGS.demo_mode = 'hdf'
     #FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
-    FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5'
-    FLAGS.demo_file_path_1 = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+    #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+    #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro.h5'
     FLAGS.collect_Q_experience = False
 
     FLAGS.eval_freq = 10000
     FLAGS.tiny_explore = 0.01
 
     FLAGS.learning_starts = 0
+    print(FLAGS.demo_file_path)
 
 def yang_common_setting(tag=None):
     common_setting()
@@ -29,21 +30,17 @@ def yang_common_setting(tag=None):
 
 def yang_cross_entropy():
     tag = inspect.stack()[0][3]
-    print("config name=", tag)
-    FLAGS.method_name = tag
-    yang_common_setting()
+    yang_common_setting(tag)
 
     FLAGS.supervise_cross_entropy_loss_weight = 1.0
-    FLAGS.core_num = '0'
+    FLAGS.core_num = '2'
 
 def yang_hinge_dqfd():
     tag = inspect.stack()[0][3]
-    print("config name=", tag)
-    FLAGS.method_name = tag
-    yang_common_setting()
+    yang_common_setting(tag)
 
     FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
-    FLAGS.core_num = '0'
+    FLAGS.core_num = '3'
 
 def yang_hinge_standard():
     tag = inspect.stack()[0][3]

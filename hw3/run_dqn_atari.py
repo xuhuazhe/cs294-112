@@ -28,8 +28,6 @@ tf.app.flags.DEFINE_string('demo_mode', 'hdf',
                            """no_demo: skip the demo exp pool""")
 tf.app.flags.DEFINE_string('demo_file_path', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5',
                            """Demonstration file path""")
-tf.app.flags.DEFINE_string('demo_file_path_1', '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5',
-                           """Demonstration file path""")
 tf.app.flags.DEFINE_boolean('collect_Q_experience', False,
                             """Do we want to add Q learning sample to the replay buffer""")
 tf.app.flags.DEFINE_boolean('learning_stage', True,
