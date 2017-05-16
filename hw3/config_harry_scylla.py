@@ -10,7 +10,7 @@ FLAGS = tf.app.flags.FLAGS
 def common_setting():
     FLAGS.ddqn = False
 
-    FLAGS.demo_mode = 'hdf'
+    FLAGS.demo_mode = 'replay'
     FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/hardQ_expert.p'
     #FLAGS.demo_file_path   = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5'  #'/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
     #FLAGS.demo_file_path_1 = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
@@ -274,6 +274,247 @@ def policy_gradient_soft_1_step_new_finetune():
     FLAGS.core_num = '2'
 
 #_______________________starts_here_the_new_experiments______________________
+
+def cross_entropy_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'supervised'
+
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+
+def hinge_dqfd_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'supervised'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.core_num = '1'
+
+def hard_Q_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'rl'
+
+    FLAGS.core_num = '2'
+    FLAGS.hard_Q_loss_weight = 1.0
+    # optionally set: lr_schedule, exploration_schedule
+
+def soft_Q_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'rl'
+
+    FLAGS.core_num = '3'
+    FLAGS.soft_Q_loss_weight = 1.0
+
+def DQfD_no_l2_softQ_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'dqfd'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.core_num = '0'
+
+def DQfD_no_l2_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'dqfd'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.core_num = '1'
+
+def policy_gradient_soft_1_step_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'rl'
+
+    FLAGS.policy_gradient_soft_1_step = 1.0
+    FLAGS.core_num = '2'
+
+def exp_policy_grad_weighting_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'rl'
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = '3'
+
+def exp_advantage_diff_learning_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.group_name = 'rl'
+
+    FLAGS.exp_advantage_diff_learning = 1.0
+    FLAGS.core_num = '2'
+
+#_________________________double_Q_test________________________________
+def DQfD_no_l2_doubleQ_plot():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    #FLAGS.group_name = 'dqfd'
+
+    FLAGS.demo_file_path   = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5'
+    FLAGS.demo_file_path_1 = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+    FLAGS.ddqn = True
+    FLAGS.demo_mode = 'hdf'
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.core_num = '0'
+
+#________________________cross_entropy_finetune_dm________________
+def cross_entropy_dm_finetune_small_explore():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.inenv_finetune = True
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/cross_entropy_T_300000_0.0_dm/'
+    FLAGS.core_num = '1'
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def cross_entropy_dm_finetune_normal_explore():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.inenv_finetune = True
+
+
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/cross_entropy_T_300000_0.0_dm/'
+    FLAGS.core_num = '2'
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def policy_gradient_soft_1_step_new_finetune_small_explore():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/policy_gradient_soft_1_step_new_T_300000_0.0_dm/'
+    FLAGS.policy_gradient_soft_1_step = 1.0
+    FLAGS.core_num = '3'
+
+def policy_gradient_soft_1_step_new_finetune_normal_explore():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/policy_gradient_soft_1_step_new_T_300000_0.0_dm/'
+    FLAGS.policy_gradient_soft_1_step = 1.0
+    FLAGS.core_num = '0'
+
+def adv_learn_finetune_small_explore():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+
+
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/exp_advantage_diff_learning_plot_300000_0.0_plot/'
+    FLAGS.exp_advantage_diff_learning = 1.0
+    FLAGS.core_num = '1'
+
+def adv_learn_finetune_normal_explore():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_plot'
+    common_setting()
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/exp_advantage_diff_learning_plot_300000_0.0_plot/'
+    FLAGS.exp_advantage_diff_learning = 1.0
+    FLAGS.core_num = '2'
+
+#________________________________from_here_to_visualize_factor_____________________
+def exp_advantage_diff_learning_visualize():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+    #FLAGS.group_name = 'rl'
+
+    FLAGS.exp_advantage_diff_learning = 1.0
+    FLAGS.core_num = '2'
+
+def exp_policy_gradient_visualize():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion)
+    common_setting()
+    #FLAGS.group_name = 'rl'
+
+    FLAGS.policy_gradient_soft_1_step = 1.0
+    FLAGS.core_num = '3'
 
 
 

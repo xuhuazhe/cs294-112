@@ -276,7 +276,9 @@ def learn(env,
         node_no_grad = tf.stop_gradient(q_act - q_soft_ahead)
         pg1_output = tf.reduce_mean(node_grad * node_no_grad)
         tf.scalar_summary("loss/policy_gradient_soft_1_step", pg1_output)
+        tf.histogram_summary("sign_visualize/policy_gradient", node_no_grad)
         total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
+
 
     if FLAGS.policy_gradient_soft_1_step_surrogate > 0:
         pg1_surrogate = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead))
@@ -315,6 +317,7 @@ def learn(env,
     if FLAGS.exp_advantage_diff_learning > 0:
         adv_diff = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead + V_target))
         tf.scalar_summary("loss/exp_advantage_diff_learning", adv_diff)
+        tf.histogram_summary("sign_visualize/adv_diff", q_act - Vrapid - q_soft_ahead + V_target)
         total_error += FLAGS.exp_advantage_diff_learning * adv_diff
 
     tf.scalar_summary("loss/total", total_error)
@@ -427,7 +430,7 @@ def learn(env,
         # YOUR CODE HERE
         # TODO: right now the demonstration and dqn share the same buffer
         if FLAGS.collect_Q_experience:
-            assert (np.sign(FLAGS.soft_Q_loss_weight) != np.sign(FLAGS.hard_Q_loss_weight))
+            assert (np.sign(FLAGS.soft_Q_loss_weight)<0 or np.sign(FLAGS.hard_Q_loss_weight)<0)
             if FLAGS.hard_Q_loss_weight > 0:
                 idx = replay_buffer.store_frame(last_obs)
                 eps = exploration.value(t)
@@ -447,8 +450,8 @@ def learn(env,
                 last_obs = obs
             else:
                 idx = replay_buffer.store_frame(last_obs)
-                eps = FLAGS.tiny_explore
-                #eps = exploration.value(t)
+                #eps = FLAGS.tiny_explore
+                eps = exploration.value(t)
                 is_greedy = np.random.rand(1) >= eps
                 if is_greedy and model_initialized:
                     recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
