@@ -113,7 +113,8 @@ tf.app.flags.DEFINE_boolean('force_original_exploration', False,
                            """""")
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
-
+tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
+                           """""")
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -257,18 +258,22 @@ def default_parameters(**kwargs):
         ], outside_value=0.01
     )
 
-def main(_):
-    benchmark = gym.benchmark_spec('Atari40M')
-    # Change the index to select a different game.
-    task = benchmark.tasks[2]
-    default_parameters(num_timesteps=task.max_timesteps)
+class Object(object):
+    pass
 
+def main(_):
     if not FLAGS.config.endswith("()"):
         FLAGS.config += "()"
 
     eval(FLAGS.config)
     #collect_demonstration()
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
+
+    task = Object()
+    task.max_timesteps = int(4e7)
+    task.env_id = FLAGS.env_id
+
+    default_parameters(num_timesteps=int(4e7))
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)

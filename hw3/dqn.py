@@ -190,17 +190,16 @@ def learn(env,
         return Q2V(target_q_next, alpha)
 
     V_hardmax = tf.reduce_max(target_q, 1)
+    # q: rapid, now
+    rapid_now = q
+    # q_next: rapid, next
+    rapid_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
+
+    # target_q_now: target, now
+    target_now = q_func(obs_t_float, num_actions, scope="target_q_func", reuse=True)
+    # target_q: target, next
+    target_next = target_q
     if FLAGS.ddqn:
-        # q: rapid, now
-        rapid_now = q
-        # q_next: rapid, next
-        rapid_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
-
-        # target_q_now: target, now
-        target_now = q_func(obs_t_float, num_actions, scope="target_q_func", reuse=True)
-        # target_q: target, next
-        target_next = target_q
-
         V_target = doubleQ2V(target_next, rapid_next, alpha)
         V_target = tf.stop_gradient(V_target)
         Vrapid = doubleQ2V(rapid_now, target_now, alpha)
@@ -310,15 +309,18 @@ def learn(env,
 
             weighting = tf.stop_gradient(pi_selected, name="weighting")
             weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting, name="grad_final")
+            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad*weighting)
             tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
             total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
 
             tf.histogram_summary("weighting_of_grad", weighting)
 
     if FLAGS.exp_advantage_diff_learning > 0:
-        adv_diff = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead + V_target))
+        V_target_now = Q2V(target_now, alpha)
+        adv_delta = (q_act - Vrapid) - (q_soft_ahead - V_target_now)
+        adv_diff = tf.reduce_mean(tf.square(adv_delta))
         tf.scalar_summary("loss/exp_advantage_diff_learning", adv_diff)
-        tf.histogram_summary("sign_visualize/adv_diff", q_act - Vrapid - q_soft_ahead + V_target)
+        tf.histogram_summary("sign_visualize/adv_diff", adv_delta)
         total_error += FLAGS.exp_advantage_diff_learning * adv_diff
 
     tf.scalar_summary("loss/total", total_error)
