@@ -463,3 +463,19 @@ def roadrunner_ddqn():
     FLAGS.env_id="RoadRunnerNoFrameskip-v3"
 
     FLAGS.target_update_freq = 30000
+
+def exp_policy_grad_weighting_ratio_env():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    #FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.force_original_exploration = True

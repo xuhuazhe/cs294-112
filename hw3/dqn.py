@@ -112,7 +112,7 @@ def learn(env,
     done_mask_ph = tf.placeholder(tf.float32, [None])
 
     need_hinge_ph = tf.placeholder(tf.float32, shape=())
-    action_dist_ph = tf.placeholder(tf.float32, [None] + list(num_actions))
+    action_dist_ph = tf.placeholder(tf.float32, [None, num_actions])
 
     # visualize inputs
     to_vis_format = lambda batch: tf.expand_dims(tf.transpose(batch[0, :, :, :], perm=[2, 0, 1]), 3)
@@ -433,54 +433,38 @@ def learn(env,
 
         # YOUR CODE HERE
         if FLAGS.collect_Q_experience:
-            assert (np.sign(FLAGS.soft_Q_loss_weight)<0 or np.sign(FLAGS.hard_Q_loss_weight)<0)
-            if FLAGS.hard_Q_loss_weight > 0 or FLAGS.force_original_exploration:
-                idx = replay_buffer.store_frame(last_obs)
+            idx = replay_buffer.store_frame(last_obs)
+            if FLAGS.explore_value_method == "normal":
                 eps = exploration.value(t)
-                #eps = FLAGS.tiny_explore
-                is_greedy = np.random.rand(1) >= eps
-                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                max_action = np.argmax(np.squeeze(q_values))
-
-                if is_greedy and model_initialized:
-                    action = max_action
-                else:
-                    action = np.random.choice(num_actions)
-
-                obs, reward, done, info = env.step(action)
-                if done:
-                    obs = env.reset()
-
-                action_dist_this = np.ones((num_actions), dtype=np.float32) * eps / num_actions
-                action_dist_this[max_action] = 1.0 - eps + eps/num_actions
-
-                replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
-                last_obs = obs
+            elif FLAGS.explore_value_method == "tiny":
+                eps = FLAGS.tiny_explore
             else:
-                idx = replay_buffer.store_frame(last_obs)
-                #eps = FLAGS.tiny_explore
-                eps = exploration.value(t)
-                is_greedy = np.random.rand(1) >= eps
+                raise ValueError("explore_method invalid %s" % FLAGS.explore_value_method)
 
+            action_dist_this = np.ones((num_actions), dtype=np.float32) / num_actions
+            if model_initialized:
                 recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
                 q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
-                dist = q_values / np.sum(q_values)
-
-                if is_greedy and model_initialized:
-                    action = np.random.choice(num_actions, p=np.squeeze(dist))
+                if FLAGS.greedy_method == "hard" or FLAGS.force_original_exploration:
+                    max_action = np.argmax(np.squeeze(q_values))
+                    greedy_dist = np.zeros((num_actions), dtype=np.float32)
+                    greedy_dist[max_action] = 1.0
+                elif FLAGS.greedy_method == "soft":
+                    q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
+                    greedy_dist = q_values / np.sum(q_values)
                 else:
-                    action = np.random.choice(num_actions)
-                obs, reward, done, info = env.step(action)
-                if done:
-                    obs = env.reset()
+                    raise ValueError("greedy_method invalid %s " % FLAGS.greedy_method)
 
-                action_dist_this = np.squeeze(dist)
-                action_dist_this = action_dist_this * (1.0-eps) + eps/num_actions
+                action_dist_this = eps * action_dist_this + (1 - eps) * greedy_dist
 
-                replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
-                last_obs = obs
+            action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
+
+            obs, reward, done, info = env.step(action)
+            if done:
+                obs = env.reset()
+
+            replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
+            last_obs = obs
 
         #####
 

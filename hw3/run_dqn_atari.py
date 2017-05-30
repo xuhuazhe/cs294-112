@@ -114,6 +114,11 @@ tf.app.flags.DEFINE_string('tag_prefix', '',
                            """""")
 tf.app.flags.DEFINE_boolean('force_original_exploration', False,
                            """""")
+tf.app.flags.DEFINE_string('explore_value_method', "normal",
+                           """""")
+tf.app.flags.DEFINE_string('greedy_method', "hard",
+                           """""")
+
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
 tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
