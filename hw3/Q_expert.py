@@ -60,11 +60,11 @@ def collect(env,
     saver = tf.train.Saver()
 
     if FLAGS.m_bad > 0:
-        replay_buffer_obs = ReplayBuffer(replay_buffer_size, frame_history_len)
+        replay_buffer_obs = ReplayBuffer(replay_buffer_size, frame_history_len, num_actions)
         replay_buffer = ReplayBuffer(int(replay_buffer_size*(np.float(FLAGS.m_bad)/(FLAGS.m_bad+FLAGS.m_good))),
-                                     frame_history_len)
+                                     frame_history_len, num_actions)
     else:
-        replay_buffer = ReplayBuffer(replay_buffer_size , frame_history_len)
+        replay_buffer = ReplayBuffer(replay_buffer_size , frame_history_len, num_actions)
     ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_path)
     if ckpt and ckpt.model_checkpoint_path:
         ckpt_path = ckpt.model_checkpoint_path
@@ -112,6 +112,7 @@ def collect(env,
         obs, reward, done, info = env.step(action)
         if done:
             obs = env.reset()
+        # TODO: modify the following 3 lines to add action_dist back in
         if FLAGS.m_bad > 0:
             replay_buffer_obs.store_effect(idx_obs, action, reward, done)
             if should_save:

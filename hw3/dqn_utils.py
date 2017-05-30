@@ -180,7 +180,7 @@ def get_wrapper_by_name(env, classname):
             raise ValueError("Couldn't find wrapper named %s"%classname)
 
 class ReplayBuffer(object):
-    def __init__(self, size, frame_history_len):
+    def __init__(self, size, frame_history_len, num_actions):
         """This is a memory efficient implementation of the replay buffer.
 
         The sepecific memory optimizations use here are:
@@ -208,6 +208,7 @@ class ReplayBuffer(object):
         """
         self.size = size
         self.frame_history_len = frame_history_len
+        self.num_actions = num_actions
 
         self.next_idx      = 0
         self.num_in_buffer = 0
@@ -216,6 +217,11 @@ class ReplayBuffer(object):
         self.action   = None
         self.reward   = None
         self.done     = None
+
+    def fix_action_dist(self):
+        print("Warning: this function should not be called! You should regenerate the dataset")
+        self.num_actions = 9
+        self.action_dist = np.ones([self.size, self.num_actions], dtype=np.float32) / self.num_actions
 
     def can_sample(self, batch_size):
         """Returns true if `batch_size` different transitions can be sampled from the buffer."""
@@ -227,9 +233,9 @@ class ReplayBuffer(object):
         rew_batch      = self.reward[idxes]
         next_obs_batch = np.concatenate([self._encode_observation(idx + 1)[None] for idx in idxes], 0)
         done_mask      = np.array([1.0 if self.done[idx] else 0.0 for idx in idxes], dtype=np.float32)
+        action_dist_batch = self.action_dist[idxes, :]
 
-        return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask
-
+        return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask, action_dist_batch
 
     def sample(self, batch_size, name='rl'):
         """Sample `batch_size` different transitions.
@@ -342,6 +348,8 @@ class ReplayBuffer(object):
             self.action   = np.empty([self.size],                     dtype=np.int32)
             self.reward   = np.empty([self.size],                     dtype=np.float32)
             self.done     = np.empty([self.size],                     dtype=np.bool)
+            self.action_dist = np.empty([self.size, self.num_actions], dtype=np.float32)
+
         self.obs[self.next_idx] = frame
 
         ret = self.next_idx
@@ -350,7 +358,7 @@ class ReplayBuffer(object):
 
         return ret
 
-    def store_effect(self, idx, action, reward, done):
+    def store_effect(self, idx, action, reward, done, action_dist):
         """Store effects of action taken after obeserving frame stored
         at index idx. The reason `store_frame` and `store_effect` is broken
         up into two functions is so that once can call `encode_recent_observation`
@@ -370,9 +378,12 @@ class ReplayBuffer(object):
         self.action[idx] = action
         self.reward[idx] = reward
         self.done[idx]   = done
+        self.action_dist[idx, :] = action_dist
 
 
-def get_hdf_demo(filename, replay_buffer, sync=True):
+def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
+    print("Warning: the num_actions is set as ", num_actions, ". modify if needed")
+
     # sync=True is the updated version. Only set it to false when we use older data
     # List all groups
     # print("Keys: %s" % f.keys())
@@ -386,6 +397,8 @@ def get_hdf_demo(filename, replay_buffer, sync=True):
     # parse filename into a list, it could be a comma(,) seperated filename list
     filename = filename.split(",")
     filename = [x.strip() for x in filename if x.strip() != ""]
+
+    delta_action_dist = np.zeros((num_actions), dtype=np.float32)
 
     for fi in filename:
         f1 = h5py.File(fi, 'r')
@@ -403,16 +416,19 @@ def get_hdf_demo(filename, replay_buffer, sync=True):
             if i % 5000 == 0:
                 print('%d are loaded' % i)
 
+            delta_action_dist[_action[i]]=1.0
+
             if sync:
                 idx = replay_buffer.store_frame(_obs[i][:, :, 3][..., np.newaxis])
-                replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i])
+                replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i], delta_action_dist)
             else:
                 _obs_buffer.append(_obs[i])
                 if i % 4 == 3:
                     max_frame = np.max(np.stack(_obs_buffer), axis=0)
                     max_frame = process_frame84(max_frame)
                     idx = replay_buffer.store_frame(max_frame)
-                    replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i])
+                    replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i], delta_action_dist)
+            delta_action_dist[_action[i]] = 0.0
 
     print('Loaded! Almost there! Total Number of observations is %d' % len(_obs))
     return replay_buffer

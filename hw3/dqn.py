@@ -112,6 +112,7 @@ def learn(env,
     done_mask_ph = tf.placeholder(tf.float32, [None])
 
     need_hinge_ph = tf.placeholder(tf.float32, shape=())
+    action_dist_ph = tf.placeholder(tf.float32, [None] + list(num_actions))
 
     # visualize inputs
     to_vis_format = lambda batch: tf.expand_dims(tf.transpose(batch[0, :, :, :], perm=[2, 0, 1]), 3)
@@ -168,7 +169,7 @@ def learn(env,
             return tf.reduce_sum(q * tf.one_hot(act_t_ph, num_actions), 1, keep_dims=keep_dims)
     q_act = select_each_row(q, act_t_ph, num_actions)
 
-    # TODO: relative weight between entropy and reward has to be included
+    # relative weight between entropy and reward has already been included, which is the temperature tau
     alpha = FLAGS.soft_Q_alpha
     def Q2V(target_q, alpha):
         with tf.variable_scope("Q2V"):
@@ -205,7 +206,6 @@ def learn(env,
         Vrapid = doubleQ2V(rapid_now, target_now, alpha)
     else:
         V_target = Q2V(target_q, alpha)
-        # TODO: output V_target and target_q to make sure we get the impl correct
         Vrapid = Q2V(q, alpha)
     q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V_target
 
@@ -302,17 +302,19 @@ def learn(env,
         with tf.variable_scope("exp_policy_grad_weighting"):
             pi_rapid = QV2pi(q, Vrapid, alpha)
             pi_selected = select_each_row(pi_rapid, act_t_ph, num_actions)
+            mu_selected = select_each_row(action_dist_ph, act_t_ph, num_actions)
 
             node_grad = q_act - Vrapid
             node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
             #node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead, name="q_yStar")
 
-            weighting = tf.stop_gradient(pi_selected, name="weighting")
+            ratio = pi_selected / mu_selected
+            weighting = tf.stop_gradient(tf.minimum(ratio, FLAGS.ratio_truncate_thres), name="weighting")
             weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting, name="grad_final")
-            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad*weighting)
-            tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
             total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
 
+            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting)
+            tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
             tf.histogram_summary("weighting_of_grad", weighting)
 
     if FLAGS.exp_advantage_diff_learning > 0:
@@ -346,7 +348,7 @@ def learn(env,
         graph_def=session.graph.as_graph_def(add_shapes=True))
 
     # construct the replay buffer
-    replay_buffer = ReplayBuffer(replay_buffer_size, frame_history_len)
+    replay_buffer = ReplayBuffer(replay_buffer_size, frame_history_len, num_actions)
 
     ###############
     # RUN ENV     #
@@ -364,10 +366,13 @@ def learn(env,
 
     if FLAGS.demo_mode == 'hdf':
         replay_buffer = get_hdf_demo(FLAGS.demo_file_path, replay_buffer)
+        #replay_buffer.fix_action_dist()
     elif FLAGS.demo_mode == 'replay':
         replay_buffer = load_replay_pickle(FLAGS.demo_file_path, FLAGS.dataset_size)
+        #replay_buffer.fix_action_dist()
     elif FLAGS.demo_mode == 'dqfd':
         replay_buffer_demo = load_replay_pickle(FLAGS.demo_file_path, FLAGS.dataset_size)
+        #replay_buffer_demo.fix_action_dist()
     elif FLAGS.demo_mode == 'no_demo':
         pass
     else:
@@ -427,7 +432,6 @@ def learn(env,
         #####
 
         # YOUR CODE HERE
-        # TODO: right now the demonstration and dqn share the same buffer
         if FLAGS.collect_Q_experience:
             assert (np.sign(FLAGS.soft_Q_loss_weight)<0 or np.sign(FLAGS.hard_Q_loss_weight)<0)
             if FLAGS.hard_Q_loss_weight > 0 or FLAGS.force_original_exploration:
@@ -435,36 +439,47 @@ def learn(env,
                 eps = exploration.value(t)
                 #eps = FLAGS.tiny_explore
                 is_greedy = np.random.rand(1) >= eps
+                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                max_action = np.argmax(np.squeeze(q_values))
+
                 if is_greedy and model_initialized:
-                    recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-                    q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                    action = np.argmax(np.squeeze(q_values))
+                    action = max_action
                 else:
                     action = np.random.choice(num_actions)
 
                 obs, reward, done, info = env.step(action)
                 if done:
                     obs = env.reset()
-                replay_buffer.store_effect(idx, action, reward, done)
+
+                action_dist_this = np.ones((num_actions), dtype=np.float32) * eps / num_actions
+                action_dist_this[max_action] = 1.0 - eps + eps/num_actions
+
+                replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
                 last_obs = obs
             else:
                 idx = replay_buffer.store_frame(last_obs)
                 #eps = FLAGS.tiny_explore
                 eps = exploration.value(t)
                 is_greedy = np.random.rand(1) >= eps
-                if is_greedy and model_initialized:
-                    recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-                    q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                    q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
-                    dist = q_values / np.sum(q_values)
-                    action = np.random.choice(num_actions, p=np.squeeze(dist))
 
+                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
+                dist = q_values / np.sum(q_values)
+
+                if is_greedy and model_initialized:
+                    action = np.random.choice(num_actions, p=np.squeeze(dist))
                 else:
                     action = np.random.choice(num_actions)
                 obs, reward, done, info = env.step(action)
                 if done:
                     obs = env.reset()
-                replay_buffer.store_effect(idx, action, reward, done)
+
+                action_dist_this = np.squeeze(dist)
+                action_dist_this = action_dist_this * (1.0-eps) + eps/num_actions
+
+                replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
                 last_obs = obs
 
         #####
@@ -529,21 +544,22 @@ def learn(env,
                 demo_size = int(batch_size * FLAGS.demo_portion)
                 package_demo, need_hinge_demo = \
                     replay_buffer_demo.sample(demo_size, FLAGS.group_name)
-                obs_t_batch_demo, act_t_batch_demo, rew_t_batch_demo, obs_tp1_batch_demo, done_mask_demo = \
+                obs_t_batch_demo, act_t_batch_demo, rew_t_batch_demo, obs_tp1_batch_demo, done_mask_demo, action_dist_demo = \
                     package_demo
                 package, need_hinge = \
                     replay_buffer.sample(batch_size-demo_size, FLAGS.group_name)
-                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
+                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
                     package
                 obs_t_batch   = np.concatenate((obs_t_batch_demo, obs_t_batch))
                 act_t_batch   = np.concatenate((act_t_batch_demo, act_t_batch))
                 rew_t_batch   = np.concatenate((rew_t_batch_demo, rew_t_batch))
                 obs_tp1_batch = np.concatenate((obs_tp1_batch_demo, obs_tp1_batch))
                 done_mask     = np.concatenate((done_mask_demo  , done_mask))
+                action_dist   = np.concatenate((action_dist_demo, action_dist))
             else:
                 package, need_hinge = \
                     replay_buffer.sample(batch_size, FLAGS.group_name)
-                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
+                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
                     package
 
                 # (b)
@@ -562,7 +578,8 @@ def learn(env,
                 obs_tp1_ph: obs_tp1_batch,
                 done_mask_ph: done_mask,
                 need_hinge_ph: need_hinge,
-                learning_rate: optimizer_spec.lr_schedule.value(t)
+                learning_rate: optimizer_spec.lr_schedule.value(t),
+                action_dist_ph: action_dist,
             }
 
             if t % FLAGS.summary_interval == 0:
