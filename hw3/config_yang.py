@@ -9,7 +9,7 @@ FLAGS = tf.app.flags.FLAGS
 def common_setting():
     FLAGS.demo_mode = 'hdf'
     #FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
-    FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+    #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
     #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro.h5'
     FLAGS.collect_Q_experience = False
 
@@ -204,9 +204,7 @@ def yang_soft_Q_in_env_tinyExplore_lowtemp():
 
 def yang_hard_Q_in_env():
     tag = inspect.stack()[0][3]
-    print("config name=", tag)
-    FLAGS.method_name = tag
-    yang_common_setting()
+    yang_common_setting(tag)
 
     FLAGS.core_num = '0'
 
@@ -413,3 +411,88 @@ def DQfD_no_l2_official_double():
 
     FLAGS.target_update_freq = 30000
     FLAGS.ddqn = True
+
+def yang_DDQN_in_env_official_double_longtarget():
+    FLAGS.ddqn = True
+
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.target_update_freq = 30000
+
+def roadrunner():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.env_id="RoadRunnerNoFrameskip-v3"
+    # set ddqn flag in command line
+
+def roadrunner_ddqn():
+    FLAGS.ddqn = True
+
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.env_id="RoadRunnerNoFrameskip-v3"
+
+    FLAGS.target_update_freq = 30000
+
+def exp_policy_grad_weighting_ratio_env():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    #FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.force_original_exploration = True
+
+# from this point, we change the evaluation to Standard Eval.
+# i.e. eps=0.05, and max emulator time 30 mins
+def exp_policy_grad_weighting_ratio_env_pong():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.env_id="PongNoFrameskip-v3"

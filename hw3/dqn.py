@@ -112,6 +112,7 @@ def learn(env,
     done_mask_ph = tf.placeholder(tf.float32, [None])
 
     need_hinge_ph = tf.placeholder(tf.float32, shape=())
+    action_dist_ph = tf.placeholder(tf.float32, [None, num_actions])
 
     # visualize inputs
     to_vis_format = lambda batch: tf.expand_dims(tf.transpose(batch[0, :, :, :], perm=[2, 0, 1]), 3)
@@ -169,7 +170,7 @@ def learn(env,
             return tf.reduce_sum(q * tf.one_hot(act_t_ph, num_actions), 1, keep_dims=keep_dims)
     q_act = select_each_row(q, act_t_ph, num_actions)
 
-    # TODO: relative weight between entropy and reward has to be included
+    # relative weight between entropy and reward has already been included, which is the temperature tau
     alpha = FLAGS.soft_Q_alpha
     def Q2V(target_q, alpha):
         with tf.variable_scope("Q2V"):
@@ -191,23 +192,21 @@ def learn(env,
         return Q2V(target_q_next, alpha)
 
     V_hardmax = tf.reduce_max(target_q, 1)
+    # q: rapid, now
+    rapid_now = q
+    # q_next: rapid, next
+    rapid_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
+
+    # target_q_now: target, now
+    target_now = q_func(obs_t_float, num_actions, scope="target_q_func", reuse=True)
+    # target_q: target, next
+    target_next = target_q
     if FLAGS.ddqn:
-        # q: rapid, now
-        rapid_now = q
-        # q_next: rapid, next
-        rapid_next = q_func(obs_tp1_float, num_actions, scope="q_func", reuse=True)
-
-        # target_q_now: target, now
-        target_now = q_func(obs_t_float, num_actions, scope="target_q_func", reuse=True)
-        # target_q: target, next
-        target_next = target_q
-
         V_target = doubleQ2V(target_next, rapid_next, alpha)
         V_target = tf.stop_gradient(V_target)
         Vrapid = doubleQ2V(rapid_now, target_now, alpha)
     else:
         V_target = Q2V(target_q, alpha)
-        # TODO: output V_target and target_q to make sure we get the impl correct
         Vrapid = Q2V(q, alpha)
     q_soft_ahead = rew_t_ph + (1 - done_mask_ph) * gamma * V_target
 
@@ -304,22 +303,27 @@ def learn(env,
         with tf.variable_scope("exp_policy_grad_weighting"):
             pi_rapid = QV2pi(q, Vrapid, alpha)
             pi_selected = select_each_row(pi_rapid, act_t_ph, num_actions)
+            mu_selected = select_each_row(action_dist_ph, act_t_ph, num_actions)
 
             node_grad = q_act - Vrapid
             node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
             #node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead, name="q_yStar")
 
-            weighting = tf.stop_gradient(pi_selected, name="weighting")
+            ratio = pi_selected / mu_selected
+            weighting = tf.stop_gradient(tf.minimum(ratio, FLAGS.ratio_truncate_thres), name="weighting")
             weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting, name="grad_final")
-            tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
             total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
 
+            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting)
+            tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
             tf.histogram_summary("weighting_of_grad", weighting)
 
     if FLAGS.exp_advantage_diff_learning > 0:
-        adv_diff = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead + V_target))
+        V_target_now = Q2V(target_now, alpha)
+        adv_delta = (q_act - Vrapid) - (q_soft_ahead - V_target_now)
+        adv_diff = tf.reduce_mean(tf.square(adv_delta))
         tf.scalar_summary("loss/exp_advantage_diff_learning", adv_diff)
-        tf.histogram_summary("sign_visualize/adv_diff", q_act - Vrapid - q_soft_ahead + V_target)
+        tf.histogram_summary("sign_visualize/adv_diff", adv_delta)
         total_error += FLAGS.exp_advantage_diff_learning * adv_diff
 
     tf.scalar_summary("loss/total", total_error)
@@ -347,7 +351,7 @@ def learn(env,
         graph_def=session.graph.as_graph_def(add_shapes=True))
 
     # construct the replay buffer
-    replay_buffer = ReplayBuffer(replay_buffer_size, frame_history_len)
+    replay_buffer = ReplayBuffer(replay_buffer_size, frame_history_len, num_actions)
 
     ###############
     # RUN ENV     #
@@ -365,10 +369,13 @@ def learn(env,
 
     if FLAGS.demo_mode == 'hdf':
         replay_buffer = get_hdf_demo(FLAGS.demo_file_path, replay_buffer)
+        #replay_buffer.fix_action_dist()
     elif FLAGS.demo_mode == 'replay':
         replay_buffer = load_replay_pickle(FLAGS.demo_file_path, FLAGS.dataset_size)
+        #replay_buffer.fix_action_dist()
     elif FLAGS.demo_mode == 'dqfd':
         replay_buffer_demo = load_replay_pickle(FLAGS.demo_file_path, FLAGS.dataset_size)
+        #replay_buffer_demo.fix_action_dist()
     elif FLAGS.demo_mode == 'no_demo':
         pass
     else:
@@ -428,45 +435,39 @@ def learn(env,
         #####
 
         # YOUR CODE HERE
-        # TODO: right now the demonstration and dqn share the same buffer
         if FLAGS.collect_Q_experience:
-            assert (np.sign(FLAGS.soft_Q_loss_weight)<0 or np.sign(FLAGS.hard_Q_loss_weight)<0)
-            if FLAGS.hard_Q_loss_weight > 0 or FLAGS.force_original_exploration:
-                idx = replay_buffer.store_frame(last_obs)
+            idx = replay_buffer.store_frame(last_obs)
+            if FLAGS.explore_value_method == "normal":
                 eps = exploration.value(t)
-                #eps = FLAGS.tiny_explore
-                is_greedy = np.random.rand(1) >= eps
-                if is_greedy and model_initialized:
-                    recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-                    q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                    action = np.argmax(np.squeeze(q_values))
-                else:
-                    action = np.random.choice(num_actions)
-
-                obs, reward, done, info = env.step(action)
-                if done:
-                    obs = env.reset()
-                replay_buffer.store_effect(idx, action, reward, done)
-                last_obs = obs
+            elif FLAGS.explore_value_method == "tiny":
+                eps = FLAGS.tiny_explore
             else:
-                idx = replay_buffer.store_frame(last_obs)
-                #eps = FLAGS.tiny_explore
-                eps = exploration.value(t)
-                is_greedy = np.random.rand(1) >= eps
-                if is_greedy and model_initialized:
-                    recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-                    q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                    q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
-                    dist = q_values / np.sum(q_values)
-                    action = np.random.choice(num_actions, p=np.squeeze(dist))
+                raise ValueError("explore_method invalid %s" % FLAGS.explore_value_method)
 
+            action_dist_this = np.ones((num_actions), dtype=np.float32) / num_actions
+            if model_initialized:
+                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                if FLAGS.greedy_method == "hard" or FLAGS.force_original_exploration:
+                    max_action = np.argmax(np.squeeze(q_values))
+                    greedy_dist = np.zeros((num_actions), dtype=np.float32)
+                    greedy_dist[max_action] = 1.0
+                elif FLAGS.greedy_method == "soft":
+                    q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
+                    greedy_dist = q_values / np.sum(q_values)
                 else:
-                    action = np.random.choice(num_actions)
-                obs, reward, done, info = env.step(action)
-                if done:
-                    obs = env.reset()
-                replay_buffer.store_effect(idx, action, reward, done)
-                last_obs = obs
+                    raise ValueError("greedy_method invalid %s " % FLAGS.greedy_method)
+
+                action_dist_this = eps * action_dist_this + (1 - eps) * greedy_dist
+
+            action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
+
+            obs, reward, done, info = env.step(action)
+            if done:
+                obs = env.reset()
+
+            replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
+            last_obs = obs
 
         #####
 
@@ -530,21 +531,22 @@ def learn(env,
                 demo_size = int(batch_size * FLAGS.demo_portion)
                 package_demo, need_hinge_demo = \
                     replay_buffer_demo.sample(demo_size, FLAGS.group_name)
-                obs_t_batch_demo, act_t_batch_demo, rew_t_batch_demo, obs_tp1_batch_demo, done_mask_demo = \
+                obs_t_batch_demo, act_t_batch_demo, rew_t_batch_demo, obs_tp1_batch_demo, done_mask_demo, action_dist_demo = \
                     package_demo
                 package, need_hinge = \
                     replay_buffer.sample(batch_size-demo_size, FLAGS.group_name)
-                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
+                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
                     package
                 obs_t_batch   = np.concatenate((obs_t_batch_demo, obs_t_batch))
                 act_t_batch   = np.concatenate((act_t_batch_demo, act_t_batch))
                 rew_t_batch   = np.concatenate((rew_t_batch_demo, rew_t_batch))
                 obs_tp1_batch = np.concatenate((obs_tp1_batch_demo, obs_tp1_batch))
                 done_mask     = np.concatenate((done_mask_demo  , done_mask))
+                action_dist   = np.concatenate((action_dist_demo, action_dist))
             else:
                 package, need_hinge = \
                     replay_buffer.sample(batch_size, FLAGS.group_name)
-                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
+                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
                     package
 
                 # (b)
@@ -563,7 +565,8 @@ def learn(env,
                 obs_tp1_ph: obs_tp1_batch,
                 done_mask_ph: done_mask,
                 need_hinge_ph: need_hinge,
-                learning_rate: optimizer_spec.lr_schedule.value(t)
+                learning_rate: optimizer_spec.lr_schedule.value(t),
+                action_dist_ph: action_dist,
             }
 
             if t % FLAGS.summary_interval == 0:
@@ -587,9 +590,9 @@ def learn(env,
         if FLAGS.eval_freq > 0 and t % FLAGS.eval_freq == 0 and model_initialized:
             print('_' * 50)
             print('Start Evaluating at TimeStep %d' % t)
-            eps = FLAGS.tiny_explore
+            eps = 0.05
 
-            reward_calc, frame_counter = \
+            reward_calc, frame_counter, last_obs = \
                 eval_policy(env, q, obs_t_ph,
                             session,
                             eps, frame_history_len, num_actions, img_c)

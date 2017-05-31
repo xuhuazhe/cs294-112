@@ -83,6 +83,9 @@ tf.app.flags.DEFINE_float('exp_soft_Q_bellman', -1.0,
                             """""")
 tf.app.flags.DEFINE_float('exp_policy_grad_weighting', -1.0,
                             """""")
+tf.app.flags.DEFINE_float('ratio_truncate_thres', 10.0,
+                            """""")
+
 tf.app.flags.DEFINE_float('policy_gradient_soft_1_step_surrogate', -1.0,
                             """""")
 tf.app.flags.DEFINE_float('exp_advantage_diff_learning', -1.0,
@@ -115,11 +118,18 @@ tf.app.flags.DEFINE_string('tag_prefix', '',
                            """""")
 tf.app.flags.DEFINE_boolean('force_original_exploration', False,
                            """""")
+tf.app.flags.DEFINE_string('explore_value_method', "normal",
+                           """""")
+tf.app.flags.DEFINE_string('greedy_method', "hard",
+                           """""")
+
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
+
 tf.app.flags.DEFINE_float('learning_rate', 0.0001,
                           """learning rate might change, e.g. dueling net need small learning rate""")
-
+tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
+                           """""")
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     print("*Dueling Net is enabled!*")
@@ -140,6 +150,7 @@ def dueling_model(img_in, num_actions, scope, reuse=False):
                 out_value = layers.fully_connected(out_value, num_outputs=1          , activation_fn=None)
                 Q = out_value + out_adv - tf.reduce_mean(out_value, 1, keep_dims = True)
             return Q
+
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -291,18 +302,22 @@ def default_parameters(**kwargs):
         ], outside_value=0.01
     )
 
-def main(_):
-    benchmark = gym.benchmark_spec('Atari40M')
-    # Change the index to select a different game.
-    task = benchmark.tasks[2]
-    default_parameters(num_timesteps=task.max_timesteps)
+class Object(object):
+    pass
 
+def main(_):
     if not FLAGS.config.endswith("()"):
         FLAGS.config += "()"
 
     eval(FLAGS.config)
     #collect_demonstration()
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
+
+    task = Object()
+    task.max_timesteps = int(4e7)
+    task.env_id = FLAGS.env_id
+
+    default_parameters(num_timesteps=int(4e7))
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
