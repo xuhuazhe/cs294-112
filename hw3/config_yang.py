@@ -479,3 +479,20 @@ def exp_policy_grad_weighting_ratio_env():
     #FLAGS.hard_Q_loss_weight = 1.0
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.force_original_exploration = True
+
+# from this point, we change the evaluation to Standard Eval.
+# i.e. eps=0.05, and max emulator time 30 mins
+def exp_policy_grad_weighting_ratio_env_pong():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.env_id="PongNoFrameskip-v3"

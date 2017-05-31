@@ -587,9 +587,9 @@ def learn(env,
         if FLAGS.eval_freq > 0 and t % FLAGS.eval_freq == 0 and model_initialized:
             print('_' * 50)
             print('Start Evaluating at TimeStep %d' % t)
-            eps = FLAGS.tiny_explore
+            eps = 0.05
 
-            reward_calc, frame_counter = \
+            reward_calc, frame_counter, last_obs = \
                 eval_policy(env, q, obs_t_ph,
                             session,
                             eps, frame_history_len, num_actions, img_c)
