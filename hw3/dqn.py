@@ -29,7 +29,8 @@ def learn(env,
           learning_freq=4,
           frame_history_len=4,
           target_update_freq=10000,
-          grad_norm_clipping=10):
+          grad_norm_clipping=10,
+          env_test=None):
     """Run Deep Q-learning algorithm.
 
     You can specify your own convnet using q_func.
@@ -589,8 +590,8 @@ def learn(env,
             print('Start Evaluating at TimeStep %d' % t)
             eps = 0.05
 
-            reward_calc, frame_counter, last_obs = \
-                eval_policy(env, q, obs_t_ph,
+            reward_calc, frame_counter = \
+                eval_policy(env_test, q, obs_t_ph,
                             session,
                             eps, frame_history_len, num_actions, img_c)
 
