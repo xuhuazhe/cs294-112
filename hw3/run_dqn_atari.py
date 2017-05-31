@@ -177,7 +177,8 @@ def atari_model(img_in, num_actions, scope, reuse=False):
 
 def atari_learn(env,
                 session,
-                num_timesteps):
+                num_timesteps,
+                env_test):
     # TODO: principle of Adam and more parameters
     optimizer = dqn.OptimizerSpec(
         constructor=tf.train.AdamOptimizer,
@@ -210,7 +211,8 @@ def atari_learn(env,
         learning_freq=4,
         frame_history_len=FLAGS.frame_history_len,
         target_update_freq=FLAGS.target_update_freq,
-        grad_norm_clipping=10
+        grad_norm_clipping=10,
+        env_test=env_test,
     )
     env.close()
 
@@ -279,6 +281,18 @@ def get_env(task, seed):
 
     return env
 
+def get_env_test(task, seed):
+    env_id = task.env_id
+
+    env = gym.make(env_id)
+
+    set_global_seeds(seed)
+    env.seed(seed)
+
+    env = wrap_deepmind(env)
+
+    return env
+
 
 def default_parameters(**kwargs):
     # This is just a rough estimate
@@ -325,7 +339,8 @@ def main(_):
     session = get_session()
 
     if FLAGS.learning_stage:
-        atari_learn(env, session, num_timesteps=task.max_timesteps)
+        atari_learn(env, session, num_timesteps=task.max_timesteps,
+                    env_test=get_env_test(task, seed))
     else:
         atari_collect(env, session, num_timesteps=task.max_timesteps)
 

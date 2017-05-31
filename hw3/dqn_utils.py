@@ -504,8 +504,7 @@ def eval_policy(env, q, obs_t_ph,
             print("emulator reach 30 mins maximum length")
             break
 
-    last_obs = env.reset()
-    return reward_calc, frame_counter, last_obs
+    return reward_calc, frame_counter
 
 def eps_scheduler(t, good_step, m_bad, m_good):
     if m_bad > 0:
