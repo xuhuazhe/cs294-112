@@ -17,6 +17,7 @@ FLAGS = tf.app.flags.FLAGS
 def collect(env,
           q_func,
           session,
+          exploration,
           stopping_criterion=None,
           replay_buffer_size=1000000,
           frame_history_len=4):
@@ -80,14 +81,15 @@ def collect(env,
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
             break
-        eps, should_save = eps_scheduler(t, FLAGS.good_step, FLAGS.m_bad, FLAGS.m_good)
+
         if FLAGS.m_bad > 0:
+            eps, should_save = eps_scheduler(t, FLAGS.good_step, FLAGS.m_bad, FLAGS.m_good)
             idx_obs = replay_buffer_obs.store_frame(last_obs)
             if should_save:
                 idx = replay_buffer.store_frame(last_obs)
         else:
             idx = replay_buffer.store_frame(last_obs)
-        #eps = FLAGS.tiny_explore
+            eps = exploration.value(t)
 
 
         is_greedy = np.random.rand(1) >= eps
@@ -106,8 +108,9 @@ def collect(env,
             if FLAGS.m_bad > 0:
                 action = np.random.choice(num_actions)
             else:
-                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                action = np.argsort(np.squeeze(q_values))[-2]
+                #q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                #action = np.argsort(np.squeeze(q_values))[-2]
+                action = np.random.choice(num_actions)
 
         obs, reward, done, info = env.step(action)
         if done:
@@ -146,7 +149,7 @@ def collect(env,
 
     # save the replay buffer
     print('save pickle!')
-    FLAGS.Q_expert_path = './link_data/' + 'bad_demo.p'
+    FLAGS.Q_expert_path = './link_data/' + 'bad_demo_onpolicy.p'
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
 

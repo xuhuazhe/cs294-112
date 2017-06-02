@@ -21,6 +21,8 @@ FLAGS = tf.app.flags.FLAGS
 # DQN types
 tf.app.flags.DEFINE_boolean('ddqn', False,
                             """Enable double Q bellman Update""")
+tf.app.flags.DEFINE_boolean('dueling', False,
+                            """Enable dueling net architecture""")
 
 # demonstration related
 tf.app.flags.DEFINE_string('demo_mode', 'hdf',
@@ -36,7 +38,7 @@ tf.app.flags.DEFINE_string('ckpt_path', '/data/hxu/cs294-112/hw3/link_data/',
                            """where did we save the checkpoints""")
 tf.app.flags.DEFINE_integer('dataset_size',300000,
                             """dataset size to try for all method.""")
-tf.app.flags.DEFINE_float('bad_portion', -1.0,
+tf.app.flags.DEFINE_float('bad_portion', 0,
                             """bad portion for mediocre data.""") # 0.2, 0.8 inverse
 tf.app.flags.DEFINE_integer('good_step', 0,
                             """starting good steps """)
@@ -48,6 +50,8 @@ tf.app.flags.DEFINE_string('bad_dir', '/data/hxu/cs294-112/hw3/link_data/bad_dem
                            """dir for bad demo""")
 tf.app.flags.DEFINE_float('demo_portion', 0.1,
                           """in dqfd, how much demonstration do we want to add to the replay buffer""")
+tf.app.flags.DEFINE_float('bad_starts', 1e5,
+                          """where the bad demonstration starts(time step)""")
 
 
 # evaluation related
@@ -123,8 +127,32 @@ tf.app.flags.DEFINE_string('greedy_method', "hard",
 
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
+
+tf.app.flags.DEFINE_float('learning_rate', 0.0001,
+                          """learning rate might change, e.g. dueling net need small learning rate""")
 tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
                            """""")
+def dueling_model(img_in, num_actions, scope, reuse=False):
+    # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
+    print("*Dueling Net is enabled!*")
+    with slim.arg_scope([layers.convolution2d, layers.fully_connected], outputs_collections="activation_collection"):
+        with tf.variable_scope(scope, reuse=reuse):
+            out = img_in
+            with tf.variable_scope("convnet"):
+                # original architecture
+                out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
+                out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
+                with tf.variable_scope('last_conv'):
+                    out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
+            out = layers.flatten(out)
+            with tf.variable_scope("action_value"):
+                out_adv   = layers.fully_connected(out,     num_outputs=512,         activation_fn=tf.nn.relu)
+                out_adv   = layers.fully_connected(out_adv, num_outputs=num_actions, activation_fn=None)
+                out_value = layers.fully_connected(out,     num_outputs=512,         activation_fn=tf.nn.relu)
+                out_value = layers.fully_connected(out_value, num_outputs=1          , activation_fn=None)
+                Q = out_value + out_adv - tf.reduce_mean(out_value, 1, keep_dims = True)
+            return Q
+
 
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -156,7 +184,7 @@ def atari_learn(env,
     # TODO: principle of Adam and more parameters
     optimizer = dqn.OptimizerSpec(
         constructor=tf.train.AdamOptimizer,
-        kwargs=dict(epsilon=1e-4),
+        kwargs=dict(epsilon=FLAGS.learning_rate),
         lr_schedule=FLAGS.lr_schedule
     )
 
@@ -167,9 +195,13 @@ def atari_learn(env,
         return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps
 
     # TODO: better hyper parameters here
+    if FLAGS.dueling:
+        model = dueling_model
+    else:
+        model = atari_model
     dqn.learn(
         env,
-        q_func=atari_model,
+        q_func=model,
         optimizer_spec=optimizer,
         session=session,
         exploration=FLAGS.exploration_schedule,
@@ -189,18 +221,22 @@ def atari_learn(env,
 def atari_collect(env,
                   session,
                   num_timesteps):
-    num_steps = 600000
+    num_steps = 300000
 
     # TODO: t input is not used here
     def stopping_criterion(env, t):
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
-        return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_steps*4
+        if FLAGS.m_bad > 0:
+            return get_wrapper_by_name(env, "Monitor").get_total_steps() >= int(num_steps * 4 * ((FLAGS.m_good + FLAGS.m_bad)/float(FLAGS.m_bad)))
+        else:
+            return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_steps*4
 
     Q_expert.collect(
         env,
         q_func=atari_model,
         session=session,
+        exploration=FLAGS.exploration_schedule,
         stopping_criterion=stopping_criterion,
         replay_buffer_size=num_steps,
         frame_history_len=FLAGS.frame_history_len)

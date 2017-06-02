@@ -134,7 +134,7 @@ def compute_exponential_averages(variables, decay):
     apply_op = averager.apply(variables)
     return [averager.average(v) for v in variables], apply_op
 
-def minimize_and_clip(optimizer, objective, var_list, clip_val=10):
+def minimize_and_clip(optimizer, objective, var_list, dueling_list=None, clip_val=10, multiplier=1/np.sqrt(2)):
     """Minimized `objective` using `optimizer` w.r.t. variables in
     `var_list` while ensure the norm of the gradients for each
     variable is clipped to `clip_val`
@@ -144,6 +144,13 @@ def minimize_and_clip(optimizer, objective, var_list, clip_val=10):
         if grad is not None:
             gradients[i] = (tf.clip_by_norm(grad, clip_val), var)
             tf.histogram_summary("gradients/"+gradients[i][0].op.name, gradients[i][0])
+    if  FLAGS.dueling:
+        gradients_duel = optimizer.compute_gradients(objective, var_list=dueling_list)
+        for i, (grad, var) in enumerate(gradients_duel):
+            if grad is not None:
+                gradients_duel[i] = (multiplier * grad, var)
+                tf.histogram_summary("gradients_scaled/"+gradients_duel[i][0].op.name, gradients_duel[i][0])
+        gradients = gradients + gradients_duel
     return optimizer.apply_gradients(gradients)
 
 def initialize_interdependent_variables(session, vars_list, feed_dict):
@@ -504,10 +511,10 @@ def eps_scheduler(t, good_step, m_bad, m_good):
         if t< good_step:
             should_save = True
             return 0, should_save
-        elif (t-good_step) % (m_good+m_bad) <= m_good:
+        elif (t-good_step) % (m_good+m_bad) < m_good:
             should_save = False
             return 0, should_save
-        elif (t-good_step) % (m_good+m_bad) > m_good:
+        elif (t-good_step) % (m_good+m_bad) >= m_good:
             should_save = True
             return 1, should_save
     else:

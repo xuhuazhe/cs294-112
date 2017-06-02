@@ -147,7 +147,8 @@ def learn(env,
     # YOUR CODE HERE
     # The (rapidly updated Q network)
     q = q_func(obs_t_float, num_actions, scope="q_func", reuse=False)
-    q_func_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='q_func')
+    dueling_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='q_func/convnet/last_conv')
+    q_func_vars  = tf.get_collection(tf.GraphKeys.VARIABLES, scope='q_func')
 
     # The target Q network
     target_q = q_func(obs_tp1_float, num_actions, scope="target_q_func", reuse=False)
@@ -358,7 +359,9 @@ def learn(env,
     tf.scalar_summary("learning_rate", learning_rate)
     optimizer = optimizer_spec.constructor(learning_rate=learning_rate, **optimizer_spec.kwargs)
     train_fn = minimize_and_clip(optimizer, total_error,
-                                 var_list=q_func_vars, clip_val=grad_norm_clipping)
+                                 var_list=q_func_vars,
+                                 dueling_list=dueling_vars,
+                                 clip_val=grad_norm_clipping)
 
     # update_target_fn will be called periodically to copy Q network to target Q network
     update_target_fn = []
