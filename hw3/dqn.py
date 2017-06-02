@@ -299,24 +299,49 @@ def learn(env,
             v = tf.expand_dims(v, 1)
             return tf.exp((q-v) / (1.0*alpha))
 
+    # weighting term computation
+    def get_weighting(q, Vrapid, alpha, act_t_ph, action_dist_ph, num_actions, ratio_truncate_thres):
+        pi_rapid = QV2pi(q, Vrapid, alpha)
+        pi_selected = select_each_row(pi_rapid, act_t_ph, num_actions)
+        mu_selected = select_each_row(action_dist_ph, act_t_ph, num_actions)
+        ratio = pi_selected / mu_selected
+        weighting = tf.stop_gradient(tf.minimum(ratio, ratio_truncate_thres), name="weighting")
+        return weighting
+
     if FLAGS.exp_policy_grad_weighting > 0:
         with tf.variable_scope("exp_policy_grad_weighting"):
-            pi_rapid = QV2pi(q, Vrapid, alpha)
-            pi_selected = select_each_row(pi_rapid, act_t_ph, num_actions)
-            mu_selected = select_each_row(action_dist_ph, act_t_ph, num_actions)
+            # get the weighting based on rapid net
+            weighting = get_weighting(q, Vrapid, alpha, act_t_ph, action_dist_ph, num_actions,
+                                      FLAGS.ratio_truncate_thres)
 
             node_grad = q_act - Vrapid
             node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
             #node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead, name="q_yStar")
 
-            ratio = pi_selected / mu_selected
-            weighting = tf.stop_gradient(tf.minimum(ratio, FLAGS.ratio_truncate_thres), name="weighting")
             weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting, name="grad_final")
             total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
 
             tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting)
             tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
             tf.histogram_summary("weighting_of_grad", weighting)
+
+    if FLAGS.exp_value_critic_weighting > 0:
+        # fit a value critic using the Q values
+        # Vrapid == rapid net, on current frame
+        # V_target == target net, on next frame
+        # first compute the target value
+        print("using value fitting baseline")
+        target_now_V = Q2V(target_now, alpha)
+        weighting_target = get_weighting(target_now,
+                                         target_now_V,
+                                         alpha, act_t_ph, action_dist_ph, num_actions, FLAGS.ratio_truncate_thres)
+        pi = QV2pi(target_now, target_now_V, alpha)
+        KL = tf.reduce_sum(pi * target_now, 1) - target_now_V
+
+        y = weighting_target * (rew_t_ph - KL + (1 - done_mask_ph)*gamma*V_target)
+        y = tf.stop_gradient(y)
+        loss = tf.reduce_mean(tf.square(y-Vrapid))
+        total_error += FLAGS.exp_value_critic_weighting * loss
 
     if FLAGS.exp_advantage_diff_learning > 0:
         V_target_now = Q2V(target_now, alpha)

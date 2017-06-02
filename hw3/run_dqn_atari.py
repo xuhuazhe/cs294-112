@@ -86,6 +86,8 @@ tf.app.flags.DEFINE_float('policy_gradient_soft_1_step_surrogate', -1.0,
                             """""")
 tf.app.flags.DEFINE_float('exp_advantage_diff_learning', -1.0,
                             """""")
+tf.app.flags.DEFINE_float('exp_value_critic_weighting', -1.0,
+                            """""")
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',
