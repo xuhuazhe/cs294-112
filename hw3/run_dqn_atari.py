@@ -128,8 +128,6 @@ tf.app.flags.DEFINE_string('greedy_method', "hard",
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
 
-tf.app.flags.DEFINE_float('learning_rate', 0.0001,
-                          """learning rate might change, e.g. dueling net need small learning rate""")
 tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
                            """""")
 def dueling_model(img_in, num_actions, scope, reuse=False):
@@ -184,7 +182,7 @@ def atari_learn(env,
     # TODO: principle of Adam and more parameters
     optimizer = dqn.OptimizerSpec(
         constructor=tf.train.AdamOptimizer,
-        kwargs=dict(epsilon=FLAGS.learning_rate),
+        kwargs=dict(epsilon=1e-4),
         lr_schedule=FLAGS.lr_schedule
     )
 
