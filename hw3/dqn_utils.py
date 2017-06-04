@@ -499,9 +499,10 @@ def eval_policy(env, q, obs_t_ph,
         reward_calc += reward
         if done:
             break
-        if frame_counter >= 30*60*(60/4):
+        #if frame_counter >= 30*60*(60/4):
+        if frame_counter >= 5 * 60 * (60 / 4):
             # 30mins * 60seconds * 15Hz
-            print("emulator reach 30 mins maximum length")
+            print("emulator reach 5 mins maximum length")
             break
 
     return reward_calc, frame_counter
