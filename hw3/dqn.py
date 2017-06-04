@@ -309,11 +309,13 @@ def learn(env,
         weighting = tf.stop_gradient(tf.minimum(ratio, ratio_truncate_thres), name="weighting")
         return weighting
 
+    weighting_rapid = get_weighting(q, Vrapid, alpha, act_t_ph, action_dist_ph, num_actions,
+                              FLAGS.ratio_truncate_thres)
+
     if FLAGS.exp_policy_grad_weighting > 0:
         with tf.variable_scope("exp_policy_grad_weighting"):
             # get the weighting based on rapid net
-            weighting = get_weighting(q, Vrapid, alpha, act_t_ph, action_dist_ph, num_actions,
-                                      FLAGS.ratio_truncate_thres)
+            weighting = weighting_rapid
 
             node_grad = q_act - Vrapid
             node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
@@ -339,9 +341,14 @@ def learn(env,
         pi = QV2pi(target_now, target_now_V, alpha)
         KL = tf.reduce_sum(pi * target_now, 1) - target_now_V
 
+        if FLAGS.critic_use_rapid_weighting:
+            print("Warning using a rapid weighting strategy")
+            weighting_target = weighting_rapid
+
         y = weighting_target * (rew_t_ph - KL + (1 - done_mask_ph)*gamma*V_target)
         y = tf.stop_gradient(y)
         loss = tf.reduce_mean(tf.square(y-Vrapid))
+        tf.scalar_summary("loss/exp_value_critic_mean_square_error", loss)
         total_error += FLAGS.exp_value_critic_weighting * loss
 
     if FLAGS.exp_advantage_diff_learning > 0:

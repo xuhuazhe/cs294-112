@@ -92,6 +92,9 @@ tf.app.flags.DEFINE_float('exp_advantage_diff_learning', -1.0,
                             """""")
 tf.app.flags.DEFINE_float('exp_value_critic_weighting', -1.0,
                             """""")
+tf.app.flags.DEFINE_boolean('critic_use_rapid_weighting', False,
+                            """""")
+
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',
