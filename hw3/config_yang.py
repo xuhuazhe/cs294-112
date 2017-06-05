@@ -3,6 +3,7 @@ import os
 import inspect
 sys.path.append('../')
 import tensorflow as tf
+from dqn_utils import PiecewiseSchedule
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -496,3 +497,126 @@ def exp_policy_grad_weighting_ratio_env_pong():
 
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.env_id="PongNoFrameskip-v3"
+
+def exp_policy_grad_weighting_ratio_env_smallLR():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+
+    num_iterations = float(4e7) / 4.0
+    lr_multiplier = 0.1
+    FLAGS.lr_schedule = PiecewiseSchedule([
+        (0, 1e-4 * lr_multiplier),
+        (num_iterations / 10, 1e-4 * lr_multiplier),
+        (num_iterations / 2, 5e-5 * lr_multiplier),
+        ],
+        outside_value=5e-5 * lr_multiplier)
+
+def exp_policy_grad_weighting_ratio_env_plus_Qloss():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.soft_Q_loss_weight = 1.0
+
+def soft_Q_base():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.soft_Q_loss_weight = 1.0
+
+def PG_Vloss():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.exp_value_critic_weighting = 1.0
+
+def soft_Q_soft_explore():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.greedy_method = "soft"
+    FLAGS.explore_value_method = "normal"
+
+    FLAGS.env_id = "PongNoFrameskip-v3"
+
+def hard_Q_paper_explore():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # config exploration schedule
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 1.0),
+            (1e6, 0.1),
+        ], outside_value=0.1
+    )
+
+def PG_Vloss_rapidWeighting():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '1'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = True
