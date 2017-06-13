@@ -650,9 +650,9 @@ def hard_Q_onpolicy_data():
 def dueling_net_double_Q():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
-    FLAGS.method_name = tag + '_dueling'
+    FLAGS.method_name = tag + '_dueling_30min'
     common_setting()
-    FLAGS.core_num = '1'
+    FLAGS.core_num = '0'
 
     # Q learning specific
     FLAGS.eval_freq = 10000

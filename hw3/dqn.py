@@ -249,7 +249,6 @@ def learn(env,
         max_ent_loss = tf.nn.l2_loss(q_act - q_soft_ahead) * 2 / batch_size
         tf.scalar_summary("loss/soft_Q", max_ent_loss)
         total_error += FLAGS.soft_Q_loss_weight * max_ent_loss
-
     def compute_hinge(act_t, q_t, q_act_t, num_actions):
         loss_l = 0.8 - 0.8 * tf.one_hot(act_t, num_actions)
         large_margin = tf.reduce_max(loss_l + q_t, 1)
@@ -327,6 +326,7 @@ def learn(env,
             tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting)
             tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
             tf.histogram_summary("weighting_of_grad", weighting)
+
 
     if FLAGS.exp_value_critic_weighting > 0:
         # fit a value critic using the Q values
