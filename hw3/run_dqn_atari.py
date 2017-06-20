@@ -7,12 +7,11 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import tensorflow.contrib.slim as slim
-import os
 
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
-import sys
+import sys, os, inspect
 from config import *
 import Q_expert
 
@@ -270,32 +269,33 @@ def get_session():
     print("AVAILABLE GPUS: ", get_available_gpus())
     return session
 
-def get_env(task, seed):
+def get_env(task, seed, istest=False):
     env_id = task.env_id
 
-    env = gym.make(env_id)
+    if env_id == "torcs":
+        # note that you have to start "xvfb_init.sh 99" first
+        sys.path.insert(0, '../../rlTORCS')
+        import py_torcs
+        env = py_torcs.TorcsEnv("discrete",
+                                server=True,
+                                auto_back=False,
+                                game_config=os.path.abspath('../../rlTORCS/game_config/quickrace_discrete_single.xml'))
+    else:
+        env = gym.make(env_id)
 
-    set_global_seeds(seed)
-    env.seed(seed)
+        set_global_seeds(seed)
+        env.seed(seed)
 
-    model_save_path = os.path.join('./link_data/', FLAGS.method_name)
-    env = wrappers.Monitor(env, model_save_path, force=True)
-    env = wrap_deepmind(env)
+    if not istest:
+        model_save_path = os.path.join('./link_data/', FLAGS.method_name)
+        env = wrappers.Monitor(env, model_save_path, force=True)
+
+    if env_id == "torcs":
+        env = wrap_torcs(env)
+    else:
+        env = wrap_deepmind(env)
 
     return env
-
-def get_env_test(task, seed):
-    env_id = task.env_id
-
-    env = gym.make(env_id)
-
-    set_global_seeds(seed)
-    env.seed(seed)
-
-    env = wrap_deepmind(env)
-
-    return env
-
 
 def default_parameters(**kwargs):
     # This is just a rough estimate
@@ -343,7 +343,7 @@ def main(_):
 
     if FLAGS.learning_stage:
         atari_learn(env, session, num_timesteps=task.max_timesteps,
-                    env_test=get_env_test(task, seed))
+                    env_test=get_env(task, seed, True))
     else:
         atari_collect(env, session, num_timesteps=task.max_timesteps)
 
