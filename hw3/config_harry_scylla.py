@@ -650,12 +650,12 @@ def hard_Q_onpolicy_data():
 def dueling_net_double_Q():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
-    FLAGS.method_name = tag + '_dueling'
+    FLAGS.method_name = tag + '_dueling_30min'
     common_setting()
-    FLAGS.core_num = '1'
+    FLAGS.core_num = '0'
 
     # Q learning specific
-    FLAGS.eval_freq = -1
+    FLAGS.eval_freq = 10000
     FLAGS.demo_mode = "no_demo"
     FLAGS.hard_Q_loss_weight = 1.0
     FLAGS.collect_Q_experience = True
@@ -664,6 +664,24 @@ def dueling_net_double_Q():
     #FLAGS.learning_rate = 5e-5
     FLAGS.ddqn = True
 
+def dueling_net_double_Q_eval():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    common_setting()
+    FLAGS.core_num = '1'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = False
+    FLAGS.dueling = True
+    FLAGS.learning_starts = 0
+    # FLAGS.learning_rate = 5e-5
+    FLAGS.ddqn = True
+    FLAGS.inenv_eval = True
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/dueling_net_double_Q_dueling/'
 
 
 

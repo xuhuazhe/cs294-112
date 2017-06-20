@@ -142,15 +142,20 @@ def minimize_and_clip(optimizer, objective, var_list, dueling_list=None, clip_va
     gradients = optimizer.compute_gradients(objective, var_list=var_list)
     for i, (grad, var) in enumerate(gradients):
         if grad is not None:
+            print(var.op.name, "what is var for me!!!!!!!!!!!!")
+            #break
+            if 'q_func/convnet/last_conv' in var.op.name:
+                print('*'*30, 'multiply!')
+                grad = multiplier * grad
             gradients[i] = (tf.clip_by_norm(grad, clip_val), var)
             tf.histogram_summary("gradients/"+gradients[i][0].op.name, gradients[i][0])
-    if  FLAGS.dueling:
-        gradients_duel = optimizer.compute_gradients(objective, var_list=dueling_list)
-        for i, (grad, var) in enumerate(gradients_duel):
-            if grad is not None:
-                gradients_duel[i] = (multiplier * grad, var)
-                tf.histogram_summary("gradients_scaled/"+gradients_duel[i][0].op.name, gradients_duel[i][0])
-        gradients = gradients + gradients_duel
+    #if  FLAGS.dueling:
+    #    gradients_duel = optimizer.compute_gradients(objective, var_list=dueling_list)
+    #    for i, (grad, var) in enumerate(gradients_duel):
+    #        if grad is not None:
+    #            gradients_duel[i] = (multiplier * grad, var)
+    #            tf.histogram_summary("gradients_scaled/"+gradients_duel[i][0].op.name, gradients_duel[i][0])
+    #    gradients = gradients + gradients_duel
     return optimizer.apply_gradients(gradients)
 
 def initialize_interdependent_variables(session, vars_list, feed_dict):
@@ -232,7 +237,10 @@ class ReplayBuffer(object):
 
     def can_sample(self, batch_size):
         """Returns true if `batch_size` different transitions can be sampled from the buffer."""
-        return batch_size + 1 <= self.num_in_buffer
+        if FLAGS.inenv_eval:
+            return True
+        else:
+            return batch_size + 1 <= self.num_in_buffer
 
     def _encode_sample(self, idxes):
         obs_batch      = np.concatenate([self._encode_observation(idx)[None] for idx in idxes], 0)
@@ -499,8 +507,8 @@ def eval_policy(env, q, obs_t_ph,
         reward_calc += reward
         if done:
             break
-        #if frame_counter >= 30*60*(60/4):
-        if frame_counter >= 5 * 60 * (60 / 4):
+        if frame_counter >= 30*60*(60/4):
+        #if frame_counter >= 5 * 60 * (60 / 4):
             # 30mins * 60seconds * 15Hz
             print("emulator reach 5 mins maximum length")
             break

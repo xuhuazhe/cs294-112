@@ -9,7 +9,7 @@
 declare -a arr=("dueling_net_double_Q()")
 for i in "${arr[@]}"
 do
-    python run_dqn_atari.py --config $i --bad_dir='/backup/hxu/modelRL/bad_demo_onpolicy.p' --bad_portion=0.25 &
+    python run_dqn_atari.py --config $i &
     #python run_dqn_atari.py --config $i --dataset_size=300000 --demo_file_path='/data/hxu/cs294-112/hw3/link_data/bad_demo_50000.0_0.3' &
     #python run_dqn_atari.py --config $i --dataset_size=300000 --core_num=1 --demo_file_path='/data/hxu/cs294-112/hw3/link_data/bad_demo_150000.0_0.7' &
     #python run_dqn_atari.py --config $i --dataset_size=300000 --core_num=2 --demo_file_path='/data/hxu/cs294-112/hw3/link_data/bad_demo_250000.0_0.7' &

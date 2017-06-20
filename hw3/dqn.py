@@ -249,7 +249,6 @@ def learn(env,
         max_ent_loss = tf.nn.l2_loss(q_act - q_soft_ahead) * 2 / batch_size
         tf.scalar_summary("loss/soft_Q", max_ent_loss)
         total_error += FLAGS.soft_Q_loss_weight * max_ent_loss
-
     def compute_hinge(act_t, q_t, q_act_t, num_actions):
         loss_l = 0.8 - 0.8 * tf.one_hot(act_t, num_actions)
         large_margin = tf.reduce_max(loss_l + q_t, 1)
@@ -327,6 +326,7 @@ def learn(env,
             tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting)
             tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
             tf.histogram_summary("weighting_of_grad", weighting)
+
 
     if FLAGS.exp_value_critic_weighting > 0:
         # fit a value critic using the Q values
@@ -415,7 +415,7 @@ def learn(env,
         raise ValueError("invalid FLAGS.demo_mode = %s" % FLAGS.demo_mode)
 
     #print(replay_buffer.obs.shape, replay_buffer.reward.shape, replay_buffer.action.shape, replay_buffer.done.shape)
-    if FLAGS.inenv_finetune:
+    if FLAGS.inenv_finetune or FLAGS.inenv_eval:
         print('*'*30)
         print(FLAGS.ckpt_path)
         ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_path)
@@ -560,7 +560,7 @@ def learn(env,
                 print('saved at: ', save_path)
 
 
-            if FLAGS.demo_mode == 'dqfd':
+            if FLAGS.demo_mode == 'dqfd' and not FLAGS.inenv_eval:
                 demo_size = int(batch_size * FLAGS.demo_portion)
                 package_demo, need_hinge_demo = \
                     replay_buffer_demo.sample(demo_size, FLAGS.group_name)
@@ -576,7 +576,7 @@ def learn(env,
                 obs_tp1_batch = np.concatenate((obs_tp1_batch_demo, obs_tp1_batch))
                 done_mask     = np.concatenate((done_mask_demo  , done_mask))
                 action_dist   = np.concatenate((action_dist_demo, action_dist))
-            else:
+            elif not FLAGS.inenv_eval:
                 package, need_hinge = \
                     replay_buffer.sample(batch_size, FLAGS.group_name)
                 obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
@@ -591,26 +591,27 @@ def learn(env,
                 model_initialized = True
 
             # (c)
-            feed_dict = {
-                obs_t_ph: obs_t_batch,
-                act_t_ph: act_t_batch,
-                rew_t_ph: rew_t_batch,
-                obs_tp1_ph: obs_tp1_batch,
-                done_mask_ph: done_mask,
-                need_hinge_ph: need_hinge,
-                learning_rate: optimizer_spec.lr_schedule.value(t),
-                action_dist_ph: action_dist,
-            }
-
-            if t % FLAGS.summary_interval == 0:
-                _, summary_value = session.run([train_fn, summary_op], feed_dict)
-            else:
-                session.run(train_fn, feed_dict)
-            num_param_updates += 1
-
-            # (d)
-            if num_param_updates % target_update_freq == 0:
-                session.run(update_target_fn)
+            if not FLAGS.inenv_eval:
+                feed_dict = {
+                    obs_t_ph: obs_t_batch,
+                    act_t_ph: act_t_batch,
+                    rew_t_ph: rew_t_batch,
+                    obs_tp1_ph: obs_tp1_batch,
+                    done_mask_ph: done_mask,
+                    need_hinge_ph: need_hinge,
+                    learning_rate: optimizer_spec.lr_schedule.value(t),
+                    action_dist_ph: action_dist,
+                }
+                if t % FLAGS.summary_interval == 0:
+                    _, summary_value = session.run([train_fn, summary_op], feed_dict)
+                else:
+                    session.run(train_fn, feed_dict)
+                num_param_updates += 1
+                # (d)
+                if num_param_updates % target_update_freq == 0:
+                    session.run(update_target_fn)
+            #else:
+            #    summary_value = session.run(summary_op, feed_dict)
 
                 #####
 

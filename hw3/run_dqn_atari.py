@@ -106,6 +106,8 @@ tf.app.flags.DEFINE_integer('batch_size', 32,
                            """optimization batch size""")
 tf.app.flags.DEFINE_integer('frame_history_len', 4,
                            """frame_history_len""")
+tf.app.flags.DEFINE_integer('learning_freq', 4,
+                            """the frequency that an agent learns""")
 
 # Other hyper parameters
 tf.app.flags.DEFINE_boolean('save_model', True,
@@ -118,6 +120,8 @@ tf.app.flags.DEFINE_string('group_name', 'rl',
                            """which group does it belong to""")
 tf.app.flags.DEFINE_boolean('inenv_finetune', False,
                             """finetune in the interactive environment""")
+tf.app.flags.DEFINE_boolean('inenv_eval', False,
+                            """whether we want to evaluate these with trained model""")
 tf.app.flags.DEFINE_string('tag_prefix', '',
                            """""")
 tf.app.flags.DEFINE_boolean('force_original_exploration', False,
@@ -150,7 +154,7 @@ def dueling_model(img_in, num_actions, scope, reuse=False):
                 out_adv   = layers.fully_connected(out_adv, num_outputs=num_actions, activation_fn=None)
                 out_value = layers.fully_connected(out,     num_outputs=512,         activation_fn=tf.nn.relu)
                 out_value = layers.fully_connected(out_value, num_outputs=1          , activation_fn=None)
-                Q = out_value + out_adv - tf.reduce_mean(out_value, 1, keep_dims = True)
+                Q = out_value + out_adv - tf.reduce_mean(out_adv, 1, keep_dims = True)
             return Q
 
 
@@ -210,7 +214,7 @@ def atari_learn(env,
         batch_size=FLAGS.batch_size,
         gamma=0.99,
         learning_starts=FLAGS.learning_starts,
-        learning_freq=4,
+        learning_freq=FLAGS.learning_freq,
         frame_history_len=FLAGS.frame_history_len,
         target_update_freq=FLAGS.target_update_freq,
         grad_norm_clipping=10,
