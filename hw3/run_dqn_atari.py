@@ -167,7 +167,9 @@ def atari_model(img_in, num_actions, scope, reuse=False):
                 # original architecture
                 out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
                 out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
-                out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
+                last_stride = 2 if FLAGS.env_id=="torcs" else 1
+                print("the last conv layer stride is %d" % last_stride)
+                out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=last_stride, activation_fn=tf.nn.relu)
             out = layers.flatten(out)
             with tf.variable_scope("action_value"):
                 out = layers.fully_connected(out, num_outputs=512,         activation_fn=tf.nn.relu)
@@ -295,7 +297,9 @@ def get_env(task, seed, istest=False):
         env = wrappers.Monitor(env, model_save_path, force=True)
 
     if env_id == "torcs":
-        env = wrap_torcs(env)
+        # decide not to use the wrapper, otherwise the resolution is too low
+        #env = wrap_torcs(env)
+        pass
     else:
         env = wrap_deepmind(env)
 
