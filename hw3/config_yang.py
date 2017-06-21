@@ -620,3 +620,19 @@ def PG_Vloss_rapidWeighting():
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.critic_use_rapid_weighting = True
+
+############ Begin the TORCS Game ################
+def torcs_dqn():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = 10000
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.env_id="rltorcs-v0"

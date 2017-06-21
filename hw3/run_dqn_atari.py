@@ -1,6 +1,7 @@
 import argparse
 import gym
 from gym import wrappers
+from gym.envs.registration import register
 import os.path as osp
 import random
 import numpy as np
@@ -14,6 +15,16 @@ from atari_wrappers import *
 import sys, os, inspect
 from config import *
 import Q_expert
+
+sys.path.insert(0, '../../rlTORCS')
+register(
+    id='rltorcs-v0',
+    entry_point='py_torcs:TorcsEnv',
+    kwargs={"subtype": "discrete_improved",
+            "server": True,
+            "auto_back": False,
+            "game_config": os.path.abspath('../../rlTORCS/game_config/quickrace_discrete_single.xml')}
+)
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -167,7 +178,7 @@ def atari_model(img_in, num_actions, scope, reuse=False):
                 # original architecture
                 out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
                 out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
-                last_stride = 2 if FLAGS.env_id=="torcs" else 1
+                last_stride = 2 if "torcs" in FLAGS.env_id else 1
                 print("the last conv layer stride is %d" % last_stride)
                 out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=last_stride, activation_fn=tf.nn.relu)
             out = layers.flatten(out)
@@ -278,25 +289,15 @@ def get_session():
 def get_env(task, seed, istest=False):
     env_id = task.env_id
 
-    if env_id == "torcs":
-        # note that you have to start "xvfb_init.sh 99" first
-        sys.path.insert(0, '../../rlTORCS')
-        import py_torcs
-        env = py_torcs.TorcsEnv("discrete",
-                                server=True,
-                                auto_back=False,
-                                game_config=os.path.abspath('../../rlTORCS/game_config/quickrace_discrete_single.xml'))
-    else:
-        env = gym.make(env_id)
-
-        set_global_seeds(seed)
-        env.seed(seed)
+    env = gym.make(env_id)
+    set_global_seeds(seed)
+    env.seed(seed)
 
     if not istest:
         model_save_path = os.path.join('./link_data/', FLAGS.method_name)
         env = wrappers.Monitor(env, model_save_path, force=True)
 
-    if env_id == "torcs":
+    if "torcs" in env_id:
         # decide not to use the wrapper, otherwise the resolution is too low
         #env = wrap_torcs(env)
         pass
