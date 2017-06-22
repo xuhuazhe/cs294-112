@@ -637,6 +637,9 @@ def torcs_dqn():
 
     FLAGS.env_id="rltorcs-v0"
 
+    FLAGS.inenv_finetune = True
+    FLAGS.ckpt_path = FLAGS.method_name
+
 def torcs_dqn_debug():
     tag = inspect.stack()[0][3]
     yang_common_setting(tag)
