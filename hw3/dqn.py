@@ -15,7 +15,7 @@ import math
 FLAGS = tf.app.flags.FLAGS
 OptimizerSpec = namedtuple("OptimizerSpec", ["constructor", "kwargs", "lr_schedule"])
 
-
+#@profile
 def learn(env,
           q_func,
           optimizer_spec,

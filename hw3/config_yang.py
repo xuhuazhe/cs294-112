@@ -629,7 +629,7 @@ def torcs_dqn():
     FLAGS.core_num = '0'
 
     # Q learning specific
-    FLAGS.eval_freq = 10000
+    FLAGS.eval_freq = -1
     FLAGS.demo_mode = "no_demo"
     FLAGS.hard_Q_loss_weight = 1.0
     FLAGS.collect_Q_experience = True
@@ -644,7 +644,7 @@ def torcs_dqn_debug():
     FLAGS.core_num = '0'
 
     # Q learning specific
-    FLAGS.eval_freq = 100
+    FLAGS.eval_freq = -1
     FLAGS.demo_mode = "no_demo"
     FLAGS.hard_Q_loss_weight = 1.0
     FLAGS.collect_Q_experience = True

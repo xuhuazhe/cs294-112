@@ -357,4 +357,9 @@ def main(_):
         atari_collect(env, session, num_timesteps=task.max_timesteps)
 
 if __name__ == "__main__":
-    tf.app.run()
+    #tf.app.run()
+
+    # the following line is the same as tf.app.run
+    f = tf.app.flags.FLAGS
+    flags_passthrough = f._parse_flags()
+    main(0)
