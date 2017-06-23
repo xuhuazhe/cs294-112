@@ -147,6 +147,9 @@ tf.app.flags.DEFINE_integer('target_update_freq', 10000,
 
 tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
                            """""")
+tf.app.flags.DEFINE_string('torcs_resolution', '84x84',
+                           """""")
+
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     print("*Dueling Net is enabled!*")
@@ -178,7 +181,7 @@ def atari_model(img_in, num_actions, scope, reuse=False):
                 # original architecture
                 out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
                 out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
-                last_stride = 2 if "torcs" in FLAGS.env_id else 1
+                last_stride = 2 if ("torcs" in FLAGS.env_id) and (FLAGS.torcs_resolution == "120x160") else 1
                 print("the last conv layer stride is %d" % last_stride)
                 out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=last_stride, activation_fn=tf.nn.relu)
             out = layers.flatten(out)
@@ -295,12 +298,14 @@ def get_env(task, seed, istest=False):
 
     if not istest:
         model_save_path = os.path.join('./link_data/', FLAGS.method_name)
-        env = wrappers.Monitor(env, model_save_path, force=True)
+        video_callable = lambda episode_id: episode_id == int(pow(round(pow(episode_id, 1.0/3)), 3))
+        env = wrappers.Monitor(env, model_save_path, force=True, video_callable=video_callable)
 
     if "torcs" in env_id:
-        # decide not to use the wrapper, otherwise the resolution is too low
-        #env = wrap_torcs(env)
-        pass
+        if FLAGS.torcs_resolution == "84x84":
+            env = wrap_torcs(env)
+        else:
+            print("decide not to use the wrapper, otherwise the resolution is too low")
     else:
         env = wrap_deepmind(env)
 

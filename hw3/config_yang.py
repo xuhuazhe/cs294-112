@@ -637,8 +637,8 @@ def torcs_dqn():
 
     FLAGS.env_id="rltorcs-v0"
 
-    FLAGS.inenv_finetune = True
-    FLAGS.ckpt_path = FLAGS.method_name
+    #FLAGS.inenv_finetune = True
+    #FLAGS.ckpt_path = FLAGS.method_name
 
 def torcs_dqn_debug():
     tag = inspect.stack()[0][3]
@@ -654,3 +654,20 @@ def torcs_dqn_debug():
     FLAGS.learning_starts = 10
 
     FLAGS.env_id="rltorcs-v0"
+
+def torcs_dqn_84x84():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.env_id="rltorcs-v0"
+
+    FLAGS.torcs_resolution="84x84"
