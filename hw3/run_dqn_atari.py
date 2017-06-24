@@ -125,6 +125,10 @@ tf.app.flags.DEFINE_boolean('save_model', True,
                             """save the model of Q""")
 tf.app.flags.DEFINE_integer('learning_starts', 50000,
                             """learning_starts point, 50000 for Q learning, 0 for demonstration""")
+tf.app.flags.DEFINE_integer('replay_buffer_size', 1000000,
+                            """""")
+tf.app.flags.DEFINE_integer('max_timesteps', int(4e7),
+                            """""")
 tf.app.flags.DEFINE_string('config', 'test_test()',
                            """run config name""")
 tf.app.flags.DEFINE_string('group_name', 'rl',
@@ -226,7 +230,7 @@ def atari_learn(env,
         session=session,
         exploration=FLAGS.exploration_schedule,
         stopping_criterion=stopping_criterion,
-        replay_buffer_size=1000000,
+        replay_buffer_size=FLAGS.replay_buffer_size,
         batch_size=FLAGS.batch_size,
         gamma=0.99,
         learning_starts=FLAGS.learning_starts,
@@ -337,6 +341,9 @@ class Object(object):
     pass
 
 def main(_):
+    # potential error here
+    default_parameters(num_timesteps=int(4e7))
+
     if not FLAGS.config.endswith("()"):
         FLAGS.config += "()"
 
@@ -345,10 +352,7 @@ def main(_):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 
     task = Object()
-    task.max_timesteps = int(4e7)
     task.env_id = FLAGS.env_id
-
-    default_parameters(num_timesteps=int(4e7))
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
@@ -356,10 +360,10 @@ def main(_):
     session = get_session()
 
     if FLAGS.learning_stage:
-        atari_learn(env, session, num_timesteps=task.max_timesteps,
+        atari_learn(env, session, num_timesteps=FLAGS.max_timesteps,
                     env_test=get_env(task, seed, True))
     else:
-        atari_collect(env, session, num_timesteps=task.max_timesteps)
+        atari_collect(env, session, num_timesteps=FLAGS.max_timesteps)
 
 if __name__ == "__main__":
     #tf.app.run()

@@ -671,3 +671,45 @@ def torcs_dqn_84x84():
     FLAGS.env_id="rltorcs-v0"
 
     FLAGS.torcs_resolution="84x84"
+
+def torcs_dqn_kx(divider, tag):
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    #FLAGS.learning_starts = 50000
+
+    FLAGS.env_id="rltorcs-v0"
+
+    # begin the divider attempt
+    num_iterations = int(4e7) / 4 / divider
+    FLAGS.learning_starts = 50000 / divider
+    FLAGS.target_update_freq = 10000 / divider
+    FLAGS.replay_buffer_size = 1000000 / divider
+
+    FLAGS.lr_schedule = PiecewiseSchedule([
+            (0, 1e-4),
+            (num_iterations / 10, 1e-4),
+            (num_iterations / 2, 5e-5)],
+        outside_value=5e-5)
+
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+            (0, 1.0),
+            (1e6 / divider, 0.1),
+            (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    # interaction purpose
+    FLAGS.summary_interval = 10000 / divider
+
+def torcs_dqn_3x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_kx(3, tag)
+
+def torcs_dqn_10x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_kx(10, tag)
