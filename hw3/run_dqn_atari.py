@@ -16,16 +16,6 @@ import sys, os, inspect
 from config import *
 import Q_expert
 
-sys.path.insert(0, '../../rlTORCS')
-register(
-    id='rltorcs-v0',
-    entry_point='py_torcs:TorcsEnv',
-    kwargs={"subtype": "discrete_improved",
-            "server": True,
-            "auto_back": False,
-            "game_config": os.path.abspath('../../rlTORCS/game_config/quickrace_discrete_single.xml')}
-)
-
 FLAGS = tf.app.flags.FLAGS
 
 # DQN types
@@ -153,6 +143,9 @@ tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
                            """""")
 tf.app.flags.DEFINE_string('torcs_resolution', '84x84',
                            """""")
+tf.app.flags.DEFINE_string('custom_reward', '',
+                           """""")
+
 
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -356,12 +349,24 @@ def main(_):
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
+    if "torcs" in task.env_id:
+        sys.path.insert(0, '../../rlTORCS')
+        register(
+            id='rltorcs-v0',
+            entry_point='py_torcs:TorcsEnv',
+            kwargs={"subtype": "discrete_improved",
+                    "server": True,
+                    "auto_back": False,
+                    "game_config": os.path.abspath('../../rlTORCS/game_config/quickrace_discrete_single.xml'),
+                    "custom_reward": FLAGS.custom_reward}
+        )
+
     env = get_env(task, seed)
     session = get_session()
 
     if FLAGS.learning_stage:
         atari_learn(env, session, num_timesteps=FLAGS.max_timesteps,
-                    env_test=get_env(task, seed, True))
+                    env_test=get_env(task, seed, True) if FLAGS.eval_freq > 0 else None)
     else:
         atari_collect(env, session, num_timesteps=FLAGS.max_timesteps)
 
