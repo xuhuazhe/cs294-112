@@ -295,7 +295,8 @@ def get_env(task, seed, istest=False):
 
     if not istest:
         model_save_path = os.path.join('./link_data/', FLAGS.method_name)
-        video_callable = lambda episode_id: episode_id == int(pow(round(pow(episode_id, 1.0/3)), 3))
+        video_callable = lambda episode_id: (episode_id == int(pow(round(pow(episode_id, 1.0/3)), 3))) or (episode_id % 300 == 0)
+        #video_callable = lambda episode_id: episode_id % 300 == 299
         env = wrappers.Monitor(env, model_save_path, force=True, video_callable=video_callable)
 
     if "torcs" in env_id:
