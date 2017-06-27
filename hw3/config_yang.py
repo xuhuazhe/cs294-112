@@ -776,3 +776,54 @@ def torcs_10x_BenReward():
     tag = inspect.stack()[0][3]
     torcs_dqn_kx(10, tag)
     FLAGS.custom_reward = "reward_ben"
+
+def torcs_config(tag):
+    torcs_dqn_kx(30, tag)
+    FLAGS.custom_reward = "reward_ben"
+
+def torcs_scan_RB():
+    tag = inspect.stack()[0][3]
+    if FLAGS.exp_policy_grad_weighting > 0:
+        type = "PGweighting"
+    elif FLAGS.policy_gradient_soft_1_step > 0:
+        type = "PG"
+    else:
+        raise ValueError("flag not correctly set")
+    tag = tag + "_RB" + str(FLAGS.replay_buffer_size) + "_" + type
+
+    RB_commandline = FLAGS.replay_buffer_size
+    torcs_config(tag)
+    FLAGS.hard_Q_loss_weight = 0
+    FLAGS.replay_buffer_size = RB_commandline
+
+
+def enduro_config(tag):
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '1'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    # FLAGS.hard_Q_loss_weight = 1.0
+    # need to define your own loss
+
+def enduro_scan_RB():
+    tag = inspect.stack()[0][3]
+    if FLAGS.exp_policy_grad_weighting > 0:
+        type = "PGweighting"
+    elif FLAGS.policy_gradient_soft_1_step > 0:
+        type = "PG"
+    else:
+        raise ValueError("flag not correctly set")
+    tag = tag + "_RB" + str(FLAGS.replay_buffer_size) + "_" + type
+
+    RB_commandline = FLAGS.replay_buffer_size
+    enduro_config(tag)
+    FLAGS.hard_Q_loss_weight = 0
+    FLAGS.replay_buffer_size = RB_commandline
+
+    FLAGS.env_id="EnduroNoFrameskip-v4"
