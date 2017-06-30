@@ -9,6 +9,7 @@ import tensorflow.contrib.layers as layers
 import tensorflow.contrib.slim as slim
 import os
 
+import multistep
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
@@ -95,6 +96,13 @@ tf.app.flags.DEFINE_float('exp_value_critic_weighting', -1.0,
 tf.app.flags.DEFINE_boolean('critic_use_rapid_weighting', False,
                             """""")
 
+# multistep related
+tf.app.flags.DEFINE_boolean('multistep', False,
+                            """whether we need multistep-run""") # TODO: finish this
+tf.app.flags.DEFINE_boolean('multistep_replay', False,
+                            """multistep_replay is off policy multistep""")
+tf.app.flags.DEFINE_boolean('multistep_urex', False,
+                            """urex loss""")
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',
@@ -135,8 +143,27 @@ tf.app.flags.DEFINE_string('greedy_method', "hard",
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
 
-tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
+tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v4',
                            """""")
+
+def policy_model(img_in, num_actions, scope, reuse=False):
+    print("*Multi-step is enabled!*")
+    with slim.arg_scope([layers.convolution2d, layers.fully_connected], outputs_collections="activation_collection"):
+        with tf.variable_scope(scope, reuse=reuse):
+            out = img_in
+            with tf.variable_scope("convnet"):
+                out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
+                out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
+                out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
+            out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
+            with tf.variable_scope("policy_value"):
+                policy = layers.fully_connected(out, num_outputs=512, activation_fn=tf.nn.relu)
+                policy = layers.fully_connected(policy, num_outputs=num_actions, activation_fn=None)
+            with tf.variable_scope("action_value"):
+                value = layers.fully_connected(out,     num_outputs=512,         activation_fn=tf.nn.relu)
+                value = layers.fully_connected(value, num_outputs=1, activation_fn=None)
+            return policy, value
+
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     print("*Dueling Net is enabled!*")
@@ -178,9 +205,15 @@ def atari_model(img_in, num_actions, scope, reuse=False):
                     shared_bias = tf.get_variable("shared_bias", shape=[1])
                     out += shared_bias
                 else:
+                    if FLAGS.multistep:
+                        value = layers.fully_connected(out, num_outputs=1, activation_fn=None)
                     out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
-            return out
+            if FLAGS.multistep:
+                assert value is not None
+                return out, value
+            else:
+                return out
 
 def atari_learn(env,
                 session,
@@ -247,7 +280,8 @@ def atari_collect(env,
         frame_history_len=FLAGS.frame_history_len)
     env.close()
 
-
+def atari_multistep(env):
+    multistep.run(env)
 
 def get_available_gpus():
     from tensorflow.python.client import device_lib
@@ -345,7 +379,9 @@ def main(_):
     env = get_env(task, seed)
     session = get_session()
 
-    if FLAGS.learning_stage:
+    if FLAGS.multistep:
+        multistep.run(env, atari_model)
+    elif FLAGS.learning_stage:
         atari_learn(env, session, num_timesteps=task.max_timesteps,
                     env_test=get_env_test(task, seed))
     else:

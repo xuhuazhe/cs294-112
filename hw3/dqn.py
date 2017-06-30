@@ -15,7 +15,6 @@ import math
 FLAGS = tf.app.flags.FLAGS
 OptimizerSpec = namedtuple("OptimizerSpec", ["constructor", "kwargs", "lr_schedule"])
 
-
 def learn(env,
           q_func,
           optimizer_spec,
@@ -32,11 +31,8 @@ def learn(env,
           grad_norm_clipping=10,
           env_test=None):
     """Run Deep Q-learning algorithm.
-
     You can specify your own convnet using q_func.
-
     All schedules are w.r.t. total number of steps taken in the environment.
-
     Parameters
     ----------
     env: gym.Env
