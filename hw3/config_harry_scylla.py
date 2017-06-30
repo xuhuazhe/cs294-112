@@ -683,6 +683,17 @@ def dueling_net_double_Q_eval():
     FLAGS.inenv_eval = True
     FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/dueling_net_double_Q_dueling/'
 
+def urex_multistep():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.method_name = tag
+    common_setting()
+    FLAGS.core_num = '7'
+
+    # Q learning specific
+    FLAGS.multistep = True
+    FLAGS.multistep_urex = True
+    FLAGS.multistep_replay = False
 
 
 
