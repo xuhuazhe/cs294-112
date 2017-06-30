@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*
 import gym
 from gym import wrappers
 import matplotlib

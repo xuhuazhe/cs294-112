@@ -129,6 +129,36 @@ class ProcessFrame84(gym.Wrapper):
     def _reset(self):
         return _process_frame84(self.env.reset())
 
+class TorcsProcessFrame84(gym.Wrapper):
+    def aframe(self, frame):
+        img = np.reshape(frame, [self.image_height, self.image_width, 3]).astype(np.float32)
+        img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
+        if self.resize_or_crop == "crop":
+            resized_screen = cv2.resize(img, (112, 84), interpolation=cv2.INTER_LINEAR)
+            x_t = resized_screen[:, 14:98]
+        elif self.resize_or_crop == "resize":
+            x_t = cv2.resize(img, (84, 84), interpolation=cv2.INTER_LINEAR)
+        else:
+            raise ValueError("invalid resize_or_crop parameter")
+
+        x_t = np.reshape(x_t, [84, 84, 1])
+        return x_t.astype(np.uint8)
+
+    def __init__(self, env=None, resize_or_crop="resize"):
+        self.image_width = 160
+        self.image_height = 120
+        self.resize_or_crop = resize_or_crop
+
+        super(TorcsProcessFrame84, self).__init__(env)
+        self.observation_space = spaces.Box(low=0, high=255, shape=(84, 84, 1))
+
+    def _step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        return self.aframe(obs), reward, done, info
+
+    def _reset(self):
+        return self.aframe(self.env.reset())
+
 class ClippedRewardsWrapper(gym.Wrapper):
     def _step(self, action):
         obs, reward, done, info = self.env.step(action)
@@ -159,4 +189,13 @@ def wrap_deepmind(env):
         env = FireResetEnv(env)
     env = ProcessFrame84(env)
     env = ClippedRewardsWrapper(env)
+    return env
+
+# note that the difference between torcs and original atari game
+# 1. no random number of NOOP reset
+# 2. frame skip has implemented in Torcs, but no max between frames applied
+# 3. !!! convert to gray and bilinear resize to 84*84
+# 4. !!! NO reward clipping, learning rate scale might be different
+def wrap_torcs(env):
+    env = TorcsProcessFrame84(env, resize_or_crop="resize")
     return env

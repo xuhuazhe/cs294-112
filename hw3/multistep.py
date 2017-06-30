@@ -160,7 +160,7 @@ def normal_kl(old_mean, old_log_std, new_mean, new_log_std):
 def normal_entropy(log_std):
     return tf.reduce_sum(log_std + np.log(np.sqrt(2 * np.pi * np.e)), axis=1)
 
-def main_atari(env, model, n_iter=100, gamma=1.0, min_timesteps_per_batch=1000, stepsize=1e-2, animate=True, logdir=None, vf_type='nn', tau=0.1, timesteps_threshold=5000):
+def main_atari(env, model, n_iter=10000, gamma=1.0, min_timesteps_per_batch=1000, stepsize=1e-2, animate=True, logdir=None, vf_type='nn', tau=0.1, timesteps_threshold=5000):
     tf.reset_default_graph()
     ob_dim_1 = env.observation_space.shape[0]
     ob_dim_2 = env.observation_space.shape[1]

@@ -243,11 +243,47 @@ class ReplayBuffer(object):
         else:
             return batch_size + 1 <= self.num_in_buffer
 
+    def _encode_observation_batch(self, idxes, plus):
+        obs = [self._encode_observation(idx+plus, True) for idx in idxes]
+
+        img_h, img_w, img_c = self.obs.shape[1], self.obs.shape[2], self.obs.shape[3]
+        framelen=self.frame_history_len
+
+        # fitler out the tuples
+        indexes = []
+        batches = []
+
+        def add_a_batch():
+            # form this batch
+            batch = self.obs[indexes].reshape(-1, framelen, img_h, img_w, img_c)
+            batch = batch.transpose(0, 2, 3, 1, 4)
+            print(batch.shape)
+            batch = batch.reshape(-1, img_h, img_w, framelen*img_c)
+            batches.append(batch)
+
+        for i, tuple in enumerate(obs):
+            if isinstance(tuple, type((1, 1))):
+                indexes += range(tuple[0], tuple[1])
+            else:
+                # size batch*4**H*W*C
+                if len(indexes) > 0:
+                    add_a_batch()
+                    indexes = []
+                batches.append(obs[i].reshape(1, img_h, img_w, framelen*img_c))
+
+        if len(indexes) > 0:
+            add_a_batch()
+
+        return np.concatenate(batches, 0)
+
+
     def _encode_sample(self, idxes):
-        obs_batch      = np.concatenate([self._encode_observation(idx)[None] for idx in idxes], 0)
+        obs_batch = np.concatenate([self._encode_observation(idx)[None] for idx in idxes], 0)
+        #obs_batch = self._encode_observation_batch(idxes, 0)
         act_batch      = self.action[idxes]
         rew_batch      = self.reward[idxes]
         next_obs_batch = np.concatenate([self._encode_observation(idx + 1)[None] for idx in idxes], 0)
+        #next_obs_batch = self._encode_observation_batch(idxes, 1)
         done_mask      = np.array([1.0 if self.done[idx] else 0.0 for idx in idxes], dtype=np.float32)
         action_dist_batch = self.action_dist[idxes, :]
 
@@ -325,7 +361,7 @@ class ReplayBuffer(object):
         assert self.num_in_buffer > 0
         return self._encode_observation((self.next_idx - 1) % self.size)
 
-    def _encode_observation(self, idx):
+    def _encode_observation(self, idx, returnIndex=False):
         end_idx   = idx + 1 # make noninclusive
         start_idx = end_idx - self.frame_history_len
         # this checks if we are using low-dimensional observations, such as RAM
@@ -346,10 +382,15 @@ class ReplayBuffer(object):
             for idx in range(start_idx, end_idx):
                 frames.append(self.obs[idx % self.size])
             return np.concatenate(frames, 2)
+            # this branch returns a H*W*(NC) object
         else:
-            # this optimization has potential to saves about 30% compute time \o/
-            img_h, img_w = self.obs.shape[1], self.obs.shape[2]
-            return self.obs[start_idx:end_idx].transpose(1, 2, 0, 3).reshape(img_h, img_w, -1)
+            if returnIndex:
+                return (start_idx, end_idx)
+            else:
+                # this optimization has potential to saves about 30% compute time \o/
+                img_h, img_w = self.obs.shape[1], self.obs.shape[2]
+                # from NHWC to HWNC, to H*W*NC
+                return self.obs[start_idx:end_idx].transpose(1, 2, 0, 3).reshape(img_h, img_w, -1)
 
     def store_frame(self, frame):
         """Store a single frame in the buffer at the next available index, overwriting

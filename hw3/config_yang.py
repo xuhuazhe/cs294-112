@@ -620,3 +620,210 @@ def PG_Vloss_rapidWeighting():
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.critic_use_rapid_weighting = True
+
+############ Begin the TORCS Game ################
+def torcs_dqn():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.env_id="rltorcs-v0"
+
+    #FLAGS.inenv_finetune = True
+    #FLAGS.ckpt_path = FLAGS.method_name
+
+def torcs_dqn_debug():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 10
+
+    FLAGS.env_id="rltorcs-v0"
+
+def torcs_dqn_84x84():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    FLAGS.env_id="rltorcs-v0"
+
+    FLAGS.torcs_resolution="84x84"
+
+def torcs_dqn_kx(divider, tag):
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+
+    FLAGS.env_id="rltorcs-v0"
+
+    # begin the divider attempt
+    num_iterations = int(4e7) / 4 / divider
+    FLAGS.learning_starts = 50000 / divider
+    FLAGS.target_update_freq = 10000 / divider
+    FLAGS.replay_buffer_size = 1000000 / divider
+    FLAGS.max_timesteps = int(4e7) / divider
+
+    FLAGS.lr_schedule = PiecewiseSchedule([
+            (0, 1e-4),
+            (num_iterations / 10, 1e-4),
+            (num_iterations / 2, 5e-5)],
+        outside_value=5e-5)
+
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+            (0, 1.0),
+            (1e6 / divider, 0.1),
+            (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    # interaction purpose
+    FLAGS.summary_interval = 10000 / divider
+
+def torcs_dqn_3x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_kx(3, tag)
+
+def torcs_dqn_10x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_kx(10, tag)
+
+def torcs_dqn_30x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_kx(30, tag)
+
+def torcs_dqn_100x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_kx(100, tag)
+
+def torcs_dqn_sensible_kx(divider, tag):
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '0'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.collect_Q_experience = True
+
+    FLAGS.env_id="rltorcs-v0"
+
+    # begin the divider attempt
+    num_iterations = int(4e7) / 4 / divider
+    FLAGS.learning_starts = 50000
+    FLAGS.target_update_freq = 10000
+    FLAGS.replay_buffer_size = 1000000 / divider
+    FLAGS.max_timesteps = int(4e7) / divider
+
+    FLAGS.lr_schedule = PiecewiseSchedule([
+            (0, 1e-4),
+            (num_iterations / 10, 1e-4),
+            (num_iterations / 2, 5e-5)],
+        outside_value=5e-5)
+
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+            (0, 1.0),
+            (1e6 / divider, 0.1),
+            (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    # interaction purpose
+    FLAGS.summary_interval = 10000 / divider
+
+def torcs_dqn_snesible_3x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_sensible_kx(3, tag)
+
+def torcs_dqn_sensible_10x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_sensible_kx(10, tag)
+
+def torcs_dqn_snesible_30x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_sensible_kx(30, tag)
+
+def torcs_dqn_sensible_100x():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_sensible_kx(100, tag)
+
+def torcs_10x_BenReward():
+    tag = inspect.stack()[0][3]
+    torcs_dqn_kx(10, tag)
+    FLAGS.custom_reward = "reward_ben"
+
+def torcs_config(tag):
+    torcs_dqn_kx(30, tag)
+    FLAGS.custom_reward = "reward_ben"
+
+def torcs_scan_RB():
+    tag = inspect.stack()[0][3]
+    if FLAGS.exp_policy_grad_weighting > 0:
+        type = "PGweighting"
+    elif FLAGS.policy_gradient_soft_1_step > 0:
+        type = "PG"
+    else:
+        raise ValueError("flag not correctly set")
+    tag = tag + "_RB" + str(FLAGS.replay_buffer_size) + "_" + type
+
+    RB_commandline = FLAGS.replay_buffer_size
+    torcs_config(tag)
+    FLAGS.hard_Q_loss_weight = 0
+    FLAGS.replay_buffer_size = RB_commandline
+
+
+def enduro_config(tag):
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '1'
+
+    # Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+    # FLAGS.hard_Q_loss_weight = 1.0
+    # need to define your own loss
+
+def enduro_scan_RB():
+    tag = inspect.stack()[0][3]
+    if FLAGS.exp_policy_grad_weighting > 0:
+        type = "PGweighting"
+    elif FLAGS.policy_gradient_soft_1_step > 0:
+        type = "PG"
+    else:
+        raise ValueError("flag not correctly set")
+    tag = tag + "_RB" + str(FLAGS.replay_buffer_size) + "_" + type
+
+    RB_commandline = FLAGS.replay_buffer_size
+    enduro_config(tag)
+    FLAGS.hard_Q_loss_weight = 0
+    FLAGS.replay_buffer_size = RB_commandline
+
+    FLAGS.env_id="EnduroNoFrameskip-v4"

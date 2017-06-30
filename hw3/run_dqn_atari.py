@@ -1,19 +1,19 @@
 import argparse
 import gym
 from gym import wrappers
+from gym.envs.registration import register
 import os.path as osp
 import random
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import tensorflow.contrib.slim as slim
-import os
 
 import multistep
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
-import sys
+import sys, os, inspect
 from config import *
 import Q_expert
 
@@ -123,6 +123,10 @@ tf.app.flags.DEFINE_boolean('save_model', True,
                             """save the model of Q""")
 tf.app.flags.DEFINE_integer('learning_starts', 50000,
                             """learning_starts point, 50000 for Q learning, 0 for demonstration""")
+tf.app.flags.DEFINE_integer('replay_buffer_size', 1000000,
+                            """""")
+tf.app.flags.DEFINE_integer('max_timesteps', int(4e7),
+                            """""")
 tf.app.flags.DEFINE_string('config', 'test_test()',
                            """run config name""")
 tf.app.flags.DEFINE_string('group_name', 'rl',
@@ -145,24 +149,11 @@ tf.app.flags.DEFINE_integer('target_update_freq', 10000,
 
 tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v4',
                            """""")
+tf.app.flags.DEFINE_string('torcs_resolution', '84x84',
+                           """""")
+tf.app.flags.DEFINE_string('custom_reward', '',
+                           """""")
 
-def policy_model(img_in, num_actions, scope, reuse=False):
-    print("*Multi-step is enabled!*")
-    with slim.arg_scope([layers.convolution2d, layers.fully_connected], outputs_collections="activation_collection"):
-        with tf.variable_scope(scope, reuse=reuse):
-            out = img_in
-            with tf.variable_scope("convnet"):
-                out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
-                out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
-                out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
-            out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
-            with tf.variable_scope("policy_value"):
-                policy = layers.fully_connected(out, num_outputs=512, activation_fn=tf.nn.relu)
-                policy = layers.fully_connected(policy, num_outputs=num_actions, activation_fn=None)
-            with tf.variable_scope("action_value"):
-                value = layers.fully_connected(out,     num_outputs=512,         activation_fn=tf.nn.relu)
-                value = layers.fully_connected(value, num_outputs=1, activation_fn=None)
-            return policy, value
 
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -195,7 +186,9 @@ def atari_model(img_in, num_actions, scope, reuse=False):
                 # original architecture
                 out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
                 out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
-                out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
+                last_stride = 2 if ("torcs" in FLAGS.env_id) and (FLAGS.torcs_resolution == "120x160") else 1
+                print("the last conv layer stride is %d" % last_stride)
+                out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=last_stride, activation_fn=tf.nn.relu)
             out = layers.flatten(out)
             with tf.variable_scope("action_value"):
                 out = layers.fully_connected(out, num_outputs=512,         activation_fn=tf.nn.relu)
@@ -244,7 +237,7 @@ def atari_learn(env,
         session=session,
         exploration=FLAGS.exploration_schedule,
         stopping_criterion=stopping_criterion,
-        replay_buffer_size=1000000,
+        replay_buffer_size=FLAGS.replay_buffer_size,
         batch_size=FLAGS.batch_size,
         gamma=0.99,
         learning_starts=FLAGS.learning_starts,
@@ -308,32 +301,28 @@ def get_session():
     print("AVAILABLE GPUS: ", get_available_gpus())
     return session
 
-def get_env(task, seed):
+def get_env(task, seed, istest=False):
     env_id = task.env_id
 
     env = gym.make(env_id)
-
     set_global_seeds(seed)
     env.seed(seed)
 
-    model_save_path = os.path.join('./link_data/', FLAGS.method_name)
-    env = wrappers.Monitor(env, model_save_path, force=True)
-    env = wrap_deepmind(env)
+    if not istest:
+        model_save_path = os.path.join('./link_data/', FLAGS.method_name)
+        video_callable = lambda episode_id: (episode_id == int(pow(round(pow(episode_id, 1.0/3)), 3))) or (episode_id % 300 == 0)
+        #video_callable = lambda episode_id: episode_id % 300 == 299
+        env = wrappers.Monitor(env, model_save_path, force=True, video_callable=video_callable)
+
+    if "torcs" in env_id:
+        if FLAGS.torcs_resolution == "84x84":
+            env = wrap_torcs(env)
+        else:
+            print("decide not to use the wrapper, otherwise the resolution is too low")
+    else:
+        env = wrap_deepmind(env)
 
     return env
-
-def get_env_test(task, seed):
-    env_id = task.env_id
-
-    env = gym.make(env_id)
-
-    set_global_seeds(seed)
-    env.seed(seed)
-
-    env = wrap_deepmind(env)
-
-    return env
-
 
 def default_parameters(**kwargs):
     # This is just a rough estimate
@@ -361,6 +350,9 @@ class Object(object):
     pass
 
 def main(_):
+    # potential error here
+    default_parameters(num_timesteps=int(4e7))
+
     if not FLAGS.config.endswith("()"):
         FLAGS.config += "()"
 
@@ -369,15 +361,25 @@ def main(_):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 
     task = Object()
-    task.max_timesteps = int(4e7)
     task.env_id = FLAGS.env_id
-
-    default_parameters(num_timesteps=int(4e7))
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
+    if "torcs" in task.env_id:
+        sys.path.insert(0, '../../rlTORCS')
+        register(
+            id='rltorcs-v0',
+            entry_point='py_torcs:TorcsEnv',
+            kwargs={"subtype": "discrete_improved",
+                    "server": True,
+                    "auto_back": False,
+                    "game_config": os.path.abspath('../../rlTORCS/game_config/quickrace_discrete_single.xml'),
+                    "custom_reward": FLAGS.custom_reward}
+        )
+
     env = get_env(task, seed)
     session = get_session()
+
 
     if FLAGS.multistep:
         multistep.run(env, atari_model)
@@ -385,7 +387,12 @@ def main(_):
         atari_learn(env, session, num_timesteps=task.max_timesteps,
                     env_test=get_env_test(task, seed))
     else:
-        atari_collect(env, session, num_timesteps=task.max_timesteps)
+        atari_collect(env, session, num_timesteps=FLAGS.max_timesteps)
 
 if __name__ == "__main__":
-    tf.app.run()
+    #tf.app.run()
+
+    # the following line is the same as tf.app.run
+    f = tf.app.flags.FLAGS
+    flags_passthrough = f._parse_flags()
+    main(0)
