@@ -94,6 +94,8 @@ tf.app.flags.DEFINE_float('exp_value_critic_weighting', -1.0,
                             """""")
 tf.app.flags.DEFINE_boolean('critic_use_rapid_weighting', False,
                             """""")
+tf.app.flags.DEFINE_boolean('disable_off_policy_weighting', False,
+                            """""")
 
 
 # resource related
