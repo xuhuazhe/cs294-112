@@ -827,3 +827,4 @@ def enduro_scan_RB():
     FLAGS.replay_buffer_size = RB_commandline
 
     FLAGS.env_id="EnduroNoFrameskip-v4"
+

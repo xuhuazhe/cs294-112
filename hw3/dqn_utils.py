@@ -408,11 +408,14 @@ class ReplayBuffer(object):
             Index at which the frame is stored. To be used for `store_effect` later.
         """
         if self.obs is None:
-            self.obs      = np.empty([self.size] + list(frame.shape), dtype=np.uint8)
-            self.action   = np.empty([self.size],                     dtype=np.int32)
-            self.reward   = np.empty([self.size],                     dtype=np.float32)
-            self.done     = np.empty([self.size],                     dtype=np.bool)
-            self.action_dist = np.empty([self.size, self.num_actions], dtype=np.float32)
+            self.obs         = np.empty([self.size] + list(frame.shape), dtype=np.uint8)
+            self.action      = np.empty([self.size],                     dtype=np.int32)
+            self.reward      = np.empty([self.size],                     dtype=np.float32)
+            self.done        = np.empty([self.size],                     dtype=np.bool)
+            self.action_dist = np.empty([self.size, self.num_actions],   dtype=np.float32)
+            self.info        = np.empty([self.size],
+                                         dtype={'names':['speed','angle','trackPos', 'trackWidth','damage', 'next_damage', 'stuck'],
+                                                'formats':['f8','f8', 'f8', 'f8', 'i1', 'i1', 'b1']})
 
         self.obs[self.next_idx] = frame
 
@@ -422,7 +425,7 @@ class ReplayBuffer(object):
 
         return ret
 
-    def store_effect(self, idx, action, reward, done, action_dist):
+    def store_effect(self, idx, action, reward, done, action_dist, info=None):
         """Store effects of action taken after obeserving frame stored
         at index idx. The reason `store_frame` and `store_effect` is broken
         up into two functions is so that once can call `encode_recent_observation`
@@ -443,6 +446,11 @@ class ReplayBuffer(object):
         self.reward[idx] = reward
         self.done[idx]   = done
         self.action_dist[idx, :] = action_dist
+        if info is not None:
+            self.info[idx] = (info['speed'],info['angle'],info['trackPos'],
+                              info['trackWidth'],info['damage'], info['next_damage'], info['is_stuck'])
+        else:
+            self.info = None
 
 
 def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
