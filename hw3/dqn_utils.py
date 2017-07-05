@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from atari_wrappers import *
 from collections import deque
 import h5py
+import scipy
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -288,6 +289,13 @@ class ReplayBuffer(object):
 
         return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask, action_dist_batch
 
+    def sample_onpolicy(self, number_path, total_path):
+        assert(number_path <= total_path)
+        counter = 0
+        for i in range(self.num_in_buffer):
+            obs, act, rew, next_obs, done, action_dist = _encode_sample(i)
+        return [self._encode_sample(idxes), need_hinge]
+
     def sample(self, batch_size, name='rl'):
         """Sample `batch_size` different transitions.
 
@@ -400,11 +408,14 @@ class ReplayBuffer(object):
             Index at which the frame is stored. To be used for `store_effect` later.
         """
         if self.obs is None:
-            self.obs      = np.empty([self.size] + list(frame.shape), dtype=np.uint8)
-            self.action   = np.empty([self.size],                     dtype=np.int32)
-            self.reward   = np.empty([self.size],                     dtype=np.float32)
-            self.done     = np.empty([self.size],                     dtype=np.bool)
-            self.action_dist = np.empty([self.size, self.num_actions], dtype=np.float32)
+            self.obs         = np.empty([self.size] + list(frame.shape), dtype=np.uint8)
+            self.action      = np.empty([self.size],                     dtype=np.int32)
+            self.reward      = np.empty([self.size],                     dtype=np.float32)
+            self.done        = np.empty([self.size],                     dtype=np.bool)
+            self.action_dist = np.empty([self.size, self.num_actions],   dtype=np.float32)
+            self.info        = np.empty([self.size],
+                                         dtype={'names':['speed','angle','trackPos', 'trackWidth','damage', 'next_damage', 'stuck'],
+                                                'formats':['f8','f8', 'f8', 'f8', 'i1', 'i1', 'b1']})
 
         self.obs[self.next_idx] = frame
 
@@ -414,7 +425,7 @@ class ReplayBuffer(object):
 
         return ret
 
-    def store_effect(self, idx, action, reward, done, action_dist):
+    def store_effect(self, idx, action, reward, done, action_dist, info=None):
         """Store effects of action taken after obeserving frame stored
         at index idx. The reason `store_frame` and `store_effect` is broken
         up into two functions is so that once can call `encode_recent_observation`
@@ -435,6 +446,11 @@ class ReplayBuffer(object):
         self.reward[idx] = reward
         self.done[idx]   = done
         self.action_dist[idx, :] = action_dist
+        if info is not None:
+            self.info[idx] = (info['speed'],info['angle'],info['trackPos'],
+                              info['trackWidth'],info['damage'], info['next_damage'], info['is_stuck'])
+        else:
+            self.info = None
 
 
 def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
@@ -590,3 +606,58 @@ def activation_summaries(endpoints):
     print("-"*40 + "\nAll tensors that will be summarized:")
     for act in end_values:
       _activation_summary(act)
+
+def select_exploration(name, exploration, t):
+    if name == "normal":
+        eps = exploration.value(t)
+        return eps
+    elif name == "tiny":
+        eps = FLAGS.tiny_explore
+        return eps
+    else:
+        raise ValueError("explore_method invalid %s" % FLAGS.explore_value_method)
+
+def pathlength(path):
+    return len(path["reward"])
+
+def discount(x, gamma):
+    """
+    Compute discounted sum of future values
+    out[i] = in[i] + gamma * in[i+1] + gamma^2 * in[i+2] + ...
+    """
+    return scipy.signal.lfilter([1],[1,-gamma],x[::-1], axis=0)[::-1]
+
+class NnValueFunction(object):
+    coeffs = None
+
+    def __init__(self, session):
+        self.net = None
+        self.session = session
+
+    def create_net(self, shape):
+        self.x = tf.placeholder(tf.float32, shape=[None, shape], name="x")
+        self.y = tf.placeholder(tf.float32, shape=[None], name="y")
+        hidden1 = tf.nn.relu(dense(self.x, 32, 'value-net-hidden1', 1.0))
+        hidden2 = tf.nn.relu(dense(hidden1, 16, 'value-net-hidden2', 1.0))
+        self.net = dense(hidden2, 1, 'value-net-out', 1.0)
+        self.net = tf.reshape(self.net, (-1,))
+        l2 = (self.net - self.y) * (self.net - self.y)
+        self.train = tf.train.AdamOptimizer().minimize(l2)
+        self.session.run(tf.initialize_all_variables())
+
+    def preproc(self, X):
+        return np.concatenate([np.ones([X.shape[0], 1]), X, np.square(X)/2.0], axis=1)
+
+    def fit(self, X, y):
+        featmat = self.preproc(X)
+        if self.net is None:
+            self.create_net(featmat.shape[1])
+        for _ in range(40):
+            self.session.run(self.train, {self.x: featmat, self.y: y})
+
+    def predict(self, X):
+        if self.net is None:
+            return np.zeros(X.shape[0])
+        else:
+            ret = self.session.run(self.net, {self.x: self.preproc(X)})
+            return np.reshape(ret, (ret.shape[0],))

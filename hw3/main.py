@@ -217,7 +217,7 @@ def main_cartpole(n_iter=100, gamma=1.0, min_timesteps_per_batch=1000, stepsize=
         paths = []
         while True:
             ob = env.reset()
-            terminated = False
+            terminated = False #TODO:fix this bug
             obs, acs, rewards = [], [], []
             animate_this_episode=(len(paths)==0 and (i % 10 == 0) and animate)
             while True:

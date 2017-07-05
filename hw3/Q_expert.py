@@ -81,7 +81,10 @@ def collect(env,
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
             break
-
+        if t%10000 == 0:
+            print('*'*30)
+            print('Iteration:', t)
+            print('*'*30)
         if FLAGS.m_bad > 0:
             eps, should_save = eps_scheduler(t, FLAGS.good_step, FLAGS.m_bad, FLAGS.m_good)
             idx_obs = replay_buffer_obs.store_frame(last_obs)
@@ -93,6 +96,7 @@ def collect(env,
 
 
         is_greedy = np.random.rand(1) >= eps
+        action_dist_this = np.ones((num_actions), dtype=np.float32) / num_actions
         if is_greedy:
             if FLAGS.m_bad > 0:
                 recent_obs = replay_buffer_obs.encode_recent_observation()[np.newaxis, ...]
@@ -104,6 +108,8 @@ def collect(env,
             #dist = q_values / np.sum(q_values)
             #action = np.random.choice(num_actions, p=np.squeeze(dist))
             action = np.argmax(np.squeeze(q_values))
+            action_dist_this = np.zeros((num_actions), dtype=np.float32)
+            action_dist_this[action] = 1.0
         else:
             if FLAGS.m_bad > 0:
                 action = np.random.choice(num_actions)
@@ -113,15 +119,21 @@ def collect(env,
                 action = np.random.choice(num_actions)
 
         obs, reward, done, info = env.step(action)
+
+
         if done:
             obs = env.reset()
         # TODO: modify the following 3 lines to add action_dist back in
         if FLAGS.m_bad > 0:
-            replay_buffer_obs.store_effect(idx_obs, action, reward, done)
+            replay_buffer_obs.store_effect(idx_obs, action, reward, done,
+                                           action_dist_this, info)
             if should_save:
-                replay_buffer.store_effect(idx, action, reward, done)
+                replay_buffer.store_effect(idx, action, reward, done,
+                                           action_dist_this, info)
         else:
-            replay_buffer.store_effect(idx, action, reward, done)
+
+            replay_buffer.store_effect(idx, action, reward, done,
+                                       action_dist_this, info)
         last_obs = obs
 
         ### 4. Log progress
@@ -149,7 +161,7 @@ def collect(env,
 
     # save the replay buffer
     print('save pickle!')
-    FLAGS.Q_expert_path = './link_data/' + 'bad_demo_onpolicy.p'
+    FLAGS.Q_expert_path = './link_data/' + str(FLAGS.torcs_divider) +'torcs_new.p'
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
 

@@ -6,10 +6,15 @@
 #declare -a arr=("cross_entropy_finetune()" "hinge_standard_finetune()" "hard_Q_finetune()")
 #declare -a arr=("policy_gradient_soft_1_step_finetune_small_explore_May16" "policy_gradient_soft_1_step_finetune_normal_explore_May16" "adv_learn_finetune_small_explore_May16" "adv_learn_finetune_normal_explore_May16" "exp_policy_grad_weighting_finetune_normal_explore_May16()" "exp_policy_grad_weighting_finetune_small_explore_May16()" "DQfD_no_l2_finetune_small_explore_human_May16()" "DQfD_no_l2_finetune_normal_explore_human_May16()")
 ## now loop through the above arrayi
-declare -a arr=("dueling_net_double_Q()")
+#declare -a arr=("dueling_net_double_Q_eval")
+#declare -a arr=("urex_multistep")
+#declare -a arr=("collect_torcs_demonstration")
+#declare -a arr=("torcs_cross_entropy_demo")
+declare -a arr=("torcs_cross_entropy_demo" "torcs_hinge_dqfd_demo" "torcs_hard_Q_demo" "torcs_soft_Q_demo" "torcs_dqfd_full_demo" "torcs_PG_Vloss_rapidWeighting_demo")
 for i in "${arr[@]}"
 do
     python run_dqn_atari.py --config $i &
+    sleep 10
     #python run_dqn_atari.py --config $i --dataset_size=300000 --demo_file_path='/data/hxu/cs294-112/hw3/link_data/bad_demo_50000.0_0.3' &
     #python run_dqn_atari.py --config $i --dataset_size=300000 --core_num=1 --demo_file_path='/data/hxu/cs294-112/hw3/link_data/bad_demo_150000.0_0.7' &
     #python run_dqn_atari.py --config $i --dataset_size=300000 --core_num=2 --demo_file_path='/data/hxu/cs294-112/hw3/link_data/bad_demo_250000.0_0.7' &

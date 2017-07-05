@@ -9,6 +9,7 @@ import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import tensorflow.contrib.slim as slim
 
+import multistep
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
@@ -97,6 +98,13 @@ tf.app.flags.DEFINE_boolean('critic_use_rapid_weighting', False,
 tf.app.flags.DEFINE_boolean('disable_off_policy_weighting', False,
                             """""")
 
+# multistep related
+tf.app.flags.DEFINE_boolean('multistep', False,
+                            """whether we need multistep-run""") # TODO: finish this
+tf.app.flags.DEFINE_boolean('multistep_replay', False,
+                            """multistep_replay is off policy multistep""")
+tf.app.flags.DEFINE_boolean('multistep_urex', False,
+                            """urex loss""")
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',
@@ -141,12 +149,19 @@ tf.app.flags.DEFINE_string('greedy_method', "hard",
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
 
-tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v3',
+tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v4',
                            """""")
+#### torcs related
 tf.app.flags.DEFINE_string('torcs_resolution', '84x84',
                            """""")
+tf.app.flags.DEFINE_string('torcs_path', '/data/hxu/rlTORCS',
+                           """path for torcs env""")
 tf.app.flags.DEFINE_string('custom_reward', '',
                            """""")
+tf.app.flags.DEFINE_integer('torcs_divider', 30,
+                            """divider for training time and replay buffer.""")
+tf.app.flags.DEFINE_boolean('torcs_demo', False,
+                            """learning from demonstration in torcs environment""")
 
 
 def dueling_model(img_in, num_actions, scope, reuse=False):
@@ -192,9 +207,15 @@ def atari_model(img_in, num_actions, scope, reuse=False):
                     shared_bias = tf.get_variable("shared_bias", shape=[1])
                     out += shared_bias
                 else:
+                    if FLAGS.multistep:
+                        value = layers.fully_connected(out, num_outputs=1, activation_fn=None)
                     out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
-            return out
+            if FLAGS.multistep:
+                assert value is not None
+                return out, value
+            else:
+                return out
 
 def atari_learn(env,
                 session,
@@ -240,16 +261,16 @@ def atari_learn(env,
 def atari_collect(env,
                   session,
                   num_timesteps):
-    num_steps = 300000
+    #num_steps = 300000
 
     # TODO: t input is not used here
     def stopping_criterion(env, t):
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
         if FLAGS.m_bad > 0:
-            return get_wrapper_by_name(env, "Monitor").get_total_steps() >= int(num_steps * 4 * ((FLAGS.m_good + FLAGS.m_bad)/float(FLAGS.m_bad)))
+            return get_wrapper_by_name(env, "Monitor").get_total_steps() >= int(num_timesteps * 4 * ((FLAGS.m_good + FLAGS.m_bad)/float(FLAGS.m_bad)))
         else:
-            return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_steps*4
+            return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps*4
 
     Q_expert.collect(
         env,
@@ -257,11 +278,12 @@ def atari_collect(env,
         session=session,
         exploration=FLAGS.exploration_schedule,
         stopping_criterion=stopping_criterion,
-        replay_buffer_size=num_steps,
+        replay_buffer_size=FLAGS.replay_buffer_size,
         frame_history_len=FLAGS.frame_history_len)
     env.close()
 
-
+def atari_multistep(env):
+    multistep.run(env)
 
 def get_available_gpus():
     from tensorflow.python.client import device_lib
@@ -353,26 +375,29 @@ def main(_):
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     if "torcs" in task.env_id:
-        sys.path.insert(0, '../../rlTORCS')
+        sys.path.insert(0, FLAGS.torcs_path) # /data/yang/code/rlTORCS
         register(
             id='rltorcs-v0',
             entry_point='py_torcs:TorcsEnv',
             kwargs={"subtype": "discrete_improved",
                     "server": True,
                     "auto_back": False,
-                    "game_config": os.path.abspath('../../rlTORCS/game_config/quickrace_discrete_single.xml'),
-                    "custom_reward": FLAGS.custom_reward}
+                    "game_config": os.path.abspath('/data/hxu/rlTORCS/game_config/quickrace_discrete_single.xml'),
+                    "custom_reward": FLAGS.custom_reward,
+                    "detailed_info": True}
         )
 
     env = get_env(task, seed)
     session = get_session()
 
-    if FLAGS.learning_stage:
+
+    if FLAGS.multistep:
+        multistep.run(env, atari_model)
+    elif FLAGS.learning_stage:
         atari_learn(env, session, num_timesteps=FLAGS.max_timesteps,
-                    env_test=get_env(task, seed, True) if FLAGS.eval_freq > 0 else None)
+                    env_test = env if FLAGS.torcs_demo else None)#get_env_test(task, seed)
     else:
         atari_collect(env, session, num_timesteps=FLAGS.max_timesteps)
-
 if __name__ == "__main__":
     #tf.app.run()
 
