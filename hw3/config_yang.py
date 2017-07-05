@@ -780,6 +780,8 @@ def torcs_10x_BenReward():
 def torcs_config(tag):
     torcs_dqn_kx(30, tag)
     FLAGS.custom_reward = "reward_ben"
+    # need to set this for every torcs instance
+    FLAGS.torcs_path = "/data/yang/code/rlTORCS"
 
 def torcs_scan_RB():
     tag = inspect.stack()[0][3]

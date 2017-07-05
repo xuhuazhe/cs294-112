@@ -15,7 +15,7 @@ import math
 FLAGS = tf.app.flags.FLAGS
 OptimizerSpec = namedtuple("OptimizerSpec", ["constructor", "kwargs", "lr_schedule"])
 
-def learn(env,
+def learn(env_train,
           q_func,
           optimizer_spec,
           session,
@@ -77,20 +77,22 @@ def learn(env,
     grad_norm_clipping: float or None
         If not None gradients' norms are clipped to this value.
     """
-    assert type(env.observation_space) == gym.spaces.Box
-    assert type(env.action_space) == gym.spaces.Discrete
+    env_info = env_train if env_train else env_train
+
+    assert type(env_info.observation_space) == gym.spaces.Box
+    assert type(env_info.action_space) == gym.spaces.Discrete
 
     ###############
     # BUILD MODEL #
     ###############
 
-    if len(env.observation_space.shape) == 1:
+    if len(env_info.observation_space.shape) == 1:
         # This means we are running on low-dimensional observations (e.g. RAM)
-        input_shape = env.observation_space.shape
+        input_shape = env_info.observation_space.shape
     else:
-        img_h, img_w, img_c = env.observation_space.shape
+        img_h, img_w, img_c = env_info.observation_space.shape
         input_shape = (img_h, img_w, frame_history_len * img_c)
-    num_actions = env.action_space.n
+    num_actions = env_info.action_space.n
 
     # set up placeholders
     # placeholder for current observation (or state)
@@ -394,7 +396,8 @@ def learn(env,
     mean_episode_reward = -float('nan')
     best_mean_episode_reward = -float('inf')
     best_reward = -float('inf')
-    last_obs = env.reset()
+    if env_train:
+        last_obs = env_train.reset()
     LOG_EVERY_N_STEPS = 10000
 
     log_file = os.path.join(model_save_path, "log.txt")
@@ -432,7 +435,7 @@ def learn(env,
 
     for t in itertools.count():
         ### 1. Check stopping criterion
-        if stopping_criterion is not None and stopping_criterion(env, t):
+        if stopping_criterion is not None and stopping_criterion(env_info, t):
             break
 
         ### 2. Step the env and store the transition
@@ -495,9 +498,9 @@ def learn(env,
 
             action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
 
-            obs, reward, done, info = env.step(action)
+            obs, reward, done, info = env_train.step(action)
             if done:
-                obs = env.reset()
+                obs = env_train.reset()
 
             replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
             last_obs = obs
@@ -640,7 +643,7 @@ def learn(env,
 
         # evaluating with the current environment
         if FLAGS.eval_freq <= 0:
-            episode_rewards = get_wrapper_by_name(env, "Monitor").get_episode_rewards()
+            episode_rewards = get_wrapper_by_name(env_train, "Monitor").get_episode_rewards()
             if len(episode_rewards) > 0:
                 mean_episode_reward = np.mean(episode_rewards[-100:])
                 reward_calc = episode_rewards[-1]

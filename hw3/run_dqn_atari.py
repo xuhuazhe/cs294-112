@@ -162,7 +162,8 @@ tf.app.flags.DEFINE_integer('torcs_divider', 30,
                             """divider for training time and replay buffer.""")
 tf.app.flags.DEFINE_boolean('torcs_demo', False,
                             """learning from demonstration in torcs environment""")
-
+tf.app.flags.DEFINE_string('game_config_fname', 'quickrace_discrete_single.xml',
+                           """""")
 
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -256,7 +257,9 @@ def atari_learn(env,
         grad_norm_clipping=10,
         env_test=env_test,
     )
-    env.close()
+
+    if env is not None:
+        env.close()
 
 def atari_collect(env,
                   session,
@@ -382,7 +385,7 @@ def main(_):
             kwargs={"subtype": "discrete_improved",
                     "server": True,
                     "auto_back": False,
-                    "game_config": os.path.abspath('/data/hxu/rlTORCS/game_config/quickrace_discrete_single.xml'),
+                    "game_config": os.path.abspath(os.path.join(FLAGS.torcs_path, "game_config", FLAGS.game_config_fname)),
                     "custom_reward": FLAGS.custom_reward,
                     "detailed_info": True}
         )
@@ -394,8 +397,18 @@ def main(_):
     if FLAGS.multistep:
         multistep.run(env, atari_model)
     elif FLAGS.learning_stage:
-        atari_learn(env, session, num_timesteps=FLAGS.max_timesteps,
-                    env_test = env if FLAGS.torcs_demo else None)#get_env_test(task, seed)
+        if FLAGS.torcs_demo:
+            print("warning: using the training env as the testing env! "
+                  "It's the user's responsibility to check you are not using it for training")
+            env_test = env
+            env_train = None
+        elif FLAGS.eval_freq > 0:
+            env_test = get_env(task, seed, True)
+            env_train = env
+        else:
+            env_test = None
+            env_train = env
+        atari_learn(env_train, session, num_timesteps=FLAGS.max_timesteps, env_test=env_test)
     else:
         atari_collect(env, session, num_timesteps=FLAGS.max_timesteps)
 if __name__ == "__main__":
