@@ -102,22 +102,18 @@ def collect(env,
                 recent_obs = replay_buffer_obs.encode_recent_observation()[np.newaxis, ...]
             else:
                 recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-            q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-            # TODO: find an appropriate soft_Q_alpha for the sampling
-            #q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
-            #dist = q_values / np.sum(q_values)
-            #action = np.random.choice(num_actions, p=np.squeeze(dist))
-            action = np.argmax(np.squeeze(q_values))
-            greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
-            greedy_dist_this[action] = 1.0
-        else:
-            if FLAGS.m_bad > 0:
-                action = np.random.choice(num_actions)
-            else:
-                #q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                #action = np.argsort(np.squeeze(q_values))[-2]
-                action = np.random.choice(num_actions)
+        q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+        # TODO: find an appropriate soft_Q_alpha for the sampling
+        #q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
+        #dist = q_values / np.sum(q_values)
+        #action = np.random.choice(num_actions, p=np.squeeze(dist))
+        max_action = np.argmax(np.squeeze(q_values))
+        greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
+        greedy_dist_this[max_action] = 1.0
+
         action_dist_this = eps*action_dist_this + (1-eps)*greedy_dist_this
+        action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
+
         obs, reward, done, info = env.step(action)
 
 
