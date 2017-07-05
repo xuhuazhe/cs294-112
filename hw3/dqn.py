@@ -311,6 +311,8 @@ def learn(env,
         with tf.variable_scope("exp_policy_grad_weighting"):
             # get the weighting based on rapid net
             weighting = weighting_rapid
+            if FLAGS.disable_off_policy_weighting:
+                weighting = 1.0
 
             node_grad = q_act - Vrapid
             node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
@@ -340,6 +342,8 @@ def learn(env,
         if FLAGS.critic_use_rapid_weighting:
             print("Warning using a rapid weighting strategy")
             weighting_target = weighting_rapid
+        if FLAGS.disable_off_policy_weighting:
+            weighting_target = 1.0
 
         y = weighting_target * (rew_t_ph - KL + (1 - done_mask_ph)*gamma*V_target)
         y = tf.stop_gradient(y)

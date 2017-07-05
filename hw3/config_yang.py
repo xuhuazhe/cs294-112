@@ -828,3 +828,36 @@ def enduro_scan_RB():
 
     FLAGS.env_id="EnduroNoFrameskip-v4"
 
+def torcs_V_grounding():
+    tag = inspect.stack()[0][3]
+    torcs_config(tag)
+    FLAGS.hard_Q_loss_weight = 0
+
+    # use a small replay buffer to simulate on line case
+    FLAGS.replay_buffer_size = 300
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+def torcs_V_grounding_no_weighting():
+    tag = inspect.stack()[0][3]
+    torcs_config(tag)
+    FLAGS.hard_Q_loss_weight = 0
+
+    # use a small replay buffer to simulate on line case
+    FLAGS.replay_buffer_size = 300
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+def torcs_V_grounding_baseline():
+    tag = inspect.stack()[0][3]
+    torcs_config(tag)
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # use a small replay buffer to simulate on line case
+    FLAGS.replay_buffer_size = 300
