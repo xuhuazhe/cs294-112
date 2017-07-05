@@ -108,8 +108,8 @@ def collect(env,
             #dist = q_values / np.sum(q_values)
             #action = np.random.choice(num_actions, p=np.squeeze(dist))
             action = np.argmax(np.squeeze(q_values))
-            action_dist_this = np.zeros((num_actions), dtype=np.float32)
-            action_dist_this[action] = 1.0
+            greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
+            greedy_dist_this[action] = 1.0
         else:
             if FLAGS.m_bad > 0:
                 action = np.random.choice(num_actions)
@@ -117,7 +117,7 @@ def collect(env,
                 #q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
                 #action = np.argsort(np.squeeze(q_values))[-2]
                 action = np.random.choice(num_actions)
-
+        action_dist_this = eps*action_dist_this + (1-eps)*greedy_dist_this
         obs, reward, done, info = env.step(action)
 
 
