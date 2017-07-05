@@ -97,11 +97,10 @@ def collect(env,
 
         is_greedy = np.random.rand(1) >= eps
         action_dist_this = np.ones((num_actions), dtype=np.float32) / num_actions
-        if is_greedy:
-            if FLAGS.m_bad > 0:
-                recent_obs = replay_buffer_obs.encode_recent_observation()[np.newaxis, ...]
-            else:
-                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+        if FLAGS.m_bad > 0:
+            recent_obs = replay_buffer_obs.encode_recent_observation()[np.newaxis, ...]
+        else:
+            recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
         q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
         # TODO: find an appropriate soft_Q_alpha for the sampling
         #q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
@@ -157,7 +156,7 @@ def collect(env,
 
     # save the replay buffer
     print('save pickle!')
-    FLAGS.Q_expert_path = './link_data/' + str(FLAGS.torcs_divider) +'torcs_new.p'
+    FLAGS.Q_expert_path = './link_data/' + str(FLAGS.replay_buffer_size) +'_torcs.p'
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
 
