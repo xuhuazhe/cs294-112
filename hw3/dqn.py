@@ -308,24 +308,26 @@ def learn(env_train,
 
     weighting_rapid = get_weighting(q, Vrapid, alpha, act_t_ph, action_dist_ph, num_actions,
                               FLAGS.ratio_truncate_thres)
+    target_now_V = Q2V(target_now, alpha)
+    weighting_target = get_weighting(target_now,
+                                     target_now_V,
+                                     alpha, act_t_ph, action_dist_ph, num_actions, FLAGS.ratio_truncate_thres)
+    weighting_in_use = weighting_rapid if FLAGS.critic_use_rapid_weighting else weighting_target
+    if FLAGS.disable_off_policy_weighting:
+        weighting_in_use = 1.0
 
     if FLAGS.exp_policy_grad_weighting > 0:
         with tf.variable_scope("exp_policy_grad_weighting"):
-            # get the weighting based on rapid net
-            weighting = weighting_rapid
-            if FLAGS.disable_off_policy_weighting:
-                weighting = 1.0
-
             node_grad = q_act - Vrapid
             node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
             #node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead, name="q_yStar")
 
-            weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting, name="grad_final")
+            weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting_in_use, name="grad_final")
             total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
 
-            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting)
+            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting_in_use)
             tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
-            tf.histogram_summary("weighting_of_grad", weighting)
+            tf.histogram_summary("weighting_of_grad", weighting_in_use)
 
 
     if FLAGS.exp_value_critic_weighting > 0:
@@ -334,20 +336,10 @@ def learn(env_train,
         # V_target == target net, on next frame
         # first compute the target value
         print("using value fitting baseline")
-        target_now_V = Q2V(target_now, alpha)
-        weighting_target = get_weighting(target_now,
-                                         target_now_V,
-                                         alpha, act_t_ph, action_dist_ph, num_actions, FLAGS.ratio_truncate_thres)
         pi = QV2pi(target_now, target_now_V, alpha)
         KL = tf.reduce_sum(pi * target_now, 1) - target_now_V
 
-        if FLAGS.critic_use_rapid_weighting:
-            print("Warning using a rapid weighting strategy")
-            weighting_target = weighting_rapid
-        if FLAGS.disable_off_policy_weighting:
-            weighting_target = 1.0
-
-        y = weighting_target * (rew_t_ph - KL + (1 - done_mask_ph)*gamma*V_target)
+        y = weighting_in_use * (rew_t_ph - KL + (1 - done_mask_ph)*gamma*V_target)
         y = tf.stop_gradient(y)
         loss = tf.reduce_mean(tf.square(y-Vrapid))
         tf.scalar_summary("loss/exp_value_critic_mean_square_error", loss)
