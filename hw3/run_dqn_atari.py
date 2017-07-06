@@ -361,6 +361,15 @@ def default_parameters(**kwargs):
 class Object(object):
     pass
 
+def flags_to_cmd():
+    # dict of flags to values
+    d = FLAGS.__dict__["__flags"]
+    out=[]
+    for k, v in d.iteritems():
+        print(k, v)
+        out.append("--"+k+"="+str(v))
+    return out
+
 def main(_):
     # potential error here
     default_parameters(num_timesteps=int(4e7))
@@ -369,6 +378,7 @@ def main(_):
         FLAGS.config += "()"
 
     eval(FLAGS.config)
+    flags_to_cmd()
     #collect_demonstration()
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 
