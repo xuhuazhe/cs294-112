@@ -675,7 +675,7 @@ def torcs_dqn_84x84():
 def torcs_dqn_kx(divider, tag):
     yang_common_setting(tag)
 
-    FLAGS.core_num = '0'
+    FLAGS.core_num = '1'
 
     # Q learning specific
     FLAGS.eval_freq = -1
@@ -830,25 +830,43 @@ def enduro_scan_RB():
 
     FLAGS.env_id="EnduroNoFrameskip-v4"
 
-def torcs_V_grounding():
+def torcs_V_grounding_consistent_target():
     tag = inspect.stack()[0][3]
+    RB = FLAGS.replay_buffer_size
+    tag = tag + "_RB" + str(RB)
     torcs_config(tag)
     FLAGS.hard_Q_loss_weight = 0
 
     # use a small replay buffer to simulate on line case
-    FLAGS.replay_buffer_size = 300
+    FLAGS.replay_buffer_size = RB
 
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.critic_use_rapid_weighting = False
 
-def torcs_V_grounding_no_weighting():
+def torcs_V_grounding_consistent_rapid():
     tag = inspect.stack()[0][3]
+    RB = FLAGS.replay_buffer_size
+    tag = tag + "_RB" + str(RB)
     torcs_config(tag)
     FLAGS.hard_Q_loss_weight = 0
 
     # use a small replay buffer to simulate on line case
-    FLAGS.replay_buffer_size = 300
+    FLAGS.replay_buffer_size = RB
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = True
+
+def torcs_V_grounding_no_weighting():
+    tag = inspect.stack()[0][3]
+    RB = FLAGS.replay_buffer_size
+    tag = tag + "_RB" + str(RB)
+    torcs_config(tag)
+    FLAGS.hard_Q_loss_weight = 0
+
+    # use a small replay buffer to simulate on line case
+    FLAGS.replay_buffer_size = RB
 
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.exp_policy_grad_weighting = 1.0
@@ -858,8 +876,10 @@ def torcs_V_grounding_no_weighting():
 
 def torcs_V_grounding_baseline():
     tag = inspect.stack()[0][3]
+    RB = FLAGS.replay_buffer_size
+    tag = tag + "_RB" + str(RB)
     torcs_config(tag)
     FLAGS.hard_Q_loss_weight = 1.0
 
     # use a small replay buffer to simulate on line case
-    FLAGS.replay_buffer_size = 300
+    FLAGS.replay_buffer_size = RB
