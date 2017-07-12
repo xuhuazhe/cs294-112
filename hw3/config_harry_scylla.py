@@ -5,16 +5,16 @@ sys.path.append('../')
 import tensorflow as tf
 from dqn_utils import *
 FLAGS = tf.app.flags.FLAGS
+from datetime import datetime
 
 
 def common_setting():
     FLAGS.ddqn = False
-
     FLAGS.demo_mode = 'replay'
     FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/hardQ_expert.p'
     #FLAGS.demo_file_path   = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5'  #'/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
     #FLAGS.demo_file_path_1 = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
-    FLAGS.bad_dir = '/data/hxu/cs294-112/hw3/link_data/bad_demo.p'
+    FLAGS.bad_dir = ''#'/data/hxu/cs294-112/hw3/link_data/bad_demo.p'
     FLAGS.collect_Q_experience = False
 
     FLAGS.eval_freq = 10000
@@ -697,21 +697,16 @@ def urex_multistep():
 
 
 def yang_common_setting(tag=None):
-    #FLAGS.demo_mode = 'hdf'
-    # FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
-    # FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
-    # FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro.h5'
+
     FLAGS.collect_Q_experience = False
     FLAGS.eval_freq = 10000
     FLAGS.tiny_explore = 0.01
     FLAGS.learning_starts = 0
     print(FLAGS.demo_file_path)
-    FLAGS.learning_stage = True
-    FLAGS.batch_size = 32
 
     if tag is not None:
         print("config name = ", tag)
-        FLAGS.method_name = FLAGS.tag_prefix + tag + "_" + str(FLAGS.ddqn) + "_" + str(FLAGS.soft_Q_alpha) + "_" + str(FLAGS.torcs_divider)
+        FLAGS.method_name = FLAGS.tag_prefix + tag + '_' + str(FLAGS.torcs_divider) +'_' + str(datetime.now())
 
 def torcs_dqn_kx(divider, tag):
     yang_common_setting(tag)
@@ -721,18 +716,18 @@ def torcs_dqn_kx(divider, tag):
     # Q learning specific
     FLAGS.eval_freq = -1
     FLAGS.demo_mode = "no_demo"
-    #FLAGS.hard_Q_loss_weight = 1.0
-    FLAGS.collect_Q_experience = True
 
+
+    FLAGS.collect_Q_experience = True
     FLAGS.env_id="rltorcs-v0"
 
     # begin the divider attempt
     num_iterations = int(4e7) / 4 / divider
-    FLAGS.learning_starts = 50000 / divider
+    FLAGS.learning_starts = 0#50000 / divider
     FLAGS.target_update_freq = 10000 / divider
-    FLAGS.replay_buffer_size = 1000000 / divider
+    FLAGS.replay_buffer_size = int(1e6)
     FLAGS.max_timesteps = int(4e7) / divider
-    FLAGS.dataset_size = 1000000 / divider
+    FLAGS.dataset_size = int(3e5)
 
     FLAGS.lr_schedule = PiecewiseSchedule([
             (0, 1e-4),
@@ -756,8 +751,8 @@ def torcs_collect(divider, tag):
     # param for demonstration
     FLAGS.learning_stage = False
     FLAGS.ckpt_path = '/data/yang/code/rl_demonstration/hw3/link_data/torcs_dqn_30x_False_0.1'
-    FLAGS.replay_buffer_size = 1000000 / divider
-    FLAGS.max_timesteps = int(4e6) / 4 / divider
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.max_timesteps = int(3e5)#int(4e6) / 4
     num_iterations = int(4e7) / 4 / divider
     FLAGS.exploration_schedule = PiecewiseSchedule([
         (0, 0.01),
@@ -771,38 +766,37 @@ def torcs_10x_BenReward():
     torcs_dqn_kx(10, tag)
     FLAGS.custom_reward = "reward_ben"
 
-def collect_torcs_demonstration():
+def collect_torcs_demonstration_3e5():
     tag = inspect.stack()[0][3]
     FLAGS.torcs_divider = 1
     print(FLAGS.torcs_divider,'x torcs demo')
     torcs_collect(FLAGS.torcs_divider, tag)
     FLAGS.custom_reward = "reward_ben"
+    FLAGS.core_num = '0'
 
 def torcs_cross_entropy_demo():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
     FLAGS.torcs_divider = 30
-    FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider) +'_'+str(datetime.now())
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/30torcs_new.p'
-    yang_common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
     torcs_dqn_kx(FLAGS.torcs_divider,tag)
 
     FLAGS.demo_mode = "replay"
     FLAGS.collect_Q_experience = False
     FLAGS.eval_freq = 10000
 
-    FLAGS.core_num = '6'
+    FLAGS.core_num = '1'
     FLAGS.supervise_cross_entropy_loss_weight = 1.0
 
 def torcs_hinge_dqfd_demo():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
     FLAGS.torcs_divider = 30
-    FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/30torcs_new.p'
-    yang_common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -816,10 +810,9 @@ def torcs_hard_Q_demo():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
     FLAGS.torcs_divider = 30
-    FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/30torcs_new.p'
-    yang_common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
     torcs_dqn_kx(FLAGS.torcs_divider,tag)
 
     FLAGS.demo_mode = "replay"
@@ -833,10 +826,9 @@ def torcs_soft_Q_demo():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
     FLAGS.torcs_divider = 30
-    FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/30torcs_new.p'
-    yang_common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -850,10 +842,9 @@ def torcs_dqfd_full_demo():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
     FLAGS.torcs_divider = 30
-    FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/30torcs_new.p'
-    yang_common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -866,14 +857,141 @@ def torcs_dqfd_full_demo():
     FLAGS.hard_Q_loss_weight = 1.0
     FLAGS.l2_regularization_loss_weight = 1.0e-5
 
+def torcs_V_grounding_demo():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '4'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+def torcs_V_grounding_no_weighting_demo():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '5'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+def torcs_PG_demo():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '6'
+
+    #FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    #FLAGS.disable_off_policy_weighting = True
+
+def torcs_PG_no_weighting_demo():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '7'
+
+    #FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+def torcs_only_V_no_weighting_demo():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 0.0#1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+def torcs_Q_grounding_no_weighting_demo():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+
+    FLAGS.exp_value_critic_weighting = 0.0#1.0
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.soft_Q_alpha = 0.1
+
+    FLAGS.disable_off_policy_weighting = True
+
+
+
 def torcs_PG_Vloss_rapidWeighting_demo():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
     FLAGS.torcs_divider = 30
-    FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/30torcs_new.p'
-    yang_common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"

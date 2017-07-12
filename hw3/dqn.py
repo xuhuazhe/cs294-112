@@ -77,7 +77,7 @@ def learn(env_train,
     grad_norm_clipping: float or None
         If not None gradients' norms are clipped to this value.
     """
-    env_info = env_train if env_train else env_train
+    env_info = env_train if env_train else env_test
 
     assert type(env_info.observation_space) == gym.spaces.Box
     assert type(env_info.action_space) == gym.spaces.Discrete

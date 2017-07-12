@@ -8,9 +8,10 @@
 ## now loop through the above arrayi
 #declare -a arr=("dueling_net_double_Q_eval")
 #declare -a arr=("urex_multistep")
-#declare -a arr=("collect_torcs_demonstration")
+#declare -a arr=("collect_torcs_demonstration_3e5")
 #declare -a arr=("torcs_cross_entropy_demo")
-declare -a arr=("torcs_cross_entropy_demo" "torcs_hinge_dqfd_demo" "torcs_hard_Q_demo" "torcs_soft_Q_demo" "torcs_dqfd_full_demo" "torcs_PG_Vloss_rapidWeighting_demo")
+#declare -a arr=("torcs_cross_entropy_demo" "torcs_hinge_dqfd_demo" "torcs_hard_Q_demo" "torcs_soft_Q_demo" "torcs_dqfd_full_demo" "torcs_V_grounding_demo" "torcs_V_grounding_no_weighting_demo" "torcs_PG_demo" "torcs_PG_no_weighting_demo")
+declare -a arr=("torcs_only_V_no_weighting_demo" "torcs_Q_grounding_no_weighting_demo")
 for i in "${arr[@]}"
 do
     python run_dqn_atari.py --config $i &
