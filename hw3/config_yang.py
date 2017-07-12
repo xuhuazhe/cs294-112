@@ -9,8 +9,11 @@ FLAGS = tf.app.flags.FLAGS
 
 def common_setting():
     FLAGS.demo_mode = 'hdf'
+    # The non synced version of demonstration
     #FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
+    # The synced version
     #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+    # The harry's version, the quality is much worse
     #FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro.h5'
     FLAGS.collect_Q_experience = False
 
@@ -883,3 +886,30 @@ def torcs_V_grounding_baseline():
 
     # use a small replay buffer to simulate on line case
     FLAGS.replay_buffer_size = RB
+
+def torcs_V_grounding_only():
+    tag = inspect.stack()[0][3]
+    RB = 10000
+    tag = tag + "_RB" + str(RB)
+    torcs_config(tag)
+    FLAGS.hard_Q_loss_weight = 0
+
+    # use a small replay buffer to simulate on line case
+    FLAGS.replay_buffer_size = RB
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 0
+
+    FLAGS.disable_off_policy_weighting = True
+
+def enduro_demo_Q_grounding():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+
+    FLAGS.core_num = '1'
+
+    FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.disable_off_policy_weighting = True
