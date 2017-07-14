@@ -24,6 +24,8 @@ tf.app.flags.DEFINE_boolean('ddqn', False,
                             """Enable double Q bellman Update""")
 tf.app.flags.DEFINE_boolean('dueling', False,
                             """Enable dueling net architecture""")
+tf.app.flags.DEFINE_boolean('pi_v_model', False,
+                            """Enable actor critic parametrization""")
 
 # demonstration related
 tf.app.flags.DEFINE_string('demo_mode', 'hdf',
@@ -208,13 +210,18 @@ def atari_model(img_in, num_actions, scope, reuse=False):
                     shared_bias = tf.get_variable("shared_bias", shape=[1])
                     out += shared_bias
                 else:
-                    if FLAGS.multistep:
+                    if FLAGS.multistep or FLAGS.pi_v_model:
                         value = layers.fully_connected(out, num_outputs=1, activation_fn=None)
                     out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
             if FLAGS.multistep:
-                assert value is not None
                 return out, value
+            elif FLAGS.pi_v_model:
+                # assemble the induced Q
+                log_pi = tf.nn.log_softmax(out, name="log_pi")
+                # the inducing Q value
+                induced_Q = FLAGS.soft_Q_alpha * log_pi + value
+                return induced_Q
             else:
                 return out
 
