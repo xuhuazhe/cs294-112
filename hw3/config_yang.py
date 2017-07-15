@@ -913,3 +913,81 @@ def enduro_demo_Q_grounding():
     FLAGS.soft_Q_loss_weight = 1.0
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.disable_off_policy_weighting = True
+
+# exploring the PCL 1 step
+def torcs_dqn_kx_demo(divider, tag):
+    yang_common_setting(tag)
+
+    FLAGS.env_id="rltorcs-v0"
+
+    # begin the divider attempt
+    num_iterations = int(4e7) / 4 / divider
+    FLAGS.learning_starts = 50000 / divider
+    FLAGS.target_update_freq = 10000 / divider
+    FLAGS.replay_buffer_size = 1000000 / divider
+    FLAGS.max_timesteps = int(4e7) / divider
+
+    FLAGS.lr_schedule = PiecewiseSchedule([
+            (0, 1e-4),
+            (num_iterations / 10, 1e-4),
+            (num_iterations / 2, 5e-5)],
+        outside_value=5e-5)
+
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+            (0, 1.0),
+            (1e6 / divider, 0.1),
+            (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    # interaction purpose
+    FLAGS.summary_interval = 10000 / divider
+
+def torcs_config_demo(tag):
+    torcs_dqn_kx_demo(30, tag)
+    FLAGS.custom_reward = "reward_ben"
+    # need to set this for every torcs instance
+    FLAGS.torcs_path = "/data/yang/code/rlTORCS"
+    FLAGS.torcs_demo = True
+
+def torcs_demo_PCL_PiV_rapidNet():
+    tag = inspect.stack()[0][3]
+    torcs_config_demo(tag)
+
+    FLAGS.core_num = '5'
+    FLAGS.demo_mode="replay"
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
+
+    FLAGS.PCL_1_step_weighting = 1.0
+    FLAGS.pi_v_model = True
+
+def torcs_demo_PCL_PiV_targetNet():
+    tag = inspect.stack()[0][3]
+    torcs_config_demo(tag)
+
+    FLAGS.core_num = '1'
+    FLAGS.demo_mode = "replay"
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.pi_v_model = True
+
+def torcs_demo_PCL_Q_rapidNet():
+    tag = inspect.stack()[0][3]
+    torcs_config_demo(tag)
+
+    FLAGS.core_num = '2'
+    FLAGS.demo_mode="replay"
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
+
+    FLAGS.PCL_1_step_weighting = 1.0
+    FLAGS.pi_v_model = False
+
+def torcs_demo_PCL_Q_targetNet():
+    tag = inspect.stack()[0][3]
+    torcs_config_demo(tag)
+
+    FLAGS.core_num = '3 '
+    FLAGS.demo_mode = "replay"
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.pi_v_model = False
