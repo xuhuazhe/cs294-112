@@ -985,9 +985,23 @@ def torcs_demo_PCL_Q_targetNet():
     tag = inspect.stack()[0][3]
     torcs_config_demo(tag)
 
-    FLAGS.core_num = '3 '
+    FLAGS.core_num = '3'
     FLAGS.demo_mode = "replay"
     FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
 
     FLAGS.soft_Q_loss_weight = 1.0
     FLAGS.pi_v_model = False
+
+def torcs_demo_V_grounding():
+    tag = inspect.stack()[0][3]
+    torcs_config_demo(tag)
+
+    FLAGS.core_num = '6'
+    FLAGS.demo_mode = "replay"
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    #FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
