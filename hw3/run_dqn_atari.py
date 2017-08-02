@@ -151,6 +151,8 @@ tf.app.flags.DEFINE_integer('target_update_freq', 10000,
 
 tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v4',
                            """""")
+tf.app.flags.DEFINE_string('demo_name','dontuse.p',
+                           """collected demonstration time""")
 #### torcs related
 tf.app.flags.DEFINE_string('torcs_resolution', '84x84',
                            """""")
@@ -158,7 +160,7 @@ tf.app.flags.DEFINE_string('torcs_path', '/data/hxu/rlTORCS',
                            """path for torcs env""")
 tf.app.flags.DEFINE_string('custom_reward', '',
                            """""")
-tf.app.flags.DEFINE_integer('torcs_divider', 30,
+tf.app.flags.DEFINE_integer('torcs_divider', -1,
                             """divider for training time and replay buffer.""")
 tf.app.flags.DEFINE_boolean('torcs_demo', False,
                             """learning from demonstration in torcs environment""")

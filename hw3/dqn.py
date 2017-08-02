@@ -574,8 +574,23 @@ def learn(env_train,
             elif not FLAGS.inenv_eval:
                 package, need_hinge = \
                     replay_buffer.sample(batch_size, FLAGS.group_name)
-                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
-                    package
+                if FLAGS.tag_prefix == 'human':
+                    #print('*'*30)
+                    #print('HUMAN DEMO!')
+                    #print('*' * 30)
+                    #print(package)
+                    obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
+                        package
+                else:
+                    obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
+                        package
+            try:
+                action_dist
+            except:
+                print('ACTION_DIST is not defined!Let\'s fake it!')
+                action_dist = np.zeros([rew_t_batch.shape[0], num_actions])
+            else:
+                pass
 
                 # (b)
             if not model_initialized:
