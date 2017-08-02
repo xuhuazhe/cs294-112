@@ -6,9 +6,9 @@
 #declare -a arr=("exp_advantage_diff_learning")
 #declare -a arr=("33333" "3333" "333")
 #declare -a arr=("1000000" "100000" "10000" "1000")
-declare -a arr=("100000" "10000" "1000" "100")
-declare -a brr=("torcs_V_grounding_consistent_target" "torcs_V_grounding_consistent_rapid" "torcs_V_grounding_no_weighting" "torcs_V_grounding_baseline")
-
+#declare -a arr=("100000" "10000" "1000" "100")
+#declare -a brr=("torcs_V_grounding_consistent_target" "torcs_V_grounding_consistent_rapid" "torcs_V_grounding_no_weighting" "torcs_V_grounding_baseline")
+declare -a arr=("torcs_demo_PCL_PiV_rapidNet" "torcs_demo_PCL_PiV_targetNet" "torcs_demo_PCL_Q_rapidNet" "torcs_demo_PCL_Q_targetNet")
 
 ## now loop through the above array
 for i in "${arr[@]}"
@@ -23,8 +23,11 @@ do
     #sleep 10
     #python run_dqn_atari.py --config enduro_scan_RB --replay_buffer_size=$i --policy_gradient_soft_1_step=1.0 &
     #sleep 10
-    sleep 0
+    python run_dqn_atari.py --config $i &
+    sleep 10
 done
+
+exit 1
 
 for a in "${arr[@]}"
 do

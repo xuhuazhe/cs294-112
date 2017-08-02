@@ -353,6 +353,28 @@ def learn(env_train,
         tf.histogram_summary("sign_visualize/adv_diff", adv_delta)
         total_error += FLAGS.exp_advantage_diff_learning * adv_diff
 
+    if FLAGS.PCL_1_step_weighting > 0:
+        # PCL doesn't require any target network
+        # It also doesn't require any on policy sample
+        #   the original paper use the Boltzman distribution for exploration
+        #   we keep the same epsilon-exploration strategy here
+        V_next = Q2V(rapid_next, alpha)
+
+        # the standard error term
+        #V_now = Q2V(rapid_now, alpha)
+        #pi_now = QV2pi(rapid_now, V_now, alpha)
+        #pi_now = select_each_row(pi_now, act_t_ph, num_actions)
+        #pcl_error = -V_now + rew_t_ph + gamma*(1-done_mask_ph)*V_next - alpha*tf.log(pi_now)
+        # the unified PCL, simplified term
+        pcl_error = q_act - (rew_t_ph + (1-done_mask_ph)*gamma*V_next)
+        pcl_error = tf.reduce_mean(tf.square(pcl_error))
+        tf.scalar_summary("loss/PCL_1_step_error", pcl_error)
+        total_error += FLAGS.PCL_1_step_weighting * pcl_error
+
+        # up to now, PCL with 1 step roll out, and unified parameterization, is equal to:
+        # soft Q learning without target network
+        # this happen to be exactly the same as "exp_soft_Q_bellman", and it doesn't work
+
     tf.scalar_summary("loss/total", total_error)
 
     # construct optimization op (with gradient clipping)
