@@ -126,9 +126,12 @@ def collect(env,
                 replay_buffer.store_effect(idx, action, reward, done,
                                            action_dist_this, info)
         else:
-
-            replay_buffer.store_effect(idx, action, reward, done,
+            if 'torcs' in FLAGS.env_id:
+                replay_buffer.store_effect(idx, action, reward, done,
                                        action_dist_this, info)
+            else:
+                replay_buffer.store_effect(idx, action, reward, done,
+                                           action_dist_this, None)
         last_obs = obs
 
         ### 4. Log progress
@@ -156,7 +159,7 @@ def collect(env,
 
     # save the replay buffer
     print('save pickle!')
-    FLAGS.Q_expert_path = './link_data/' + str(FLAGS.replay_buffer_size) +'_torcs.p'
+    FLAGS.Q_expert_path = './link_data/' + str(FLAGS.replay_buffer_size) + FLAGS.demo_name
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
 
