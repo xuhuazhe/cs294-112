@@ -11,7 +11,11 @@ from datetime import datetime
 def common_setting():
     FLAGS.ddqn = False
     FLAGS.demo_mode = 'replay'
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/hardQ_expert.p'
+    if FLAGS.tag_prefix == 'human':
+        FLAGS.demo_mode = 'hdf'
+        FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /data/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+    else:
+        FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000enduro_perfect'
     #FLAGS.demo_file_path   = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5'  #'/data/hxu/cs294-112/hw3/DQfD/enduro-egs.h5'
     #FLAGS.demo_file_path_1 = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
     FLAGS.bad_dir = ''#'/data/hxu/cs294-112/hw3/link_data/bad_demo.p'
@@ -24,18 +28,26 @@ def common_setting():
     FLAGS.learning_stage = True
     FLAGS.batch_size = 32
 
+def common_data_size(sz):
+    FLAGS.dataset_size = int(sz)#30000
+    FLAGS.method_name = FLAGS.method_name + "_" + str(FLAGS.dataset_size)
+
 
 
 
 def cross_entropy_T():
+    FLAGS.tag_prefix = 'Q_expert_s'
     tag = inspect.stack()[0][3]
     print("config name=", tag)
-    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    #FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    yang_common_setting(tag)
     common_setting()
+    #FLAGS.demo_mode = 'replay'
     #FLAGS.group_name = 'supervised'
-
+    #FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000enduro_perfect'
     FLAGS.core_num = '0'
     FLAGS.supervise_cross_entropy_loss_weight = 1.0
+
 
 def hinge_dqfd_T():
     tag = inspect.stack()[0][3]
@@ -43,7 +55,8 @@ def hinge_dqfd_T():
     FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
     common_setting()
     #FLAGS.group_name = 'supervised'
-
+    FLAGS.demo_mode = 'replay'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000enduro_perfect'
     FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
     FLAGS.core_num = '1'
 
@@ -80,7 +93,7 @@ def soft_Q_T():
 def DQFD_no_l2_T():
     tag = inspect.stack()[0][3]
     print("config name=", tag)
-    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    #FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
     common_setting()
     #FLAGS.group_name = 'dqfd'
 
@@ -89,9 +102,11 @@ def DQFD_no_l2_T():
     FLAGS.core_num = '1'
 
 def DQfD_full_T():
+    FLAGS.tag_prefix = 'Q_expert_'
     tag = inspect.stack()[0][3]
     print("config name=", tag)
-    FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    #FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    yang_common_setting(tag)
     common_setting()
     #FLAGS.group_name = 'dqfd'
 
@@ -745,20 +760,20 @@ def torcs_dqn_kx(divider, tag):
 
 def torcs_collect(divider, tag):
     yang_common_setting(tag)
-    FLAGS.core_num = '7'
+    FLAGS.core_num = '0'
     FLAGS.eval_freq = -1
     FLAGS.env_id = "rltorcs-v0"
     # param for demonstration
     FLAGS.learning_stage = False
     FLAGS.ckpt_path = '/data/yang/code/rl_demonstration/hw3/link_data/torcs_dqn_30x_False_0.1'
     FLAGS.replay_buffer_size = int(3e5)
-    FLAGS.max_timesteps = int(3e5)#int(4e6) / 4
+    FLAGS.max_timesteps = int(3e5)/4#int(4e6) / 4
     num_iterations = int(4e7) / 4 / divider
     FLAGS.exploration_schedule = PiecewiseSchedule([
-        (0, 0.01),
-        (1e6 / divider, 0.01),
-        (num_iterations / 2, 0.01)],
-        outside_value=0.01)
+        (0, 0.1),
+        (1e6 / divider, 0.1),
+        (num_iterations / 2, 0.1)],
+        outside_value=0.1)
 
 
 def torcs_10x_BenReward():
@@ -780,7 +795,7 @@ def torcs_cross_entropy_demo():
     FLAGS.torcs_divider = 30
     #FLAGS.method_name = tag + str(FLAGS.torcs_divider) +'_'+str(datetime.now())
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider,tag)
 
     FLAGS.demo_mode = "replay"
@@ -789,6 +804,8 @@ def torcs_cross_entropy_demo():
 
     FLAGS.core_num = '1'
     FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
 
 def torcs_hinge_dqfd_demo():
     tag = inspect.stack()[0][3]
@@ -796,7 +813,7 @@ def torcs_hinge_dqfd_demo():
     FLAGS.torcs_divider = 30
     #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -805,6 +822,7 @@ def torcs_hinge_dqfd_demo():
 
     FLAGS.core_num = '0'
     FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    common_data_size(300000)
 
 def torcs_hard_Q_demo():
     tag = inspect.stack()[0][3]
@@ -812,7 +830,7 @@ def torcs_hard_Q_demo():
     FLAGS.torcs_divider = 30
     #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider,tag)
 
     FLAGS.demo_mode = "replay"
@@ -821,6 +839,7 @@ def torcs_hard_Q_demo():
 
     FLAGS.core_num = '1'
     FLAGS.hard_Q_loss_weight = 1.0
+    common_data_size(300000)
 
 def torcs_soft_Q_demo():
     tag = inspect.stack()[0][3]
@@ -828,7 +847,7 @@ def torcs_soft_Q_demo():
     FLAGS.torcs_divider = 30
     #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -837,6 +856,7 @@ def torcs_soft_Q_demo():
 
     FLAGS.core_num = '2'
     FLAGS.soft_Q_loss_weight = 1.0
+    common_data_size(300000)
 
 def torcs_dqfd_full_demo():
     tag = inspect.stack()[0][3]
@@ -844,7 +864,7 @@ def torcs_dqfd_full_demo():
     FLAGS.torcs_divider = 30
     #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -856,6 +876,7 @@ def torcs_dqfd_full_demo():
     FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
     FLAGS.hard_Q_loss_weight = 1.0
     FLAGS.l2_regularization_loss_weight = 1.0e-5
+    common_data_size(300000)
 
 def torcs_V_grounding_demo():
     tag = inspect.stack()[0][3]
@@ -863,7 +884,7 @@ def torcs_V_grounding_demo():
     FLAGS.torcs_divider = 30
     #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -875,6 +896,7 @@ def torcs_V_grounding_demo():
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.critic_use_rapid_weighting = False
+    common_data_size(300000)
 
 def torcs_V_grounding_no_weighting_demo():
     tag = inspect.stack()[0][3]
@@ -882,7 +904,7 @@ def torcs_V_grounding_no_weighting_demo():
     FLAGS.torcs_divider = 30
     # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -896,6 +918,7 @@ def torcs_V_grounding_no_weighting_demo():
     FLAGS.critic_use_rapid_weighting = False
 
     FLAGS.disable_off_policy_weighting = True
+    common_data_size(300000)
 
 def torcs_PG_demo():
     tag = inspect.stack()[0][3]
@@ -903,7 +926,7 @@ def torcs_PG_demo():
     FLAGS.torcs_divider = 30
     # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
@@ -917,6 +940,7 @@ def torcs_PG_demo():
     FLAGS.critic_use_rapid_weighting = False
 
     #FLAGS.disable_off_policy_weighting = True
+    common_data_size(300000)
 
 def torcs_PG_no_weighting_demo():
     tag = inspect.stack()[0][3]
@@ -924,20 +948,21 @@ def torcs_PG_no_weighting_demo():
     FLAGS.torcs_divider = 30
     # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
     FLAGS.collect_Q_experience = False
     FLAGS.eval_freq = 10000
 
-    FLAGS.core_num = '7'
+    FLAGS.core_num = '6'
 
     #FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.critic_use_rapid_weighting = False
 
     FLAGS.disable_off_policy_weighting = True
+    common_data_size(300000)
 
 def torcs_only_V_no_weighting_demo():
     tag = inspect.stack()[0][3]
@@ -945,20 +970,21 @@ def torcs_only_V_no_weighting_demo():
     FLAGS.torcs_divider = 30
     # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
     FLAGS.collect_Q_experience = False
     FLAGS.eval_freq = 10000
 
-    FLAGS.core_num = '0'
+    FLAGS.core_num = '2'
 
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.exp_policy_grad_weighting = 0.0#1.0
     FLAGS.critic_use_rapid_weighting = False
 
     FLAGS.disable_off_policy_weighting = True
+    common_data_size(300000)
 
 def torcs_Q_grounding_no_weighting_demo():
     tag = inspect.stack()[0][3]
@@ -966,14 +992,14 @@ def torcs_Q_grounding_no_weighting_demo():
     FLAGS.torcs_divider = 30
     # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs.p'
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
     FLAGS.demo_mode = "replay"
     FLAGS.collect_Q_experience = False
     FLAGS.eval_freq = 10000
 
-    FLAGS.core_num = '1'
+    FLAGS.core_num = '3'
 
     FLAGS.exp_value_critic_weighting = 0.0#1.0
     FLAGS.soft_Q_loss_weight = 1.0
@@ -982,6 +1008,7 @@ def torcs_Q_grounding_no_weighting_demo():
     FLAGS.soft_Q_alpha = 0.1
 
     FLAGS.disable_off_policy_weighting = True
+    common_data_size(300000)
 
 
 
@@ -1003,7 +1030,690 @@ def torcs_PG_Vloss_rapidWeighting_demo():
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.critic_use_rapid_weighting = True
 
+def collect_demonstration_enduro():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+    print("config name=", tag)
 
+    common_setting()
+
+    FLAGS.core_num = '0'
+    FLAGS.demo_mode = 'no_demo'
+    FLAGS.learning_starts = 0
+    FLAGS.learning_stage = False
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/data/'
+    #FLAGS.tiny_explore = 0.1
+    FLAGS.soft_Q_alpha = 0.1
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.max_timesteps = int(3e5) / 4
+    FLAGS.demo_name = 'enduro_perfect'
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    #FLAGS.summary_interval = 10
+def V_grounding_no_weighting_T():
+    FLAGS.tag_prefix = 'Q_expert_'
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+    #FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    common_setting()
+    #FLAGS.group_name = 'rl'
+
+    FLAGS.core_num = '0'
+    #FLAGS.hard_Q_loss_weight = 1.0
+    # optionally set: lr_schedule, exploration_schedule
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    #common_data_size(300000)
+
+def V_grounding_T():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+    # FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    common_setting()
+    # FLAGS.group_name = 'rl'
+
+    FLAGS.core_num = '1'
+    #FLAGS.hard_Q_loss_weight = 1.0
+    # optionally set: lr_schedule, exploration_schedule
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = False
+    #common_data_size(300000)
+
+def PG_no_weighting_T():
+    FLAGS.tag_prefix = 'Q_expert_'
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+    # FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    common_setting()
+    # FLAGS.group_name = 'rl'
+
+    FLAGS.core_num = '2'
+    #FLAGS.hard_Q_loss_weight = 1.0
+    # optionally set: lr_schedule, exploration_schedule
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    #common_data_size(300000)
+
+def PG_T():
+    tag = inspect.stack()[0][3]
+    yang_common_setting(tag)
+    # FLAGS.method_name = tag + '_' + str(FLAGS.dataset_size) + '_' + str(FLAGS.bad_portion) + '_dm'
+    common_setting()
+    # FLAGS.group_name = 'rl'
+
+    FLAGS.core_num = '3'
+    #FLAGS.hard_Q_loss_weight = 1.0
+    # optionally set: lr_schedule, exploration_schedule
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = False
+    #common_data_size(300000)
+
+def torcs_V_grounding_inenv():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000/FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '5'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    FLAGS.ckpt_path='/data/hxu/cs294-112/hw3/link_data/torcs_V_grounding_no_weighting_demo_30_2017-07-05 21:24:35.375801'
+    FLAGS.inenv_finetune = True
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+    FLAGS.custom_reward = "reward_ben"
+
+def torcs_DQFD_inenv_no_hinge():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000 / FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '3'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    FLAGS.ckpt_path = '/data/hxu/cs294-112/hw3/link_data/torcs_dqfd_full_demo_30_2017-07-05 21:24:15.244307'
+    FLAGS.inenv_finetune = True
+
+    #FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    
+    FLAGS.custom_reward = "reward_ben"
+
+# _____________damage_test_config________________
+def collect_torcs_demonstration_damage_test():
+    tag = inspect.stack()[0][3]
+    FLAGS.torcs_divider = 1
+    print(FLAGS.torcs_divider,'x torcs demo')
+    torcs_collect(FLAGS.torcs_divider, tag)
+    FLAGS.custom_reward = "reward_ben"
+    FLAGS.core_num = '0'
+# _____________use_for_write_up__________________________
+def collect_torcs_demonstration_add_damage():
+    tag = inspect.stack()[0][3]
+    FLAGS.torcs_divider = 1
+    print(FLAGS.torcs_divider,'x torcs demo')
+    torcs_collect(FLAGS.torcs_divider, tag)
+    FLAGS.custom_reward = "reward_ben"
+    FLAGS.core_num = '0'
+    FLAGS.demo_name = 'add_damage'
+    num_iterations  = int(4e7) / 4 / FLAGS.torcs_divider
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 0.01),
+        (1e6 / FLAGS.torcs_divider, 0.01),
+        (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+def torcs_cross_entropy_demo_stage_1():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider) +'_'+str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000add_damage.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+
+def torcs_hard_Q_demo_stage_1():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000add_damage.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+
+def torcs_dqfd_full_demo_stage_1():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000add_damage.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+
+def torcs_V_grounding_demo_stage_1():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000add_damage.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+
+def torcs_V_grounding_no_weighting_demo_stage_1():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000add_damage.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+
+# _____________finetune_model_writeup_use______________________
+''' possible path
+    /backup/hxu/modelRL/torcs_dqfd_full_demo_stage_1_30_2017-08-04 11:39:00.926601_300000
+    /backup/hxu/modelRL/torcs_V_grounding_no_weighting_demo_stage_1_30_2017-08-04 12:11:08.140152_300000
+    /backup/hxu/modelRL/torcs_V_grounding_demo_stage_1_30_2017-08-04 12:13:21.937080_300000
+    /backup/hxu/modelRL/torcs_cross_entropy_demo_stage_1_30_2017-08-04 11:10:35.839296_300000
+    /backup/hxu/modelRL/torcs_hard_Q_demo_stage_1_30_2017-08-04 11:33:57.696110_300000
+'''
+ckpt_list = {'dqfd':'/backup/hxu/modelRL/torcs_dqfd_full_demo_stage_1_30_2017-08-04 11:39:00.926601_300000',
+             'V_grounding_no_weighting':'/backup/hxu/modelRL/torcs_V_grounding_no_weighting_demo_stage_1_30_2017-08-04 12:11:08.140152_300000',
+             'V_grounding':'/backup/hxu/modelRL/torcs_V_grounding_demo_stage_1_30_2017-08-04 12:13:21.937080_300000',
+             'cross_entropy':'/backup/hxu/modelRL/torcs_cross_entropy_demo_stage_1_30_2017-08-04 11:10:35.839296_300000',
+             'hard_Q':'/backup/hxu/modelRL/torcs_hard_Q_demo_stage_1_30_2017-08-04 11:33:57.696110_300000'}
+def torcs_V_grounding_inenv_stage_2(key):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = ''
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000/FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '0'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    FLAGS.ckpt_path=ckpt_list[key]#'/backup/hxu/modelRL/torcs_dqfd_full_demo_stage_1_30_2017-08-04 11:39:00.926601_300000'
+    FLAGS.inenv_finetune = True
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+    FLAGS.custom_reward = "reward_ben"
+
+    FLAGS.method_name = FLAGS.method_name + '_' + key
+
+
+def torcs_DQFD_inenv_no_hinge_stage_2(key):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = ''
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000 / FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '1'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    FLAGS.ckpt_path = ckpt_list[key]#'/data/hxu/cs294-112/hw3/link_data/torcs_dqfd_full_demo_30_2017-07-05 21:24:15.244307'
+    FLAGS.inenv_finetune = True
+
+    # FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+
+    FLAGS.custom_reward = "reward_ben"
+
+    FLAGS.method_name = FLAGS.method_name + '_' + key
+
+def torcs_V_grounding_inenv_stage_2_large_replay(key):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 6
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = ''
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000/FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '0'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    FLAGS.lr_schedule = PiecewiseSchedule([
+        (0, 5e-5),
+        (1e6, 5e-5),
+        (1e7, 5e-5)],
+        outside_value=5e-5)
+    FLAGS.ckpt_path=ckpt_list[key]#'/backup/hxu/modelRL/torcs_dqfd_full_demo_stage_1_30_2017-08-04 11:39:00.926601_300000'
+    FLAGS.inenv_finetune = True
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+    FLAGS.custom_reward = "reward_ben"
+
+    FLAGS.method_name = FLAGS.method_name + '_' + key
+
+
+def torcs_DQFD_inenv_stage_2_large_replay(key):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 6
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    #FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000 / FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '0'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    FLAGS.lr_schedule = PiecewiseSchedule([
+        (0, 5e-5),
+        (1e6 / 10, 5e-5),
+        (1e7 / 2, 5e-5)],
+        outside_value=5e-5)
+    FLAGS.ckpt_path = ckpt_list[key]#'/data/hxu/cs294-112/hw3/link_data/torcs_dqfd_full_demo_30_2017-07-05 21:24:15.244307'
+    FLAGS.inenv_finetune = True
+
+    # FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+
+    FLAGS.custom_reward = "reward_ben"
+
+    FLAGS.method_name = FLAGS.method_name + '_' + key
+    FLAGS.demo_mode = 'dqfd'
+    FLAGS.demo_portion = 0.1
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000add_damage.p'
+
+
+# exp on complex torcs env __ FLAGS.game_config_fname
+def torcs_hard_Q_complex():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = ''#'/backup/hxu/modelRL/300000add_damage.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.torcs_demo = False
+    FLAGS.eval_freq = -1
+    FLAGS.learning_starts = 50000 / FLAGS.torcs_divider
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.train_from_scratch = True
+    FLAGS.inenv_finetune = True
+    FLAGS.core_num = '0'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
+    #common_data_size(300000)
+def collect_torcs_demonstration_complex():
+    tag = inspect.stack()[0][3]
+    FLAGS.torcs_divider = 1
+    print(FLAGS.torcs_divider,'x torcs demo')
+    torcs_collect(FLAGS.torcs_divider, tag)
+    FLAGS.custom_reward = "reward_ben"
+    FLAGS.core_num = '1'
+    FLAGS.demo_name = 'complex'
+    num_iterations  = int(4e7) / 4 / FLAGS.torcs_divider
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 0.01),
+        (1e6 / FLAGS.torcs_divider, 0.01),
+        (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    FLAGS.ckpt_path = '/data/hxu/modelRL/torcs_hard_Q_complex_30_2017-08-08 10:14:45.948102'
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
+
+def torcs_cross_entropy_demo_stage_1_complex():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider) +'_'+str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000complex.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
+
+def torcs_hard_Q_demo_stage_1_complex():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000complex.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
+
+def torcs_dqfd_full_demo_stage_1_complex():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000complex.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
+
+def torcs_V_grounding_demo_stage_1_complex():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000complex.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
+
+def torcs_V_grounding_no_weighting_demo_stage_1_complex():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000complex.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
+
+def torcs_V_grounding_inenv_stage_2_large_replay_complex(key):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 6
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = ''
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000/FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '0'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    FLAGS.lr_schedule = PiecewiseSchedule([
+        (0, 5e-5),
+        (1e6, 5e-5),
+        (1e7, 5e-5)],
+        outside_value=5e-5)
+    FLAGS.ckpt_path=ckpt_list[key]#'/backup/hxu/modelRL/torcs_dqfd_full_demo_stage_1_30_2017-08-04 11:39:00.926601_300000'
+    FLAGS.inenv_finetune = True
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+    FLAGS.custom_reward = "reward_ben"
+
+    FLAGS.method_name = FLAGS.method_name + '_' + key
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
+
+def torcs_DQFD_inenv_stage_2_large_replay_complex(key):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 6
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    #FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000 / FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '0'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    FLAGS.lr_schedule = PiecewiseSchedule([
+        (0, 5e-5),
+        (1e6 / 10, 5e-5),
+        (1e7 / 2, 5e-5)],
+        outside_value=5e-5)
+    FLAGS.ckpt_path = ckpt_list[key]#'/data/hxu/cs294-112/hw3/link_data/torcs_dqfd_full_demo_30_2017-07-05 21:24:15.244307'
+    FLAGS.inenv_finetune = True
+
+    # FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+
+    FLAGS.custom_reward = "reward_ben"
+
+    FLAGS.method_name = FLAGS.method_name + '_' + key
+    FLAGS.demo_mode = 'dqfd'
+    FLAGS.demo_portion = 0.1
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000complex.p'
+    FLAGS.game_config_fname = 'quickrace_discrete_multi_ushite-city.xml'
 
 use_this_config = test_test
 

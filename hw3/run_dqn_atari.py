@@ -150,6 +150,8 @@ tf.app.flags.DEFINE_string('explore_value_method', "normal",
                            """""")
 tf.app.flags.DEFINE_string('greedy_method', "hard",
                            """""")
+tf.app.flags.DEFINE_boolean('train_from_scratch', False,
+                            """Do you want to train from scratch""")
 
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
@@ -386,7 +388,7 @@ def main(_):
     # potential error here
     default_parameters(num_timesteps=int(4e7))
 
-    if not FLAGS.config.endswith("()"):
+    if not FLAGS.config.endswith(")"):
         FLAGS.config += "()"
 
     eval(FLAGS.config)

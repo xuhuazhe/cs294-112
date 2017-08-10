@@ -18,7 +18,15 @@
 #declare -a arr=("V_grounding_no_weighting_T" "PG_no_weighting_T" "DQfD_full_T" "cross_entropy_T" )
 #declare -a arr=("V_grounding_no_weighting_T")
 #declare -a arr=("DQfD_full_T" "cross_entropy_T")
-declare -a arr=("torcs_DQFD_inenv_no_hinge")
+#declare -a arr=("torcs_DQFD_inenv_no_hinge")
+#declare -a arr=("torcs_V_grounding_demo_stage_1")
+#declare -a arr=("torcs_V_grounding_inenv_stage_2('V_grounding_no_weighting')" "torcs_V_grounding_inenv_stage_2('V_grounding')" "torcs_V_grounding_inenv_stage_2('cross_entropy')" "torcs_V_grounding_inenv_stage_2('hard_Q')" "torcs_V_grounding_inenv_stage_2('dqfd')")
+#declare -a arr=("torcs_V_grounding_inenv_stage_2('dqfd')")
+#declare -a arr=("torcs_DQFD_inenv_no_hinge_stage_2('V_grounding_no_weighting')" "torcs_DQFD_inenv_no_hinge_stage_2('V_grounding')" "torcs_DQFD_inenv_no_hinge_stage_2('cross_entropy')" "torcs_DQFD_inenv_no_hinge_stage_2('hard_Q')" "torcs_DQFD_inenv_no_hinge_stage_2('dqfd')")
+#declare -a arr=("torcs_hard_Q_complex")
+declare -a arr=("torcs_V_grounding_inenv_stage_2_large_replay('V_grounding_no_weighting')" "torcs_V_grounding_inenv_stage_2_large_replay('V_grounding')" "torcs_V_grounding_inenv_stage_2_large_replay('cross_entropy')" "torcs_V_grounding_inenv_stage_2_large_replay('hard_Q')" "torcs_V_grounding_inenv_stage_2_large_replay('dqfd')" "torcs_DQFD_inenv_stage_2_large_replay('V_grounding_no_weighting')" "torcs_DQFD_inenv_stage_2_large_replay('V_grounding')" "torcs_DQFD_inenv_stage_2_large_replay('cross_entropy')" "torcs_DQFD_inenv_stage_2_large_replay('hard_Q')" "torcs_DQFD_inenv_stage_2_large_replay('dqfd')")
+#declare -a arr=("collect_torcs_demonstration_complex")
+#declare -a arr=("torcs_cross_entropy_demo_stage_1_complex" "torcs_hard_Q_demo_stage_1_complex" "torcs_dqfd_full_demo_stage_1_complex" "torcs_V_grounding_demo_stage_1_complex" "torcs_V_grounding_no_weighting_demo_stage_1_complex")
 for i in "${arr[@]}"
 do
     python run_dqn_atari.py --config $i &

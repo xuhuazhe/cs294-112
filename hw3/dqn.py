@@ -410,6 +410,10 @@ def learn(env_train,
     mean_episode_reward = -float('nan')
     best_mean_episode_reward = -float('inf')
     best_reward = -float('inf')
+    damage_per_episode = 0
+    damage_list = []
+    damage_counter = 0
+    mean_damage_counter = 0
     if env_train:
         last_obs = env_train.reset()
     LOG_EVERY_N_STEPS = 10000
@@ -438,14 +442,19 @@ def learn(env_train,
         ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_path)
         if ckpt and ckpt.model_checkpoint_path:
             ckpt_path = ckpt.model_checkpoint_path
+        elif FLAGS.train_from_scratch:
+            pass
         else:
             print('No checkpoint file found')
             session.close()
             return
-        saver.restore(session, ckpt_path)
-        print('model loaded!!!! %s' % ckpt_path)
-        print('*'*30)
-        model_initialized = True
+        if FLAGS.train_from_scratch:
+            pass
+        else:
+            saver.restore(session, ckpt_path)
+            print('model loaded!!!! %s' % ckpt_path)
+            print('*'*30)
+            model_initialized = True
 
     for t in itertools.count():
         ### 1. Check stopping criterion
@@ -513,8 +522,16 @@ def learn(env_train,
             action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
 
             obs, reward, done, info = env_train.step(action)
+            if info != {}:
+                # print(info)
+                damage = int(info['damage'])
+                next_damage = int(info['next_damage'])
+                if next_damage - damage > 1:
+                    damage_per_episode += 1
             if done:
                 obs = env_train.reset()
+                damage_list += [damage_per_episode]
+                damage_per_episode = 0
 
             replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
             last_obs = obs
@@ -658,7 +675,7 @@ def learn(env_train,
             print('Start Evaluating at TimeStep %d' % t)
             eps = 0.05
 
-            reward_calc, frame_counter = \
+            reward_calc, frame_counter, damage_counter = \
                 eval_policy(env_test, q, obs_t_ph,
                             session,
                             eps, frame_history_len, num_actions, img_c)
@@ -667,6 +684,7 @@ def learn(env_train,
             print("the frame counter is %f" % frame_counter)
             print("test reward %f" % reward_calc)
             print("best test reward %f" % best_reward)
+            print("damage counter %d" % damage_counter)
             with open(log_file, 'a') as f:
                 print(t, reward_calc, best_reward, file=f)
 
@@ -678,6 +696,9 @@ def learn(env_train,
                 reward_calc = episode_rewards[-1]
             if len(episode_rewards) > 100:
                 best_mean_episode_reward = max(best_mean_episode_reward, mean_episode_reward)
+            if len(damage_list) > 0:
+                mean_damage_counter = np.mean(damage_list[-100:])
+                damage_counter = damage_list[-1]
 
             if t % LOG_EVERY_N_STEPS == 0 and model_initialized:
                 print("mean reward (100 episodes) %f" % mean_episode_reward)
@@ -685,6 +706,8 @@ def learn(env_train,
                 print("episodes %d" % len(episode_rewards))
                 print("exploration %f" % exploration.value(t))
                 print("learning_rate %f" % optimizer_spec.lr_schedule.value(t))
+                print("mean_damage_counter %d" % mean_damage_counter)
+                print("damage_counter %d" % damage_counter)
                 sys.stdout.flush()
 
                 with open(log_file, 'a') as f:
@@ -703,4 +726,5 @@ def learn(env_train,
             if sum_eval:
                 summary.value.add(tag='exploration', simple_value=exploration.value(t))
                 summary.value.add(tag='reward', simple_value=reward_calc)
+                summary.value.add(tag='damage_number', simple_value=damage_counter)
             summary_writer.add_summary(summary, t)
