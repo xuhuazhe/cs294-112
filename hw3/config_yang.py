@@ -948,6 +948,16 @@ def torcs_config_demo(tag):
     FLAGS.torcs_path = "/data/yang/code/rlTORCS"
     FLAGS.torcs_demo = True
 
+def torcs_config_ft(tag):
+    torcs_config(tag)
+    FLAGS.torcs_demo = False
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 0.05),
+        (10, 0.05)],
+        outside_value=0.05)
+    # some in env flags
+
+
 def torcs_demo_PCL_PiV_rapidNet():
     tag = inspect.stack()[0][3]
     torcs_config_demo(tag)
@@ -1005,3 +1015,129 @@ def torcs_demo_V_grounding():
     #FLAGS.critic_use_rapid_weighting = False
 
     FLAGS.disable_off_policy_weighting = True
+
+# begin the intuitive idea experiments
+def torcs_intuitive_2_stages():
+    tag = inspect.stack()[0][3]
+    phase = 3
+
+    if phase == 1:
+        # learning from demo part
+        torcs_config_demo(tag)
+
+        FLAGS.demo_mode = "replay"
+        FLAGS.demo_file_path = '/data/hxu/cs294-112/hw3/link_data/300000_torcs_0.1explore.p'
+
+        FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    elif phase == 2 or phase == 3:
+        # finetuning V only
+        torcs_config(tag)
+
+        FLAGS.hard_Q_loss_weight = -1.0
+        FLAGS.soft_Q_loss_weight = 1.0
+
+        FLAGS.exploration_schedule = PiecewiseSchedule([
+            (0, 0.01),
+            (10, 0.01)],
+            outside_value=0.01)
+
+        FLAGS.inenv_finetune = True
+        FLAGS.ckpt_path = "/data/yang/data/link_data_rl/torcs_intuitive_2_stages_False_0.1_phase" + str(phase-1)
+    else:
+        raise ValueError("wrong phase")
+
+    if phase == 2:
+        FLAGS.optimize_V_only = True
+
+    FLAGS.method_name = FLAGS.method_name + "_phase" + str(phase)
+    FLAGS.core_num = '0'
+    FLAGS.pi_v_model = True
+
+def enduro_config_demo(tag):
+    yang_common_setting(tag)
+    FLAGS.demo_file_path = '/backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-00.h5, /backup/hxu/cs294-112/hw3/link_data/dmformat_demo/enduro-dm-egs-01.h5'
+
+def enduro_config_inenv(tag):
+    yang_common_setting(tag)
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+
+def enduro_config_ft(tag, ckpt_path):
+    enduro_config_inenv(tag)
+    # ft related
+    finetune_config(ckpt_path)
+
+def finetune_config(ckpt_path):
+    FLAGS.inenv_finetune = True
+    FLAGS.ckpt_path = ckpt_path
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 0.01),
+        (10, 0.01)],
+        outside_value=0.01)
+    # TODO: learning rate should also be smaller, doesn't change here for now
+    FLAGS.lr_schedule = PiecewiseSchedule([
+        (0, 5e-5),
+        (10, 5e-5)],
+        outside_value=5e-5)
+
+
+def enduro_intuitive_3_stages():
+    tag = inspect.stack()[0][3]
+    phase = 3
+
+    if phase == 1:
+        # learning from demo part
+        enduro_config_demo(tag)
+
+        FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    elif phase == 2 or phase == 3:
+        # finetuning V only
+        enduro_config_ft(tag,
+                         "/data/yang/data/link_data_rl/" + "enduro_intuitive_3_stages_False_0.1" + "_phase" + str(phase - 1))
+
+        FLAGS.hard_Q_loss_weight = -1.0
+        FLAGS.soft_Q_loss_weight = 1.0
+    else:
+        raise ValueError("wrong phase")
+
+    if phase == 2:
+        FLAGS.optimize_V_only = True
+
+    FLAGS.method_name = FLAGS.method_name + "_phase" + str(phase)
+    FLAGS.core_num = '0'
+    FLAGS.pi_v_model = True
+
+
+def enduro_intuitive_3_stages_combined():
+    tag = inspect.stack()[0][3]
+    phase = 2
+
+    if phase == 1:
+        # first stage should be reused
+        pass
+    elif phase == 2:
+        ckpt_path = "/data/yang/data/link_data_rl/" + "enduro_intuitive_3_stages_False_0.1" + "_phase1"
+        enduro_config_demo(tag)
+        finetune_config(ckpt_path)
+
+        FLAGS.hard_Q_loss_weight = -1.0
+        FLAGS.soft_Q_loss_weight = 1.0
+    elif phase == 3:
+        # finetuning V only
+        ckpt_path = "/data/yang/data/link_data_rl/" + "enduro_intuitive_3_stages_combined_False_0.1" + "_phase2"
+        enduro_config_ft(tag, ckpt_path)
+
+        FLAGS.hard_Q_loss_weight = -1.0
+        FLAGS.soft_Q_loss_weight = 1.0
+    else:
+        raise ValueError("wrong phase")
+
+    if phase == 2:
+        FLAGS.optimize_V_only = True
+
+    FLAGS.method_name = FLAGS.method_name + "_phase" + str(phase)
+    FLAGS.core_num = '0'
+    FLAGS.pi_v_model = True
+

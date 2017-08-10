@@ -148,6 +148,9 @@ def minimize_and_clip(optimizer, objective, var_list, dueling_list=None, clip_va
             if 'q_func/convnet/last_conv' in var.op.name:
                 print('*'*30, 'multiply!')
                 grad = multiplier * grad
+            if FLAGS.optimize_V_only and not("value_only" in var.op.name):
+                print('zero out gradient for', var.op.name)
+                grad = 0.0 * grad
             gradients[i] = (tf.clip_by_norm(grad, clip_val), var)
             tf.histogram_summary("gradients/"+gradients[i][0].op.name, gradients[i][0])
     #if  FLAGS.dueling:
