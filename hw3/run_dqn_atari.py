@@ -167,11 +167,14 @@ tf.app.flags.DEFINE_string('torcs_path', '/data/hxu/rlTORCS',
                            """path for torcs env""")
 tf.app.flags.DEFINE_string('custom_reward', '',
                            """""")
+# torcs_divider not used in Yang's config
 tf.app.flags.DEFINE_integer('torcs_divider', -1,
                             """divider for training time and replay buffer.""")
 tf.app.flags.DEFINE_boolean('torcs_demo', False,
                             """learning from demonstration in torcs environment""")
 tf.app.flags.DEFINE_string('game_config_fname', 'quickrace_discrete_single.xml',
+                           """""")
+tf.app.flags.DEFINE_boolean('optimize_V_only', False,
                            """""")
 
 def dueling_model(img_in, num_actions, scope, reuse=False):
@@ -218,7 +221,8 @@ def atari_model(img_in, num_actions, scope, reuse=False):
                     out += shared_bias
                 else:
                     if FLAGS.multistep or FLAGS.pi_v_model:
-                        value = layers.fully_connected(out, num_outputs=1, activation_fn=None)
+                        with tf.variable_scope("value_only"):
+                            value = layers.fully_connected(out, num_outputs=1, activation_fn=None)
                     out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
             if FLAGS.multistep:
