@@ -1112,7 +1112,7 @@ def enduro_intuitive_3_stages():
 
 def enduro_intuitive_3_stages_combined():
     tag = inspect.stack()[0][3]
-    phase = 2
+    phase = 3
 
     if phase == 1:
         # first stage should be reused
