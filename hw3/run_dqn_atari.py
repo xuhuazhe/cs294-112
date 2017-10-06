@@ -163,8 +163,9 @@ tf.app.flags.DEFINE_string('demo_name','dontuse.p',
 #### torcs related
 tf.app.flags.DEFINE_string('torcs_resolution', '84x84',
                            """""")
-tf.app.flags.DEFINE_string('torcs_path', '/data/hxu/rlTORCS',
+tf.app.flags.DEFINE_string('torcs_path', '/',
                            """path for torcs env""")
+tf.app.flags.DEFINE_boolean('autoback', False, """autoback set up""")
 tf.app.flags.DEFINE_string('custom_reward', '',
                            """""")
 # torcs_divider not used in Yang's config
@@ -172,10 +173,16 @@ tf.app.flags.DEFINE_integer('torcs_divider', -1,
                             """divider for training time and replay buffer.""")
 tf.app.flags.DEFINE_boolean('torcs_demo', False,
                             """learning from demonstration in torcs environment""")
+tf.app.flags.DEFINE_boolean('human_torcs', False,
+                            """human demonstration for torcs""")
 tf.app.flags.DEFINE_string('game_config_fname', 'quickrace_discrete_single.xml',
                            """""")
 tf.app.flags.DEFINE_boolean('optimize_V_only', False,
                            """""")
+tf.app.flags.DEFINE_boolean('lf_bad_data', False,
+                            """collect bad demonstration for half of all""")
+tf.app.flags.DEFINE_integer('demo_step', 2e6,
+                            """lfd step number""")
 
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -252,6 +259,42 @@ def atari_learn(env,
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
         return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps
+
+    # TODO: better hyper parameters here
+    if FLAGS.dueling:
+        model = dueling_model
+    else:
+        model = atari_model
+    dqn.learn(
+        env,
+        q_func=model,
+        optimizer_spec=optimizer,
+        session=session,
+        exploration=FLAGS.exploration_schedule,
+        stopping_criterion=stopping_criterion,
+        replay_buffer_size=FLAGS.replay_buffer_size,
+        batch_size=FLAGS.batch_size,
+        gamma=0.99,
+        learning_starts=FLAGS.learning_starts,
+        learning_freq=FLAGS.learning_freq,
+        frame_history_len=FLAGS.frame_history_len,
+        target_update_freq=FLAGS.target_update_freq,
+        grad_norm_clipping=10,
+        env_test=env_test,
+    )
+
+    if env is not None:
+        env.close()
+
+def frozen_learn(env,
+                session,
+                num_timesteps):
+    # TODO: principle of Adam and more parameters
+    optimizer = dqn.OptimizerSpec(
+        constructor=tf.train.AdamOptimizer,
+        kwargs=dict(epsilon=1e-4),
+        lr_schedule=FLAGS.lr_schedule
+    )
 
     # TODO: better hyper parameters here
     if FLAGS.dueling:
@@ -412,7 +455,7 @@ def main(_):
             entry_point='py_torcs:TorcsEnv',
             kwargs={"subtype": "discrete_improved",
                     "server": True,
-                    "auto_back": False,
+                    "auto_back": FLAGS.autoback,
                     "game_config": os.path.abspath(os.path.join(FLAGS.torcs_path, "game_config", FLAGS.game_config_fname)),
                     "custom_reward": FLAGS.custom_reward,
                     "detailed_info": True}
@@ -420,7 +463,9 @@ def main(_):
 
     env = get_env(task, seed)
     session = get_session()
-
+    if 'Frozen' in task.env_id:
+        from dqn_utils import FrozenLakeEnv
+        env = FrozenLakeEnv()
 
     if FLAGS.multistep:
         multistep.run(env, atari_model)
@@ -436,7 +481,10 @@ def main(_):
         else:
             env_test = None
             env_train = env
-        atari_learn(env_train, session, num_timesteps=FLAGS.max_timesteps, env_test=env_test)
+        if 'Frozen' in task.env_id:
+            frozen_learn(env_train, session, num_timesteps=FLAGS.max_timesteps)
+        else:
+            atari_learn(env_train, session, num_timesteps=FLAGS.max_timesteps, env_test=env_test)
     else:
         atari_collect(env, session, num_timesteps=FLAGS.max_timesteps)
 if __name__ == "__main__":

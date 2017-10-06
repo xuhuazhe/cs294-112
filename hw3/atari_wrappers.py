@@ -130,13 +130,14 @@ class ProcessFrame84(gym.Wrapper):
         return _process_frame84(self.env.reset())
 
 class TorcsProcessFrame84(gym.Wrapper):
-    def aframe(self, frame):
-        img = np.reshape(frame, [self.image_height, self.image_width, 3]).astype(np.float32)
+    @staticmethod
+    def aframe(frame, image_height, image_width, resize_or_crop):
+        img = np.reshape(frame, [image_height, image_width, 3]).astype(np.float32)
         img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
-        if self.resize_or_crop == "crop":
+        if resize_or_crop == "crop":
             resized_screen = cv2.resize(img, (112, 84), interpolation=cv2.INTER_LINEAR)
             x_t = resized_screen[:, 14:98]
-        elif self.resize_or_crop == "resize":
+        elif resize_or_crop == "resize":
             x_t = cv2.resize(img, (84, 84), interpolation=cv2.INTER_LINEAR)
         else:
             raise ValueError("invalid resize_or_crop parameter")
@@ -154,10 +155,12 @@ class TorcsProcessFrame84(gym.Wrapper):
 
     def _step(self, action):
         obs, reward, done, info = self.env.step(action)
-        return self.aframe(obs), reward, done, info
+        return self.aframe(obs, self.image_height, self.image_width, self.resize_or_crop), \
+               reward, done, info
 
     def _reset(self):
-        return self.aframe(self.env.reset())
+        return self.aframe(self.env.reset(), self.image_height, self.image_width,
+                           self.resize_or_crop)
 
 class ClippedRewardsWrapper(gym.Wrapper):
     def _step(self, action):

@@ -535,6 +535,9 @@ def learn(env_train,
 
             replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
             last_obs = obs
+        else:
+            if t > FLAGS.demo_step:
+                break
 
         #####
 
