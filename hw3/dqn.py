@@ -375,6 +375,22 @@ def learn(env_train,
         # soft Q learning without target network
         # this happen to be exactly the same as "exp_soft_Q_bellman", and it doesn't work
 
+    if FLAGS.weight_decay:
+        ''' here we want to add weight decay '''
+        # Create your variables
+
+        #weights = tf.get_variable('weights', collections=['variables'], scope='q_func')
+
+        with tf.variable_scope('weights_norm') as scope:
+            weights_norm = tf.reduce_sum(
+                input_tensor=FLAGS.WEIGHT_DECAY_FACTOR * tf.pack(
+                    [tf.nn.l2_loss(i) for i in q_func_vars]
+                ),
+                name='weights_norm'
+            )
+
+        total_error += weights_norm
+
     tf.scalar_summary("loss/total", total_error)
 
     # construct optimization op (with gradient clipping)
@@ -392,6 +408,8 @@ def learn(env_train,
                                sorted(target_q_func_vars, key=lambda v: v.name)):
         update_target_fn.append(var_target.assign(var))
     update_target_fn = tf.group(*update_target_fn)
+
+
 
     summary_op = tf.merge_all_summaries()
     model_save_path = os.path.join('./link_data/', FLAGS.method_name)

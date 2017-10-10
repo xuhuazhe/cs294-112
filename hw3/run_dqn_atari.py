@@ -183,6 +183,10 @@ tf.app.flags.DEFINE_boolean('lf_bad_data', False,
                             """collect bad demonstration for half of all""")
 tf.app.flags.DEFINE_integer('demo_step', 2e6,
                             """lfd step number""")
+tf.app.flags.DEFINE_float('WEIGHT_DECAY_FACTOR', 0.0005,
+                          """weight decay factor""")
+tf.app.flags.DEFINE_boolean('weight_decay', False,
+                            """want weight decay?""")
 
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf

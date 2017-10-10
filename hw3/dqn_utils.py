@@ -498,8 +498,10 @@ def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
 
             if sync:
                 if FLAGS.human_torcs:
-                    idx = replay_buffer.store_frame(TorcsProcessFrame84.aframe(_obs[i], 120, 160, 'resize'))
-                    replay_buffer.store_effect(idx, _action[i], _reward[i], _terminal[i], delta_action_dist)
+                    if i < len(_obs)-1:
+                        delta_action_dist[_action[i+1]] = 1.0
+                        idx = replay_buffer.store_frame(TorcsProcessFrame84.aframe(_obs[i], 120, 160, 'resize'))
+                        replay_buffer.store_effect(idx, _action[i+1], _reward[i+1], _terminal[i+1], delta_action_dist)
                 else:
                     idx = replay_buffer.store_frame(_obs[i][:, :, 3][..., np.newaxis])
                     replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i], delta_action_dist)
@@ -568,12 +570,13 @@ def eval_policy(env, q, obs_t_ph,
             action = np.random.choice(num_actions)
 
         obs, reward, done, info = env.step(action)
-        if info != {}:
-            #print(info)
-            damage = int(info['damage'])
-            next_damage = int(info['next_damage'])
-            if next_damage - damage > 1:
-                damage_counter += 1
+        if "torcs" in FLAGS.env_id:
+            if info != {}:
+                #print(info)
+                damage = int(info['damage'])
+                next_damage = int(info['next_damage'])
+                if next_damage - damage > 1:
+                    damage_counter += 1
         input_obs = np.concatenate((input_obs, obs), 2)
         assert(len(env.observation_space.shape) == 3)
         if input_obs.shape[2] > frame_history_len*img_c:
