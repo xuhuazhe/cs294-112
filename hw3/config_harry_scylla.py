@@ -4409,6 +4409,36 @@ def torcs_human_all_soft_Q_demo_stage_1_yang_new():
     FLAGS.human_torcs = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
+def torcs_human_all_soft_Q_demo_stage_1_yang_new_PCL():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/human_yang.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '6'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.pi_v_model = True
+    #FLAGS.exp_value_critic_weighting = 1.0
+    #FLAGS.exp_policy_grad_weighting = 1.0
+    #FLAGS.critic_use_rapid_weighting = False
+
+    #FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
 def torcs_human_all_cross_entropy_demo_stage_1_yang_new_second():
     tag = inspect.stack()[0][3]
     print("config name=", tag)

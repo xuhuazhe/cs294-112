@@ -514,7 +514,7 @@ def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
                     replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i], delta_action_dist)
             delta_action_dist[_action[i]] = 0.0
 
-    print('Loaded! Almost there! Replay Size is %d' % replay_buffer.size)
+    print('Loaded! Almost there! Replay Size is %d' % replay_buffer.num_in_buffer)
     return replay_buffer
 
 
