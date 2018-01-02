@@ -550,6 +550,73 @@ def load_replay_pickle(pickle_dir, step_num, bad_dir=''):
     return replay_buffer
 
 
+def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=4):
+
+    def parse_valset(filename):
+        action = "A"
+        reward = "R"
+        obs = "S"
+        terminal = "terminal"
+        lives = "lives"
+
+        # parse filename into a list, it could be a comma(,) seperated filename list
+        filename = filename.split(",")
+        filename = [x.strip() for x in filename if x.strip() != ""]
+
+        obs_list = []
+        action_list = []
+        reward_list = []
+        terminal_list = []
+
+        for fi in filename:
+            f1 = h5py.File(fi, 'r')
+            _action = list(f1[action])
+            _reward = list(f1[reward])
+            _obs = list(f1[obs])
+            _terminal = list(f1[terminal])
+            assert (len(_action) == len(_reward))
+            assert (len(_action) == len(_obs))
+            assert (len(_action) == len(_terminal))
+            print(len(_obs), '*' * 30)
+
+            for i in range(len(_obs)):
+                if FLAGS.human_torcs:
+                    if i < len(_obs) - 1:
+                        _obs[i] = TorcsProcessFrame84.aframe(_obs[i], 120, 160, 'resize')
+
+            obs_list = obs_list + _obs[0:-1]
+            action_list = action_list + _action[1:]
+            reward_list = reward_list + _reward[1:]
+            terminal_list = terminal_list + _terminal[1:]
+
+        return obs_list, reward_list, action_list, terminal_list
+
+    valset_obs, valset_reward, valset_action, valset_terminal = parse_valset(val_set_file)
+    frame_counter = 0
+    avg_bellman = 0
+    for i in range(3, len(valset_obs)-1):
+        input_obs = np.asarray(valset_obs[i+1-frame_history_length:i+1]).reshape(1,  84, 84, frame_history_length)
+        next_obs  = np.asarray(valset_obs[i+2-frame_history_length:i+2]).reshape(1,  84, 84, frame_history_length)
+
+
+        reward = valset_reward[i]
+        action = valset_action[i]
+        feed_input_obs = np.reshape(input_obs, list(input_obs.shape))
+        feed_next_obs  = np.reshape(next_obs, list(next_obs.shape))
+
+        q_values = session.run(q, feed_dict={obs_t_ph: feed_input_obs})
+        q_act    = q_values[action]
+
+        q_next = session.run(q, feed_dict={obs_t_ph: feed_next_obs})
+        q_next_max = np.argmax(q_next)
+        q_look_ahead = reward + gamma * q_next_max
+        if not valset_terminal[i]:
+            frame_counter += 1
+            avg_bellman += q_act - q_look_ahead
+    return avg_bellman/frame_counter
+
+
+
 def eval_policy(env, q, obs_t_ph,
                 session,
                 eps, frame_history_len, num_actions, img_c):

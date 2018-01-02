@@ -4063,7 +4063,7 @@ def torcs_V_grounding_has_weighting_inenv_stage_2_rerun(key):
 
     FLAGS.custom_reward = "reward_ben"
 
-    FLAGS.method_name = tag + '_' + key
+    FLAGS.method_name = tag + '_' + key + '_new'
 
 def torcs_soft_Q_inenv_stage_2_rerun(key):
     tag = inspect.stack()[0][3]
@@ -4099,7 +4099,7 @@ def torcs_soft_Q_inenv_stage_2_rerun(key):
 
     FLAGS.custom_reward = "reward_ben"
 
-    FLAGS.method_name = tag + '_' + key
+    FLAGS.method_name = tag + '_' + key + '_new'
 
 def torcs_hard_Q_inenv_stage_2_rerun(key):
     tag = inspect.stack()[0][3]
@@ -4132,7 +4132,7 @@ def torcs_hard_Q_inenv_stage_2_rerun(key):
 
     FLAGS.custom_reward = "reward_ben"
 
-    FLAGS.method_name = tag + '_' + key
+    FLAGS.method_name = tag + '_' + key + '_new'
 
 def torcs_hard_Q_inenv_stage_2_with_cross_ent_rerun(key):
     tag = inspect.stack()[0][3]
@@ -4165,7 +4165,7 @@ def torcs_hard_Q_inenv_stage_2_with_cross_ent_rerun(key):
 
     FLAGS.custom_reward = "reward_ben"
 
-    FLAGS.method_name = tag + '_' + key
+    FLAGS.method_name = tag + '_' + key + '_new'
 
 def torcs_V_grounding_no_weighting_inenv_stage_2_rerun(key):
     tag = inspect.stack()[0][3]
@@ -4201,7 +4201,7 @@ def torcs_V_grounding_no_weighting_inenv_stage_2_rerun(key):
 
     FLAGS.custom_reward = "reward_ben"
 
-    FLAGS.method_name = tag + '_' + key
+    FLAGS.method_name = tag + '_' + key + '_new'
 
 def torcs_DQFD_inenv_stage_2_rerun(key):
     tag = inspect.stack()[0][3]
@@ -4245,7 +4245,7 @@ def torcs_DQFD_inenv_stage_2_rerun(key):
 
     FLAGS.custom_reward = "reward_ben"
 
-    FLAGS.method_name = tag + '_' + key
+    FLAGS.method_name = tag + '_' + key + '_new'
     FLAGS.demo_mode = 'dqfd'
     FLAGS.demo_portion = 0.1
     FLAGS.demo_file_path = '/backup/hxu/modelRL/300000add_damage.p'
@@ -4787,8 +4787,10 @@ def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_decay(num):
     FLAGS.autoback = True
     FLAGS.human_torcs = True
     #FLAGS.game_config_fname = 'huazhe.xml'
-    FLAGS.weight_decay = True
-    FLAGS.WEIGHT_DECAY_FACTOR = num
+    #FLAGS.weight_decay = True
+    #FLAGS.WEIGHT_DECAY_FACTOR = num
+    FLAGS.l2_regularization_loss_weight = num
+    FLAGS.method_name = tag + '_' + str(num)
 
 
 def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_decay(num):
@@ -4813,8 +4815,10 @@ def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_decay(num):
     FLAGS.autoback = True
     FLAGS.human_torcs = True
     #FLAGS.game_config_fname = 'huazhe.xml'
-    FLAGS.weight_decay = True
-    FLAGS.WEIGHT_DECAY_FACTOR = num
+    #FLAGS.weight_decay = True
+    #FLAGS.WEIGHT_DECAY_FACTOR = num
+    FLAGS.l2_regularization_loss_weight = num
+    FLAGS.method_name = tag + '_' + str(num)
 
 def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_decay(num):
     tag = inspect.stack()[0][3]
@@ -4841,8 +4845,10 @@ def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_decay(num):
     FLAGS.autoback = True
     FLAGS.human_torcs = True
     #FLAGS.game_config_fname = 'huazhe.xml'
-    FLAGS.weight_decay = True
-    FLAGS.WEIGHT_DECAY_FACTOR = num
+    #FLAGS.weight_decay = True
+    #FLAGS.WEIGHT_DECAY_FACTOR = num
+    FLAGS.l2_regularization_loss_weight = num
+    FLAGS.method_name = tag + '_' + str(num)
 
 def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_decay(num):
     tag = inspect.stack()[0][3]
@@ -4869,8 +4875,10 @@ def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_decay(num):
     FLAGS.autoback = True
     FLAGS.human_torcs = True
     #FLAGS.game_config_fname = 'huazhe.xml'
-    FLAGS.weight_decay = True
-    FLAGS.WEIGHT_DECAY_FACTOR = num
+    #FLAGS.weight_decay = True
+    #FLAGS.WEIGHT_DECAY_FACTOR = num
+    FLAGS.l2_regularization_loss_weight = num
+    FLAGS.method_name = tag + '_' + str(num)
 
 def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_decay(num):
     tag = inspect.stack()[0][3]
@@ -4899,8 +4907,10 @@ def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_decay(num):
     FLAGS.autoback = True
     FLAGS.human_torcs = True
     #FLAGS.game_config_fname = 'huazhe.xml'
-    FLAGS.weight_decay = True
-    FLAGS.WEIGHT_DECAY_FACTOR = num
+    #FLAGS.weight_decay = True
+    #FLAGS.WEIGHT_DECAY_FACTOR = num
+    FLAGS.l2_regularization_loss_weight = num
+    FLAGS.method_name = tag + '_' + str(num)
 
 def torcs_human_all_soft_Q_demo_stage_1_hxu_slow_decay(num):
     tag = inspect.stack()[0][3]
@@ -4930,9 +4940,1409 @@ def torcs_human_all_soft_Q_demo_stage_1_hxu_slow_decay(num):
     FLAGS.autoback = True
     FLAGS.human_torcs = True
     # FLAGS.game_config_fname = 'huazhe.xml'
-    FLAGS.weight_decay = True
-    FLAGS.WEIGHT_DECAY_FACTOR = num
+    #FLAGS.weight_decay = True
+    #FLAGS.WEIGHT_DECAY_FACTOR = num
+    FLAGS.l2_regularization_loss_weight = num
+    FLAGS.method_name = tag + '_' + str(num)
+
+def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_val():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+    FLAGS.val_set = True
+    FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
+
+def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_val():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+    FLAGS.val_set = True
+    FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
+
+def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_val():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+    FLAGS.val_set = True
+    FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
+
+def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_val():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '4'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+    FLAGS.val_set = True
+    FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
+
+def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_val():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '5'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+    FLAGS.val_set = True
+    FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
+
+def torcs_human_all_soft_Q_demo_stage_1_hxu_slow_val():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '6'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    #FLAGS.exp_value_critic_weighting = 1.0
+    #FLAGS.exp_policy_grad_weighting = 1.0
+    #FLAGS.critic_use_rapid_weighting = False
+
+    #FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+    FLAGS.val_set = True
+    FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
+
+
+#### diverse behavior
+
+def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_diverse():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_diverse.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_diverse():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_diverse.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_diverse():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_diverse.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_diverse():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_diverse.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_diverse():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_diverse.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_soft_Q_demo_stage_1_hxu_slow_diverse():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_diverse.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    #FLAGS.exp_value_critic_weighting = 1.0
+    #FLAGS.exp_policy_grad_weighting = 1.0
+    #FLAGS.critic_use_rapid_weighting = False
+
+    #FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+#### all behavior
+
+def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_all():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_all():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_all():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_all():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_all():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_soft_Q_demo_stage_1_hxu_slow_all():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    #FLAGS.exp_value_critic_weighting = 1.0
+    #FLAGS.exp_policy_grad_weighting = 1.0
+    #FLAGS.critic_use_rapid_weighting = False
+
+    #FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+#### bad behavior
+def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_badmix():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badmix.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_badmix():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badmix.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_badmix():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badmix.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_badmix():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badmix.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_badmix():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badmix.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_soft_Q_demo_stage_1_hxu_slow_badmix():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badmix.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    # FLAGS.exp_value_critic_weighting = 1.0
+    # FLAGS.exp_policy_grad_weighting = 1.0
+    # FLAGS.critic_use_rapid_weighting = False
+
+    # FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+#### badall behavior
+def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_badall():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badall.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_badall():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badall.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_badall():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badall.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_badall():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badall.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_badall():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badall.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_human_all_soft_Q_demo_stage_1_hxu_slow_badall():
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_badall.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.soft_Q_loss_weight = 1.0
+    # FLAGS.exp_value_critic_weighting = 1.0
+    # FLAGS.exp_policy_grad_weighting = 1.0
+    # FLAGS.critic_use_rapid_weighting = False
+
+    # FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+"""bad demonstration!"""
+def collect_torcs_demonstration_autoback_simple_bad(num):
+    tag = inspect.stack()[0][3]
+    FLAGS.torcs_divider = 1
+    print(FLAGS.torcs_divider,'x torcs demo')
+    torcs_collect(FLAGS.torcs_divider, tag)
+    FLAGS.custom_reward = "reward_ben"
+    FLAGS.core_num = '0'
+
+    num_iterations  = int(4e7) / 4 / FLAGS.torcs_divider
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 0.01),
+        (1e6 / FLAGS.torcs_divider, 0.01),
+        (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    FLAGS.ckpt_path = '/backup/hxu/modelRL/torcs_hard_Q_autoback_30_2017-08-23 12:18:57.721148'
+    FLAGS.autoback = True
+    FLAGS.lf_bad_data = True
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+    FLAGS.max_timesteps = int((3e5)/4)
+    FLAGS.final_bad_portion = num
+    FLAGS.demo_name = 'block_bad_10_21' + '_' + str(FLAGS.final_bad_portion)
+
+def collect_torcs_demonstration_autoback_random_bad(num):
+    tag = inspect.stack()[0][3]
+    FLAGS.torcs_divider = 1
+    print(FLAGS.torcs_divider,'x torcs demo')
+    torcs_collect(FLAGS.torcs_divider, tag)
+    FLAGS.custom_reward = "reward_ben"
+    FLAGS.core_num = '1'
+
+    num_iterations  = int(4e7) / 4 / FLAGS.torcs_divider
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 0.01),
+        (1e6 / FLAGS.torcs_divider, 0.01),
+        (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    FLAGS.ckpt_path = '/backup/hxu/modelRL/torcs_hard_Q_autoback_30_2017-08-23 12:18:57.721148'
+    FLAGS.autoback = True
+    FLAGS.lf_bad_data = True
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+    FLAGS.max_timesteps = int((3e5)/4)
+    FLAGS.final_bad_portion = num
+    FLAGS.demo_name = 'random_bad_10_21' + '_' + str(FLAGS.final_bad_portion)
+    FLAGS.bad_type = 'random'
+
+def collect_torcs_demonstration_autoback_block_bad(num):
+    tag = inspect.stack()[0][3]
+    FLAGS.torcs_divider = 1
+    print(FLAGS.torcs_divider,'x torcs demo')
+    torcs_collect(FLAGS.torcs_divider, tag)
+    FLAGS.custom_reward = "reward_ben"
+    FLAGS.core_num = '2'
+
+    num_iterations  = int(4e7) / 4 / FLAGS.torcs_divider
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 0.01),
+        (1e6 / FLAGS.torcs_divider, 0.01),
+        (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    FLAGS.ckpt_path = '/backup/hxu/modelRL/torcs_hard_Q_autoback_30_2017-08-23 12:18:57.721148'
+    FLAGS.autoback = True
+    FLAGS.lf_bad_data = True
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+    FLAGS.max_timesteps = int((3e5)/4)
+    FLAGS.final_bad_portion = num
+    FLAGS.demo_name = 'block_bad_fix_max' + '_' + str(FLAGS.final_bad_portion)
+    FLAGS.bad_type = 'block'
+    FLAGS.method_name = tag + '_' + str(num)
+
+def collect_torcs_demonstration_segment_bad(num):
+    tag = inspect.stack()[0][3]
+    FLAGS.torcs_divider = 1
+    print(FLAGS.torcs_divider,'x torcs demo')
+    torcs_collect(FLAGS.torcs_divider, tag)
+    FLAGS.custom_reward = "reward_ben"
+    FLAGS.core_num = '0'
+
+    num_iterations  = int(4e7) / 4 / FLAGS.torcs_divider
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 0.01),
+        (1e6 / FLAGS.torcs_divider, 0.01),
+        (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    FLAGS.ckpt_path = '/backup/hxu/modelRL/torcs_hard_Q_autoback_30_2017-08-23 12:18:57.721148'
+    FLAGS.autoback = True
+    FLAGS.lf_bad_data = True
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+    FLAGS.max_timesteps = int((3e5)/4)
+    #FLAGS.final_bad_portion = num
+    FLAGS.period = 300
+    FLAGS.bad_period = num
+    FLAGS.demo_name = 'segment' + '_' + str(FLAGS.bad_period)
+    FLAGS.bad_type = 'segment'
+    FLAGS.method_name = tag + '_' + str(num)
+
+def torcs_cross_entropy_demo_stage_1_bad(demo_prefix, num, data_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    #demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_'+ demo_prefix +str(num)+'.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag+ '_' + demo_prefix + '_' +str(num) + '_' + str(data_num)
+
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_hard_Q_demo_stage_1_bad(demo_prefix, num, data_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_'+ demo_prefix +str(num)+'.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num)
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_dqfd_full_demo_stage_1_bad(demo_prefix, num, data_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_' + demo_prefix + str(num) + '.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num)
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+'''def torcs_V_grounding_demo_stage_1_bad(demo_prefix, num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_' + demo_prefix + str(num) + '.p'
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_bad_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    #FLAGS.game_config_fname = 'huazhe.xml'  '''
+
+def torcs_V_grounding_no_weighting_demo_stage_1_bad(demo_prefix, num, data_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_' + demo_prefix + str(num) + '.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num)
+
+def torcs_soft_Q_demo_stage_1_bad(demo_prefix, num, data_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_' + demo_prefix + str(num) + '.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num)
+
+"""batch exp for data amount"""
+
+def torcs_cross_entropy_demo_stage_1_amount(num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_hard_Q_demo_stage_1_amount(num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_dqfd_full_demo_stage_1_amount(num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+
+def torcs_V_grounding_no_weighting_demo_stage_1_amount(num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '2'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_soft_Q_demo_stage_1_amount(num,exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '4'
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+
+### batch for bad
+def torcs_cross_entropy_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    #demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_'+ demo_prefix +str(num)+'.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '3'
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag+ '_' + demo_prefix + '_' +str(num) + '_' + str(data_num) + '_' + str(exp_num).zfill(2)
+
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_hard_Q_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_'+ demo_prefix +str(num)+'.p'
+    torcs_dqn_kx(FLAGS.torcs_divider,tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '5'
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num) + '_' + str(exp_num).zfill(2)
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_dqfd_full_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    #FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_' + demo_prefix + str(num) + '.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '4'
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num) + '_' + str(exp_num).zfill(2)
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+
+def torcs_V_grounding_no_weighting_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_' + demo_prefix + str(num) + '.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '5'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num) + '_' + str(exp_num).zfill(2)
+
+def torcs_soft_Q_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+
+    common_setting()
+    # demo_prefix = block_bad_fix_max_ or random_bad_10_21_
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000_' + demo_prefix + str(num) + '.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '4'
+    FLAGS.soft_Q_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    common_data_size(data_num)
+    FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num) + '_' + str(exp_num).zfill(2)
+
+
+
+#### final behavior
+
+def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_final(core, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider) + '_' + str(datetime.now())
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = core
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    FLAGS.method_name = tag + '_' + str(exp_num) + '_new'
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+
+
+def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_final(core, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = core
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    FLAGS.method_name = tag + '_' + str(exp_num) + '_new'
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+
+
+def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_final(core, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/hxu_slow_all.txt')
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "hdf"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = core
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(300000)
+    FLAGS.autoback = True
+    FLAGS.human_torcs = True
+    FLAGS.method_name = tag + '_' + str(exp_num) + '_new'
+    # FLAGS.game_config_fname = 'huazhe.xml'
+
+
+
 
 
 use_this_config = test_test
-
