@@ -93,3 +93,5 @@ hw3/link_data
 hw3/config.py
 *prof
 hw3/test_img
+*swp
+hw3/.sync/*
