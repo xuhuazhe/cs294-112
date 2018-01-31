@@ -106,14 +106,38 @@ def collect(env,
         #q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
         #dist = q_values / np.sum(q_values)
         #action = np.random.choice(num_actions, p=np.squeeze(dist))
-        if FLAGS.lf_bad_data and t > FLAGS.max_timesteps/2:
-            min_action = np.argmin(np.squeeze(q_values))
-            greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
-            greedy_dist_this[min_action] = 1.0
+        if FLAGS.bad_type == 'block':
+            if FLAGS.lf_bad_data and t > FLAGS.max_timesteps*FLAGS.final_bad_portion*4:
+                min_action = np.argmin(np.squeeze(q_values))
+                greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
+                greedy_dist_this[min_action] = 1.0
+            else:
+                max_action = np.argmax(np.squeeze(q_values))
+                greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
+                greedy_dist_this[max_action] = 1.0
+        elif FLAGS.bad_type == 'random':
+            if FLAGS.lf_bad_data and np.random.rand()<FLAGS.final_bad_portion:
+                min_action = np.argmin(np.squeeze(q_values))
+                greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
+                greedy_dist_this[min_action] = 1.0
+            else:
+                max_action = np.argmax(np.squeeze(q_values))
+                greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
+                greedy_dist_this[max_action] = 1.0
+        elif FLAGS.bad_type == 'segment':
+            if t % FLAGS.period < FLAGS.bad_period:
+                min_action = np.argmin(np.squeeze(q_values))
+                greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
+                greedy_dist_this[min_action] = 1.0
+            else:
+                max_action = np.argmax(np.squeeze(q_values))
+                greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
+                greedy_dist_this[max_action] = 1.0
         else:
             max_action = np.argmax(np.squeeze(q_values))
             greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
             greedy_dist_this[max_action] = 1.0
+
 
         action_dist_this = eps*action_dist_this + (1-eps)*greedy_dist_this
         action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
@@ -164,7 +188,7 @@ def collect(env,
 
     # save the replay buffer
     print('save pickle!')
-    FLAGS.Q_expert_path = './link_data/' + str(FLAGS.replay_buffer_size) + FLAGS.demo_name + '.p'
+    FLAGS.Q_expert_path = './link_data/' + str(FLAGS.replay_buffer_size) + '_' + FLAGS.demo_name + '.p'
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
 

@@ -621,8 +621,8 @@ def eval_policy(env, q, obs_t_ph,
                 session,
                 eps, frame_history_len, num_actions, img_c):
     # TODO: we could probably use Replay buffer to get rid of frame_history_len issue
+    
     reward_calc = 0
-
     input_obs = env.reset()
     frame_counter = 0
     damage_counter = 0

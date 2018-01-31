@@ -3984,16 +3984,16 @@ def torcs_soft_Q_simple_demo_stage_1_rerun(index):
     FLAGS.torcs_divider = 30
 
     common_setting()
-    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000add_damage.p' #'/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    FLAGS.demo_file_path = '/data2/hxu/modelRL/300000add_damage.p' #'/backup/hxu/modelRL/300000autoback_simple_08_25.p'
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
-    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+    FLAGS.torcs_path = '/data2/yang/code/rlTORCS'
 
     FLAGS.demo_mode = "replay"
     FLAGS.collect_Q_experience = False
     FLAGS.eval_freq = 10000
 
-    FLAGS.core_num = '6'
+    FLAGS.core_num = '0'
     FLAGS.soft_Q_loss_weight = 1.0
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
@@ -4409,23 +4409,22 @@ def torcs_human_all_soft_Q_demo_stage_1_yang_new():
     FLAGS.human_torcs = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
-def torcs_human_all_soft_Q_demo_stage_1_yang_new_PCL():
+def torcs_human_all_soft_Q_demo_stage_1_yang_new_PCL(index):
     tag = inspect.stack()[0][3]
     print("config name=", tag)
     FLAGS.torcs_divider = 30
     # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
     common_setting()
-    FLAGS.demo_file_path = parse_name('/data/hxu/modelRL/human_yang.txt')
+    FLAGS.demo_file_path = '/data2/hxu/modelRL/300000add_damage.p'#parse_name('/data/hxu/modelRL/human_yang.txt')
     torcs_dqn_kx(FLAGS.torcs_divider, tag)
 
-    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+    FLAGS.torcs_path = '/data2/yang/code/rlTORCS'
 
-    FLAGS.demo_mode = "hdf"
+    FLAGS.demo_mode = "replay"
     FLAGS.collect_Q_experience = False
     FLAGS.eval_freq = 10000
 
-    FLAGS.core_num = '6'
-
+    FLAGS.core_num = '0'
     FLAGS.soft_Q_loss_weight = 1.0
     FLAGS.pi_v_model = True
     #FLAGS.exp_value_critic_weighting = 1.0
@@ -4436,7 +4435,9 @@ def torcs_human_all_soft_Q_demo_stage_1_yang_new_PCL():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.torcs_demo = True
+    FLAGS.method_name = tag + '_' + index
+    #FLAGS.human_torcs = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 def torcs_human_all_cross_entropy_demo_stage_1_yang_new_second():

@@ -187,6 +187,18 @@ tf.app.flags.DEFINE_float('WEIGHT_DECAY_FACTOR', 0.0005,
                           """weight decay factor""")
 tf.app.flags.DEFINE_boolean('weight_decay', False,
                             """want weight decay?""")
+tf.app.flags.DEFINE_boolean('val_set', False,
+                            """Do we want to validate bellman error on val set?""")
+tf.app.flags.DEFINE_string('val_set_file', '',
+                           """files for validation""")
+tf.app.flags.DEFINE_float('final_bad_portion', 0.5,
+                          """bad portion in bad demonstration data""")
+tf.app.flags.DEFINE_string('bad_type', '',
+                           """what type of bad Q demo you want?""")
+tf.app.flags.DEFINE_integer('period', 300,
+                            """the interval for a group of bad and good""")
+tf.app.flags.DEFINE_integer('bad_period', 0,
+                            """how many steps do you want it to be bad?""")
 
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
@@ -479,6 +491,7 @@ def main(_):
                   "It's the user's responsibility to check you are not using it for training")
             env_test = env
             env_train = None
+	    debug_obs = env_test.reset()
         elif FLAGS.eval_freq > 0:
             env_test = get_env(task, seed, True)
             env_train = env

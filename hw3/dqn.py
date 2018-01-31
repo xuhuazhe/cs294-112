@@ -680,12 +680,13 @@ def learn(env_train,
             print('_' * 50)
             print('Start Evaluating at TimeStep %d' % t)
             eps = 0.05
-
+            if FLAGS.val_set:
+                #eval_valset(q, obs_t_ph, val_set_file, session, gamma)
+                bellman_error = eval_valset(q, obs_t_ph, FLAGS.val_set_file, session, gamma)
             reward_calc, frame_counter, damage_counter = \
                 eval_policy(env_test, q, obs_t_ph,
                             session,
                             eps, frame_history_len, num_actions, img_c)
-
             best_reward = np.max([best_reward, reward_calc])
             print("the frame counter is %f" % frame_counter)
             print("test reward %f" % reward_calc)
@@ -733,4 +734,7 @@ def learn(env_train,
                 summary.value.add(tag='exploration', simple_value=exploration.value(t))
                 summary.value.add(tag='reward', simple_value=reward_calc)
                 summary.value.add(tag='damage_number', simple_value=damage_counter)
+                if FLAGS.val_set:
+                    if bellman_error is not None:
+                        summary.value.add(tag='bellman', simple_vale=bellman_error)
             summary_writer.add_summary(summary, t)
