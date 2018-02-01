@@ -24,6 +24,8 @@ tf.app.flags.DEFINE_boolean('ddqn', False,
                             """Enable double Q bellman Update""")
 tf.app.flags.DEFINE_boolean('dueling', False,
                             """Enable dueling net architecture""")
+tf.app.flags.DEFINE_boolean('tabular', False,
+                            """Enable tabular Q function""")
 tf.app.flags.DEFINE_boolean('pi_v_model', False,
                             """Enable actor critic parametrization""")
 
@@ -222,6 +224,21 @@ def dueling_model(img_in, num_actions, scope, reuse=False):
             return Q
 
 
+def tabular_model(state_id, num_actions, scope, reuse=False, nstate=8*5):
+    print("*Using tabular Q function*")
+    state_id = tf.reshape(state_id, [-1])
+    state_id *= 255.0
+    state_id = tf.cast(state_id, tf.int32)
+
+    # the Q function is a tabular of (nrow*ncol)*num_actions table
+    with tf.variable_scope(scope, reuse=reuse):
+        Q=tf.Variable(initial_value=np.random.randn(nstate, num_actions)*0.03,
+                      trainable=True,
+                      name="Q_tabular",
+                      dtype=tf.float32)
+        return tf.gather(Q, state_id, name="gather")
+
+
 def atari_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     with slim.arg_scope([layers.convolution2d, layers.fully_connected], outputs_collections="activation_collection"):
@@ -279,42 +296,8 @@ def atari_learn(env,
     # TODO: better hyper parameters here
     if FLAGS.dueling:
         model = dueling_model
-    else:
-        model = atari_model
-    dqn.learn(
-        env,
-        q_func=model,
-        optimizer_spec=optimizer,
-        session=session,
-        exploration=FLAGS.exploration_schedule,
-        stopping_criterion=stopping_criterion,
-        replay_buffer_size=FLAGS.replay_buffer_size,
-        batch_size=FLAGS.batch_size,
-        gamma=0.99,
-        learning_starts=FLAGS.learning_starts,
-        learning_freq=FLAGS.learning_freq,
-        frame_history_len=FLAGS.frame_history_len,
-        target_update_freq=FLAGS.target_update_freq,
-        grad_norm_clipping=10,
-        env_test=env_test,
-    )
-
-    if env is not None:
-        env.close()
-
-def frozen_learn(env,
-                session,
-                num_timesteps):
-    # TODO: principle of Adam and more parameters
-    optimizer = dqn.OptimizerSpec(
-        constructor=tf.train.AdamOptimizer,
-        kwargs=dict(epsilon=1e-4),
-        lr_schedule=FLAGS.lr_schedule
-    )
-
-    # TODO: better hyper parameters here
-    if FLAGS.dueling:
-        model = dueling_model
+    elif FLAGS.tabular:
+        model = tabular_model
     else:
         model = atari_model
     dqn.learn(
@@ -408,6 +391,9 @@ def get_env(task, seed, istest=False):
             env = wrap_torcs(env)
         else:
             print("decide not to use the wrapper, otherwise the resolution is too low")
+    elif "frozen" in env_id.lower():
+        env = wrap_frozen_lake(env)
+        print("using frozen lake wrapper")
     else:
         env = wrap_deepmind(env)
 
@@ -477,11 +463,13 @@ def main(_):
                     "detailed_info": True}
         )
 
+    if "frozen" in task.env_id.lower():
+        register(
+            id='frozen-v0',
+            entry_point='frozen_lake_custom:FrozenLakeEnv')
+
     env = get_env(task, seed)
     session = get_session()
-    if 'Frozen' in task.env_id:
-        from dqn_utils import FrozenLakeEnv
-        env = FrozenLakeEnv()
 
     if FLAGS.multistep:
         multistep.run(env, atari_model)
@@ -498,10 +486,8 @@ def main(_):
         else:
             env_test = None
             env_train = env
-        if 'Frozen' in task.env_id:
-            frozen_learn(env_train, session, num_timesteps=FLAGS.max_timesteps)
-        else:
-            atari_learn(env_train, session, num_timesteps=FLAGS.max_timesteps, env_test=env_test)
+
+        atari_learn(env_train, session, num_timesteps=FLAGS.max_timesteps, env_test=env_test)
     else:
         atari_collect(env, session, num_timesteps=FLAGS.max_timesteps)
 if __name__ == "__main__":

@@ -540,7 +540,7 @@ def learn(env_train,
             action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
 
             obs, reward, done, info = env_train.step(action)
-            if info != {}:
+            if info != {} and "damage" in info:
                 # print(info)
                 damage = int(info['damage'])
                 next_damage = int(info['next_damage'])

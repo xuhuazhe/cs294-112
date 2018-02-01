@@ -202,3 +202,35 @@ def wrap_deepmind(env):
 def wrap_torcs(env):
     env = TorcsProcessFrame84(env, resize_or_crop="resize")
     return env
+
+
+
+class FrozenLakeStateToFrame(gym.Wrapper):
+    @staticmethod
+    def aframe(state):
+        # should have a state space of range(0-8*5), size width=1*height=1*channel=1
+        x_t = np.reshape(state, [1, 1, 1])
+        return x_t.astype(np.uint8)
+
+    def __init__(self, env=None):
+        self.image_width = 1
+        self.image_height = 1
+
+        super(FrozenLakeStateToFrame, self).__init__(env)
+        self.observation_space = spaces.Box(low=0, high=255, shape=(1, 1, 1))
+
+    def _step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        return self.aframe(obs), reward, done, info
+
+    def _reset(self):
+        return self.aframe(self.env.reset())
+
+# wrapping of Frozen Lake
+# 1. No randomness
+# 2. no frameskip, becaues not a video game
+# 3. no image, but need to convert observation to a image type
+# 4. no reward clipping, because the reward is already in 1.
+def wrap_frozen_lake(env):
+    env = FrozenLakeStateToFrame(env)
+    return env
