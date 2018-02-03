@@ -116,10 +116,13 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
                             done = bytes(newletter) in b'GH'
                             rew = float(newletter == b'G')
                             li.append((1.0, newstate, rew, done))
+        #import pdb
+        #print(P)
+        #pdb.set_trace()
 
         super(FrozenLakeEnv, self).__init__(nS, nA, P, isd)
 
-    def render(self, mode='human'):
+    def render(self, mode='human', close=False):
         outfile = StringIO() if mode == 'ansi' else sys.stdout
 
         row, col = self.s // self.ncol, self.s % self.ncol

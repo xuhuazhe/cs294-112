@@ -134,6 +134,8 @@ tf.app.flags.DEFINE_integer('learning_starts', 50000,
                             """learning_starts point, 50000 for Q learning, 0 for demonstration""")
 tf.app.flags.DEFINE_integer('replay_buffer_size', 1000000,
                             """""")
+tf.app.flags.DEFINE_float('discount_factor', 0.99,
+                          """the gamma discount factor for reward""")
 tf.app.flags.DEFINE_integer('max_timesteps', int(4e7),
                             """""")
 tf.app.flags.DEFINE_string('config', 'test_test()',
@@ -202,6 +204,7 @@ tf.app.flags.DEFINE_integer('period', 300,
 tf.app.flags.DEFINE_integer('bad_period', 0,
                             """how many steps do you want it to be bad?""")
 
+
 def dueling_model(img_in, num_actions, scope, reuse=False):
     # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
     print("*Dueling Net is enabled!*")
@@ -232,10 +235,11 @@ def tabular_model(state_id, num_actions, scope, reuse=False, nstate=8*5):
 
     # the Q function is a tabular of (nrow*ncol)*num_actions table
     with tf.variable_scope(scope, reuse=reuse):
-        Q=tf.Variable(initial_value=np.random.randn(nstate, num_actions)*0.03,
-                      trainable=True,
-                      name="Q_tabular",
-                      dtype=tf.float32)
+        Q = tf.get_variable(name="Q_tabular",
+                            dtype=tf.float32,
+                            initializer=(np.random.randn(nstate, num_actions)*0.001).astype(dtype=np.float32),
+                            trainable=True)
+
         return tf.gather(Q, state_id, name="gather")
 
 
@@ -309,7 +313,7 @@ def atari_learn(env,
         stopping_criterion=stopping_criterion,
         replay_buffer_size=FLAGS.replay_buffer_size,
         batch_size=FLAGS.batch_size,
-        gamma=0.99,
+        gamma=FLAGS.discount_factor,
         learning_starts=FLAGS.learning_starts,
         learning_freq=FLAGS.learning_freq,
         frame_history_len=FLAGS.frame_history_len,
@@ -335,9 +339,16 @@ def atari_collect(env,
         else:
             return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps*4
 
+    if FLAGS.dueling:
+        model = dueling_model
+    elif FLAGS.tabular:
+        model = tabular_model
+    else:
+        model = atari_model
+
     Q_expert.collect(
         env,
-        q_func=atari_model,
+        q_func=model,
         session=session,
         exploration=FLAGS.exploration_schedule,
         stopping_criterion=stopping_criterion,
@@ -380,11 +391,17 @@ def get_env(task, seed, istest=False):
     set_global_seeds(seed)
     env.seed(seed)
 
-    if not istest:
-        model_save_path = os.path.join('./link_data/', FLAGS.method_name)
-        video_callable = lambda episode_id: (episode_id == int(pow(round(pow(episode_id, 1.0/3)), 3))) or (episode_id % 300 == 0)
-        #video_callable = lambda episode_id: episode_id % 300 == 299
-        env = wrappers.Monitor(env, model_save_path, force=True, video_callable=video_callable)
+    model_save_path = os.path.join('./link_data/', FLAGS.method_name)
+    if istest:
+        model_save_path = os.path.join(model_save_path, "test_videos")
+        if not os.path.exists(model_save_path):
+            os.mkdir(model_save_path)
+    video_callable = lambda episode_id: (episode_id == int(pow(round(pow(episode_id, 1.0 / 3)), 3))) or (
+    episode_id % 300 == 0) or istest
+    # video_callable = lambda episode_id: episode_id % 300 == 299
+    env = wrappers.Monitor(env, model_save_path, force=True, video_callable=video_callable)
+
+
 
     if "torcs" in env_id:
         if FLAGS.torcs_resolution == "84x84":

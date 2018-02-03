@@ -1176,12 +1176,146 @@ def frozen_dqn_kx(divider, tag):
     # interaction purpose
     FLAGS.summary_interval = 10000 / divider
 
-def frozen_dqn_v3():
+def frozen_dqn_v9_gamma0_5():
     tag = inspect.stack()[0][3]
 
-    frozen_dqn_kx(300, tag)
+    frozen_dqn_kx(30, tag)
     FLAGS.hard_Q_loss_weight = 1.0
     FLAGS.core_num = "0"
 
     FLAGS.frame_history_len = 1
     FLAGS.tabular = True
+    FLAGS.discount_factor = 0.5
+
+def collect_demonstration_frozenlake_suboptimal():
+    tag = inspect.stack()[0][3]
+
+    frozen_dqn_kx(30, tag)
+    #FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.frame_history_len = 1
+    FLAGS.tabular = True
+    #FLAGS.discount_factor = 0.5
+
+    FLAGS.learning_stage = False
+    FLAGS.ckpt_path = '/data/yang/code/rl_demonstration/hw3/link_data/frozen_dqn_v7_gamma0_9_False_0.1'
+    FLAGS.exploration_schedule = PiecewiseSchedule([], outside_value=0.01)
+
+    FLAGS.replay_buffer_size = 300
+    FLAGS.max_timesteps = FLAGS.replay_buffer_size / 4
+    FLAGS.demo_name = "frozenlake_suboptimal"
+
+def frozenlake_dqfd_stage_1_v2():
+    tag = inspect.stack()[0][3]
+
+    frozen_dqn_kx(30, tag)
+    FLAGS.hard_Q_loss_weight = -1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.frame_history_len = 1
+    FLAGS.tabular = True
+    # FLAGS.discount_factor = 0.5
+
+    FLAGS.demo_file_path = "/data/yang/code/rl_demonstration/hw3/link_data/300_frozenlake_suboptimal.p"
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+
+    FLAGS.dataset_size = 300
+    FLAGS.eval_freq = 1000
+    FLAGS.learning_starts = 0
+
+def frozenlake_dqfd_stage_2_v2():
+    tag = inspect.stack()[0][3]
+
+    frozen_dqn_kx(30, tag)
+    FLAGS.hard_Q_loss_weight = -1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.frame_history_len = 1
+    FLAGS.tabular = True
+    # FLAGS.discount_factor = 0.5
+
+    FLAGS.demo_file_path = "/data/yang/code/rl_demonstration/hw3/link_data/300_frozenlake_suboptimal.p"
+    FLAGS.demo_mode = "dqfd"
+    FLAGS.collect_Q_experience = True
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+
+    FLAGS.dataset_size = 300
+    FLAGS.eval_freq = -1
+
+    FLAGS.exploration_schedule = PiecewiseSchedule([], outside_value=0.01)
+    FLAGS.lr_schedule = PiecewiseSchedule([], outside_value=5e-5)
+
+    FLAGS.ckpt_path = "/data/yang/code/rl_demonstration/hw3/link_data/frozenlake_dqfd_stage_1_v2_False_0.1/"
+
+    FLAGS.inenv_finetune = True
+    FLAGS.demo_portion = 0.1
+
+    # TODO: unable to load the checkpoint
+
+
+def frozenlake_nac_meta(tag):
+    frozen_dqn_kx(30, tag)
+    FLAGS.hard_Q_loss_weight = -1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.frame_history_len = 1
+    FLAGS.tabular = True
+    # FLAGS.discount_factor = 0.5
+
+    FLAGS.demo_file_path = "/data/yang/code/rl_demonstration/hw3/link_data/300_frozenlake_suboptimal.p"
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.dataset_size = 300
+    FLAGS.eval_freq = 1000
+    FLAGS.learning_starts = 0
+
+def frozenlake_nac_stage_1_v4():
+    tag = inspect.stack()[0][3]
+    frozenlake_nac_meta(tag)
+
+def frozenlake_nac_small_RB():
+    tag = inspect.stack()[0][3]
+    frozenlake_nac_meta(tag)
+    FLAGS.replay_buffer_size = 600
+
+def frozenlake_nac_stage_2():
+    tag = inspect.stack()[0][3]
+    frozen_dqn_kx(30, tag)
+    FLAGS.hard_Q_loss_weight = -1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.frame_history_len = 1
+    FLAGS.tabular = True
+    # FLAGS.discount_factor = 0.5
+
+    FLAGS.demo_file_path = ""
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.disable_off_policy_weighting = True
+
+    FLAGS.eval_freq = -1
+
+    FLAGS.exploration_schedule = PiecewiseSchedule([], outside_value=0.01)
+    FLAGS.lr_schedule = PiecewiseSchedule([], outside_value=5e-5)
+
+    FLAGS.ckpt_path = "/data/yang/code/rl_demonstration/hw3/link_data/frozenlake_nac_stage_1_v4_False_0.1/"
+    FLAGS.inenv_finetune = True

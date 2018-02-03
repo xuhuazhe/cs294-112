@@ -473,268 +473,273 @@ def learn(env_train,
             print('model loaded!!!! %s' % ckpt_path)
             print('*'*30)
             model_initialized = True
-
-    for t in itertools.count():
-        ### 1. Check stopping criterion
-        if stopping_criterion is not None and stopping_criterion(env_info, t):
-            break
-
-        ### 2. Step the env and store the transition
-        # At this point, "last_obs" contains the latest observation that was
-        # recorded from the simulator. Here, your code needs to store this
-        # observation and its outcome (reward, next observation, etc.) into
-        # the replay buffer while stepping the simulator forward one step.
-        # At the end of this block of code, the simulator should have been
-        # advanced one step, and the replay buffer should contain one more
-        # transition.
-        # Specifically, last_obs must point to the new latest observation.
-        # Useful functions you'll need to call:
-        # obs, reward, done, info = env.step(action)
-        # this steps the environment forward one step
-        # obs = env.reset()
-        # this resets the environment if you reached an episode boundary.
-        # Don't forget to call env.reset() to get a new observation if done
-        # is true!!
-        # Note that you cannot use "last_obs" directly as input
-        # into your network, since it needs to be processed to include context
-        # from previous frames. You should check out the replay buffer
-        # implementation in dqn_utils.py to see what functionality the replay
-        # buffer exposes. The replay buffer has a function called
-        # encode_recent_observation that will take the latest observation
-        # that you pushed into the buffer and compute the corresponding
-        # input that should be given to a Q network by appending some
-        # previous frames.
-        # Don't forget to include epsilon greedy exploration!
-        # And remember that the first time you enter this loop, the model
-        # may not yet have been initialized (but of course, the first step
-        # might as well be random, since you haven't trained your net...)
-
-        #####
-
-        # YOUR CODE HERE
-        if FLAGS.collect_Q_experience:
-            idx = replay_buffer.store_frame(last_obs)
-            if FLAGS.explore_value_method == "normal":
-                eps = exploration.value(t)
-            elif FLAGS.explore_value_method == "tiny":
-                eps = FLAGS.tiny_explore
-            else:
-                raise ValueError("explore_method invalid %s" % FLAGS.explore_value_method)
-
-            action_dist_this = np.ones((num_actions), dtype=np.float32) / num_actions
-            if model_initialized:
-                recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
-                q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
-                if FLAGS.greedy_method == "hard" or FLAGS.force_original_exploration:
-                    max_action = np.argmax(np.squeeze(q_values))
-                    greedy_dist = np.zeros((num_actions), dtype=np.float32)
-                    greedy_dist[max_action] = 1.0
-                elif FLAGS.greedy_method == "soft":
-                    q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
-                    greedy_dist = q_values / np.sum(q_values)
-                else:
-                    raise ValueError("greedy_method invalid %s " % FLAGS.greedy_method)
-
-                action_dist_this = eps * action_dist_this + (1 - eps) * greedy_dist
-
-            action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
-
-            obs, reward, done, info = env_train.step(action)
-            if info != {} and "damage" in info:
-                # print(info)
-                damage = int(info['damage'])
-                next_damage = int(info['next_damage'])
-                if next_damage - damage > 1:
-                    damage_per_episode += 1
-            if done:
-                obs = env_train.reset()
-                damage_list += [damage_per_episode]
-                damage_per_episode = 0
-
-            replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
-            last_obs = obs
-        else:
-            if t > FLAGS.demo_step:
+    try:
+        for t in itertools.count():
+            ### 1. Check stopping criterion
+            if stopping_criterion is not None and stopping_criterion(env_info, t):
                 break
 
-        #####
+            ### 2. Step the env and store the transition
+            # At this point, "last_obs" contains the latest observation that was
+            # recorded from the simulator. Here, your code needs to store this
+            # observation and its outcome (reward, next observation, etc.) into
+            # the replay buffer while stepping the simulator forward one step.
+            # At the end of this block of code, the simulator should have been
+            # advanced one step, and the replay buffer should contain one more
+            # transition.
+            # Specifically, last_obs must point to the new latest observation.
+            # Useful functions you'll need to call:
+            # obs, reward, done, info = env.step(action)
+            # this steps the environment forward one step
+            # obs = env.reset()
+            # this resets the environment if you reached an episode boundary.
+            # Don't forget to call env.reset() to get a new observation if done
+            # is true!!
+            # Note that you cannot use "last_obs" directly as input
+            # into your network, since it needs to be processed to include context
+            # from previous frames. You should check out the replay buffer
+            # implementation in dqn_utils.py to see what functionality the replay
+            # buffer exposes. The replay buffer has a function called
+            # encode_recent_observation that will take the latest observation
+            # that you pushed into the buffer and compute the corresponding
+            # input that should be given to a Q network by appending some
+            # previous frames.
+            # Don't forget to include epsilon greedy exploration!
+            # And remember that the first time you enter this loop, the model
+            # may not yet have been initialized (but of course, the first step
+            # might as well be random, since you haven't trained your net...)
 
-        # at this point, the environment should have been advanced one step (and
-        # reset if done was true), and last_obs should point to the new latest
-        # observation
-
-        ### 3. Perform experience replay and train the network.
-        # note that this is only done if the replay buffer contains enough samples
-        # for us to learn something useful -- until then, the model will not be
-        # initialized and random actions should be taken
-        summary_value = None
-        if (t > learning_starts and
-                        t % learning_freq == 0 and
-                replay_buffer.can_sample(batch_size)):
-            # Here, you should perform training. Training consists of four steps:
-            # 3.a: use the replay buffer to sample a batch of transitions (see the
-            # replay buffer code for function definition, each batch that you sample
-            # should consist of current observations, current actions, rewards,
-            # next observations, and done indicator).
-            # 3.b: initialize the model if it has not been initialized yet; to do
-            # that, call
-            #    initialize_interdependent_variables(session, tf.global_variables(), {
-            #        obs_t_ph: obs_t_batch,
-            #        obs_tp1_ph: obs_tp1_batch,
-            #    })
-            # where obs_t_batch and obs_tp1_batch are the batches of observations at
-            # the current and next time step. The boolean variable model_initialized
-            # indicates whether or not the model has been initialized.
-            # Remember that you have to update the target network too (see 3.d)!
-            # 3.c: train the model. To do this, you'll need to use the train_fn and
-            # total_error ops that were created earlier: total_error is what you
-            # created to compute the total Bellman error in a batch, and train_fn
-            # will actually perform a gradient step and update the network parameters
-            # to reduce total_error. When calling session.run on these you'll need to
-            # populate the following placeholders:
-            # obs_t_ph
-            # act_t_ph
-            # rew_t_ph
-            # obs_tp1_ph
-            # done_mask_ph
-            # (this is needed for computing total_error)
-            # learning_rate -- you can get this from optimizer_spec.lr_schedule.value(t)
-            # (this is needed by the optimizer to choose the learning rate)
-            # 3.d: periodically update the target network by calling
-            # session.run(update_target_fn)
-            # you should update every target_update_freq steps, and you may find the
-            # variable num_param_updates useful for this (it was initialized to 0)
             #####
 
-            if t % 100000 == 0 and FLAGS.save_model:
-                model_save_path = os.path.join('./link_data/', FLAGS.method_name)
-                if not os.path.exists(model_save_path):
-                    tf.gfile.MakeDirs(model_save_path)
-                save_path = saver.save(session,
-                                       os.path.join(model_save_path, "model_%s.ckpt" % str(t)))
-                print('saved at: ', save_path)
-
-
-            if FLAGS.demo_mode == 'dqfd' and not FLAGS.inenv_eval:
-                demo_size = int(batch_size * FLAGS.demo_portion)
-                package_demo, need_hinge_demo = \
-                    replay_buffer_demo.sample(demo_size, FLAGS.group_name)
-                obs_t_batch_demo, act_t_batch_demo, rew_t_batch_demo, obs_tp1_batch_demo, done_mask_demo, action_dist_demo = \
-                    package_demo
-                package, need_hinge = \
-                    replay_buffer.sample(batch_size-demo_size, FLAGS.group_name)
-                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
-                    package
-                obs_t_batch   = np.concatenate((obs_t_batch_demo, obs_t_batch))
-                act_t_batch   = np.concatenate((act_t_batch_demo, act_t_batch))
-                rew_t_batch   = np.concatenate((rew_t_batch_demo, rew_t_batch))
-                obs_tp1_batch = np.concatenate((obs_tp1_batch_demo, obs_tp1_batch))
-                done_mask     = np.concatenate((done_mask_demo  , done_mask))
-                action_dist   = np.concatenate((action_dist_demo, action_dist))
-            elif not FLAGS.inenv_eval:
-                package, need_hinge = \
-                    replay_buffer.sample(batch_size, FLAGS.group_name)
-                obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
-                    package
-
-                # (b)
-            if not model_initialized:
-                initialize_interdependent_variables(session, tf.all_variables(), {
-                    obs_t_ph: obs_t_batch,
-                    obs_tp1_ph: obs_tp1_batch,
-                })
-                model_initialized = True
-
-            # (c)
-            if not FLAGS.inenv_eval:
-                feed_dict = {
-                    obs_t_ph: obs_t_batch,
-                    act_t_ph: act_t_batch,
-                    rew_t_ph: rew_t_batch,
-                    obs_tp1_ph: obs_tp1_batch,
-                    done_mask_ph: done_mask,
-                    need_hinge_ph: need_hinge,
-                    learning_rate: optimizer_spec.lr_schedule.value(t),
-                    action_dist_ph: action_dist,
-                }
-                if t % FLAGS.summary_interval == 0:
-                    _, summary_value = session.run([train_fn, summary_op], feed_dict)
+            # YOUR CODE HERE
+            if FLAGS.collect_Q_experience:
+                idx = replay_buffer.store_frame(last_obs)
+                if FLAGS.explore_value_method == "normal":
+                    eps = exploration.value(t)
+                elif FLAGS.explore_value_method == "tiny":
+                    eps = FLAGS.tiny_explore
                 else:
-                    session.run(train_fn, feed_dict)
-                num_param_updates += 1
-                # (d)
-                if num_param_updates % target_update_freq == 0:
-                    session.run(update_target_fn)
-            #else:
-            #    summary_value = session.run(summary_op, feed_dict)
+                    raise ValueError("explore_method invalid %s" % FLAGS.explore_value_method)
 
+                action_dist_this = np.ones((num_actions), dtype=np.float32) / num_actions
+                if model_initialized:
+                    recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
+                    q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+                    if FLAGS.greedy_method == "hard" or FLAGS.force_original_exploration:
+                        max_action = np.argmax(np.squeeze(q_values))
+                        greedy_dist = np.zeros((num_actions), dtype=np.float32)
+                        greedy_dist[max_action] = 1.0
+                    elif FLAGS.greedy_method == "soft":
+                        q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
+                        greedy_dist = q_values / np.sum(q_values)
+                    else:
+                        raise ValueError("greedy_method invalid %s " % FLAGS.greedy_method)
+
+                    action_dist_this = eps * action_dist_this + (1 - eps) * greedy_dist
+
+                action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
+
+                obs, reward, done, info = env_train.step(action)
+                if info != {} and "damage" in info:
+                    # print(info)
+                    damage = int(info['damage'])
+                    next_damage = int(info['next_damage'])
+                    if next_damage - damage > 1:
+                        damage_per_episode += 1
+                if done:
+                    obs = env_train.reset()
+                    damage_list += [damage_per_episode]
+                    damage_per_episode = 0
+
+                replay_buffer.store_effect(idx, action, reward, done, action_dist_this)
+                last_obs = obs
+            else:
+                if t > FLAGS.demo_step:
+                    break
+
+            #####
+
+            # at this point, the environment should have been advanced one step (and
+            # reset if done was true), and last_obs should point to the new latest
+            # observation
+
+            ### 3. Perform experience replay and train the network.
+            # note that this is only done if the replay buffer contains enough samples
+            # for us to learn something useful -- until then, the model will not be
+            # initialized and random actions should be taken
+            summary_value = None
+            if (t > learning_starts and
+                            t % learning_freq == 0 and
+                    replay_buffer.can_sample(batch_size)):
+                # Here, you should perform training. Training consists of four steps:
+                # 3.a: use the replay buffer to sample a batch of transitions (see the
+                # replay buffer code for function definition, each batch that you sample
+                # should consist of current observations, current actions, rewards,
+                # next observations, and done indicator).
+                # 3.b: initialize the model if it has not been initialized yet; to do
+                # that, call
+                #    initialize_interdependent_variables(session, tf.global_variables(), {
+                #        obs_t_ph: obs_t_batch,
+                #        obs_tp1_ph: obs_tp1_batch,
+                #    })
+                # where obs_t_batch and obs_tp1_batch are the batches of observations at
+                # the current and next time step. The boolean variable model_initialized
+                # indicates whether or not the model has been initialized.
+                # Remember that you have to update the target network too (see 3.d)!
+                # 3.c: train the model. To do this, you'll need to use the train_fn and
+                # total_error ops that were created earlier: total_error is what you
+                # created to compute the total Bellman error in a batch, and train_fn
+                # will actually perform a gradient step and update the network parameters
+                # to reduce total_error. When calling session.run on these you'll need to
+                # populate the following placeholders:
+                # obs_t_ph
+                # act_t_ph
+                # rew_t_ph
+                # obs_tp1_ph
+                # done_mask_ph
+                # (this is needed for computing total_error)
+                # learning_rate -- you can get this from optimizer_spec.lr_schedule.value(t)
+                # (this is needed by the optimizer to choose the learning rate)
+                # 3.d: periodically update the target network by calling
+                # session.run(update_target_fn)
+                # you should update every target_update_freq steps, and you may find the
+                # variable num_param_updates useful for this (it was initialized to 0)
                 #####
 
-        ### 4. Log progress
+                if t % 100000 == 0 and FLAGS.save_model:
+                    model_save_path = os.path.join('./link_data/', FLAGS.method_name)
+                    if not os.path.exists(model_save_path):
+                        tf.gfile.MakeDirs(model_save_path)
+                    save_path = saver.save(session,
+                                           os.path.join(model_save_path, "model_%s.ckpt" % str(t)))
+                    print('saved at: ', save_path)
 
-        # evaluating in the environment, when off policy training is used
-        # Warning: this evaluation does not use target network!
-        # TODO: make sure the environment Monitor return the undiscounted reward
-        reward_calc = None
-        if FLAGS.eval_freq > 0 and t % FLAGS.eval_freq == 0 and model_initialized:
-            print('_' * 50)
-            print('Start Evaluating at TimeStep %d' % t)
-            eps = 0.05
-            if FLAGS.val_set:
-                #eval_valset(q, obs_t_ph, val_set_file, session, gamma)
-                bellman_error = eval_valset(q, obs_t_ph, FLAGS.val_set_file, session, gamma)
-            reward_calc, frame_counter, damage_counter = \
-                eval_policy(env_test, q, obs_t_ph,
-                            session,
-                            eps, frame_history_len, num_actions, img_c)
-            best_reward = np.max([best_reward, reward_calc])
-            print("the frame counter is %f" % frame_counter)
-            print("test reward %f" % reward_calc)
-            print("best test reward %f" % best_reward)
-            print("damage counter %d" % damage_counter)
-            with open(log_file, 'a') as f:
-                print(t, reward_calc, best_reward, file=f)
 
-        # evaluating with the current environment
-        if FLAGS.eval_freq <= 0:
-            episode_rewards = get_wrapper_by_name(env_train, "Monitor").get_episode_rewards()
-            if len(episode_rewards) > 0:
-                mean_episode_reward = np.mean(episode_rewards[-100:])
-                reward_calc = episode_rewards[-1]
-            if len(episode_rewards) > 100:
-                best_mean_episode_reward = max(best_mean_episode_reward, mean_episode_reward)
-            if len(damage_list) > 0:
-                mean_damage_counter = np.mean(damage_list[-100:])
-                damage_counter = damage_list[-1]
+                if FLAGS.demo_mode == 'dqfd' and not FLAGS.inenv_eval:
+                    demo_size = int(batch_size * FLAGS.demo_portion)
+                    package_demo, need_hinge_demo = \
+                        replay_buffer_demo.sample(demo_size, FLAGS.group_name)
+                    obs_t_batch_demo, act_t_batch_demo, rew_t_batch_demo, obs_tp1_batch_demo, done_mask_demo, action_dist_demo = \
+                        package_demo
+                    package, need_hinge = \
+                        replay_buffer.sample(batch_size-demo_size, FLAGS.group_name)
+                    obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
+                        package
+                    obs_t_batch   = np.concatenate((obs_t_batch_demo, obs_t_batch))
+                    act_t_batch   = np.concatenate((act_t_batch_demo, act_t_batch))
+                    rew_t_batch   = np.concatenate((rew_t_batch_demo, rew_t_batch))
+                    obs_tp1_batch = np.concatenate((obs_tp1_batch_demo, obs_tp1_batch))
+                    done_mask     = np.concatenate((done_mask_demo  , done_mask))
+                    action_dist   = np.concatenate((action_dist_demo, action_dist))
+                elif not FLAGS.inenv_eval:
+                    package, need_hinge = \
+                        replay_buffer.sample(batch_size, FLAGS.group_name)
+                    obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
+                        package
 
-            if t % LOG_EVERY_N_STEPS == 0 and model_initialized:
-                print("mean reward (100 episodes) %f" % mean_episode_reward)
-                print("best mean reward %f" % best_mean_episode_reward)
-                print("episodes %d" % len(episode_rewards))
-                print("exploration %f" % exploration.value(t))
-                print("learning_rate %f" % optimizer_spec.lr_schedule.value(t))
-                print("mean_damage_counter %d" % mean_damage_counter)
-                print("damage_counter %d" % damage_counter)
-                sys.stdout.flush()
+                    # (b)
+                if not model_initialized:
+                    initialize_interdependent_variables(session, tf.all_variables(), {
+                        obs_t_ph: obs_t_batch,
+                        obs_tp1_ph: obs_tp1_batch,
+                    })
+                    model_initialized = True
 
-                with open(log_file, 'a') as f:
-                    print(t, mean_episode_reward, best_mean_episode_reward, file=f)
+                # (c)
+                if not FLAGS.inenv_eval:
+                    feed_dict = {
+                        obs_t_ph: obs_t_batch,
+                        act_t_ph: act_t_batch,
+                        rew_t_ph: rew_t_batch,
+                        obs_tp1_ph: obs_tp1_batch,
+                        done_mask_ph: done_mask,
+                        need_hinge_ph: need_hinge,
+                        learning_rate: optimizer_spec.lr_schedule.value(t),
+                        action_dist_ph: action_dist,
+                    }
+                    if t % FLAGS.summary_interval == 0:
+                        _, summary_value = session.run([train_fn, summary_op], feed_dict)
+                    else:
+                        session.run(train_fn, feed_dict)
+                    num_param_updates += 1
+                    # (d)
+                    if num_param_updates % target_update_freq == 0:
+                        session.run(update_target_fn)
+                #else:
+                #    summary_value = session.run(summary_op, feed_dict)
 
-        # adding visualizations to tensorboard
-        # summary condition: train has a summary, eval has a new value(>0), or eval has extended(<0)
-        sum_train = (summary_value is not None)
-        sum_eval = (reward_calc is not None) and (
-            (FLAGS.eval_freq > 0) or
-            (FLAGS.eval_freq <= 0 and t % LOG_EVERY_N_STEPS == 0 and model_initialized))
-        if sum_train or sum_eval:
-            summary = tf.Summary()
-            if sum_train:
-                summary.ParseFromString(summary_value)
-            if sum_eval:
-                summary.value.add(tag='exploration', simple_value=exploration.value(t))
-                summary.value.add(tag='reward', simple_value=reward_calc)
-                summary.value.add(tag='damage_number', simple_value=damage_counter)
+                    #####
+
+            ### 4. Log progress
+
+            # evaluating in the environment, when off policy training is used
+            # Warning: this evaluation does not use target network!
+            # TODO: make sure the environment Monitor return the undiscounted reward
+            reward_calc = None
+            if FLAGS.eval_freq > 0 and t % FLAGS.eval_freq == 0 and model_initialized:
+                print('_' * 50)
+                print('Start Evaluating at TimeStep %d' % t)
+                eps = 0.05
                 if FLAGS.val_set:
-                    if bellman_error is not None:
-                        summary.value.add(tag='bellman', simple_vale=bellman_error)
-            summary_writer.add_summary(summary, t)
+                    #eval_valset(q, obs_t_ph, val_set_file, session, gamma)
+                    bellman_error = eval_valset(q, obs_t_ph, FLAGS.val_set_file, session, gamma)
+                reward_calc, frame_counter, damage_counter = \
+                    eval_policy(env_test, q, obs_t_ph,
+                                session,
+                                eps, frame_history_len, num_actions, img_c)
+                best_reward = np.max([best_reward, reward_calc])
+                print("the frame counter is %f" % frame_counter)
+                print("test reward %f" % reward_calc)
+                print("best test reward %f" % best_reward)
+                print("damage counter %d" % damage_counter)
+                with open(log_file, 'a') as f:
+                    print(t, reward_calc, best_reward, file=f)
+
+            # evaluating with the current environment
+            if FLAGS.eval_freq <= 0:
+                episode_rewards = get_wrapper_by_name(env_train, "Monitor").get_episode_rewards()
+                if len(episode_rewards) > 0:
+                    mean_episode_reward = np.mean(episode_rewards[-100:])
+                    reward_calc = episode_rewards[-1]
+                if len(episode_rewards) > 100:
+                    best_mean_episode_reward = max(best_mean_episode_reward, mean_episode_reward)
+                if len(damage_list) > 0:
+                    mean_damage_counter = np.mean(damage_list[-100:])
+                    damage_counter = damage_list[-1]
+
+                if t % LOG_EVERY_N_STEPS == 0 and model_initialized:
+                    print("mean reward (100 episodes) %f" % mean_episode_reward)
+                    print("best mean reward %f" % best_mean_episode_reward)
+                    print("episodes %d" % len(episode_rewards))
+                    print("exploration %f" % exploration.value(t))
+                    print("learning_rate %f" % optimizer_spec.lr_schedule.value(t))
+                    print("mean_damage_counter %d" % mean_damage_counter)
+                    print("damage_counter %d" % damage_counter)
+                    sys.stdout.flush()
+
+                    with open(log_file, 'a') as f:
+                        print(t, mean_episode_reward, best_mean_episode_reward, file=f)
+
+            # adding visualizations to tensorboard
+            # summary condition: train has a summary, eval has a new value(>0), or eval has extended(<0)
+            sum_train = (summary_value is not None)
+            sum_eval = (reward_calc is not None) and (
+                (FLAGS.eval_freq > 0) or
+                (FLAGS.eval_freq <= 0 and t % LOG_EVERY_N_STEPS == 0 and model_initialized))
+            if sum_train or sum_eval:
+                summary = tf.Summary()
+                if sum_train:
+                    summary.ParseFromString(summary_value)
+                if sum_eval:
+                    summary.value.add(tag='exploration', simple_value=exploration.value(t))
+                    summary.value.add(tag='reward', simple_value=reward_calc)
+                    summary.value.add(tag='damage_number', simple_value=damage_counter)
+                    if FLAGS.val_set:
+                        if bellman_error is not None:
+                            summary.value.add(tag='bellman', simple_vale=bellman_error)
+                summary_writer.add_summary(summary, t)
+    except KeyboardInterrupt:
+        print("Control C pressed. Saving model before exit. ")
+        model_save_path = os.path.join('./link_data/', FLAGS.method_name)
+        saver.save(session, os.path.join(model_save_path, "model_%s.ckpt" % str(t)))
+        sys.exit()

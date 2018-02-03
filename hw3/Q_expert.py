@@ -187,7 +187,7 @@ def collect(env,
 
 
     # save the replay buffer
-    print('save pickle!')
+    print('save pickle! replay buffer has size: ', replay_buffer.num_in_buffer)
     FLAGS.Q_expert_path = './link_data/' + str(FLAGS.replay_buffer_size) + '_' + FLAGS.demo_name + '.p'
     with open(FLAGS.Q_expert_path, 'w') as f:
         p.dump(replay_buffer, f, protocol=-1)
