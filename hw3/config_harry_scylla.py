@@ -6177,6 +6177,12 @@ def torcs_cross_entropy_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_n
 
     #FLAGS.game_config_fname = 'huazhe.xml'
 
+    # addedbyYang,forevaluationonly
+    FLAGS.inenv_eval = True
+    FLAGS.ckpt_path = "/backup/hxu/modelRL/torcs_cross_entropy_demo_stage_1_bad_batch_segment__90_300000_00"
+    FLAGS.eval_freq = 1
+    FLAGS.torcs_path = "/data2/hxu/rlTORCS"
+
 def torcs_hard_Q_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
     tag = inspect.stack()[0][3]
     print("config name=", tag)
@@ -6230,6 +6236,12 @@ def torcs_dqfd_full_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
     FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num) + '_' + str(exp_num).zfill(2)
     #FLAGS.game_config_fname = 'huazhe.xml'
 
+    # addedbyYang,forevaluationonly
+    FLAGS.inenv_eval = True
+    FLAGS.ckpt_path = "/backup/hxu/modelRL/torcs_dqfd_full_demo_stage_1_bad_batch_segment__90_300000_00"
+    FLAGS.eval_freq = 1
+    FLAGS.torcs_path = "/data2/hxu/rlTORCS"
+
 
 def torcs_V_grounding_no_weighting_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
     tag = inspect.stack()[0][3]
@@ -6259,6 +6271,12 @@ def torcs_V_grounding_no_weighting_demo_stage_1_bad_batch(demo_prefix, num, data
     FLAGS.autoback = True
     common_data_size(data_num)
     FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num) + '_' + str(exp_num).zfill(2)
+
+    # added by Yang, for evaluation only
+    FLAGS.inenv_eval = True
+    FLAGS.ckpt_path = "/backup/hxu/modelRL/torcs_V_grounding_no_weighting_demo_stage_1_bad_batch_segment__90_300000_00"
+    FLAGS.eval_freq = 1
+    FLAGS.torcs_path = "/data2/hxu/rlTORCS"
 
 def torcs_soft_Q_demo_stage_1_bad_batch(demo_prefix, num, data_num, exp_num):
     tag = inspect.stack()[0][3]

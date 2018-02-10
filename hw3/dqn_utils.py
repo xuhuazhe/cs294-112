@@ -626,6 +626,7 @@ def eval_policy(env, q, obs_t_ph,
     input_obs = env.reset()
     frame_counter = 0
     damage_counter = 0
+    damage_inds = []
     while True:
         frame_counter += 1
         is_greedy = np.random.rand(1) >= eps
@@ -644,6 +645,9 @@ def eval_policy(env, q, obs_t_ph,
                 next_damage = int(info['next_damage'])
                 if next_damage - damage > 1:
                     damage_counter += 1
+                    damage_inds.append(1)
+                else:
+                    damage_inds.append(0)
         input_obs = np.concatenate((input_obs, obs), 2)
         assert(len(env.observation_space.shape) == 3)
         if input_obs.shape[2] > frame_history_len*img_c:
@@ -656,7 +660,7 @@ def eval_policy(env, q, obs_t_ph,
             # 30mins * 60seconds * 15Hz
             print("emulator reach 5 mins maximum length")
             break
-    return reward_calc, frame_counter, damage_counter
+    return reward_calc, frame_counter, damage_counter, damage_inds
 
 def eps_scheduler(t, good_step, m_bad, m_good):
     if m_bad > 0:

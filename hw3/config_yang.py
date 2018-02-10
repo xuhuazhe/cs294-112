@@ -1229,9 +1229,7 @@ def frozenlake_dqfd_stage_1_v2():
     FLAGS.eval_freq = 1000
     FLAGS.learning_starts = 0
 
-def frozenlake_dqfd_stage_2_v2():
-    tag = inspect.stack()[0][3]
-
+def frozenlake_dqfd_stage_2_meta(tag):
     frozen_dqn_kx(30, tag)
     FLAGS.hard_Q_loss_weight = -1.0
     FLAGS.core_num = "0"
@@ -1259,7 +1257,23 @@ def frozenlake_dqfd_stage_2_v2():
     FLAGS.inenv_finetune = True
     FLAGS.demo_portion = 0.1
 
-    # TODO: unable to load the checkpoint
+def frozenlake_dqfd_stage_2_v2():
+    tag = inspect.stack()[0][3]
+    frozenlake_dqfd_stage_2_meta(tag)
+
+def frozenlake_dqfd_stage_2_v2_original_exploration_v2():
+    tag = inspect.stack()[0][3]
+    frozenlake_dqfd_stage_2_meta(tag)
+
+    divider = 30
+    num_iterations = int(4e7) / 4 / divider
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 1.0),
+        (1e6 / divider, 0.1),
+        (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    FLAGS.discount_factor = 0.5
+
 
 
 def frozenlake_nac_meta(tag):
@@ -1293,8 +1307,7 @@ def frozenlake_nac_small_RB():
     frozenlake_nac_meta(tag)
     FLAGS.replay_buffer_size = 600
 
-def frozenlake_nac_stage_2():
-    tag = inspect.stack()[0][3]
+def frozenlake_nac_stage_2_meta(tag):
     frozen_dqn_kx(30, tag)
     FLAGS.hard_Q_loss_weight = -1.0
     FLAGS.core_num = "0"
@@ -1319,3 +1332,49 @@ def frozenlake_nac_stage_2():
 
     FLAGS.ckpt_path = "/data/yang/code/rl_demonstration/hw3/link_data/frozenlake_nac_stage_1_v4_False_0.1/"
     FLAGS.inenv_finetune = True
+
+def frozenlake_nac_stage_2():
+    tag = inspect.stack()[0][3]
+    frozenlake_nac_stage_2_meta(tag)
+
+def frozenlake_nac_stage_2_original_schedule_v7():
+    tag = inspect.stack()[0][3]
+    frozenlake_nac_stage_2_meta(tag)
+
+    divider = 30
+    num_iterations = int(4e7) / 4 / divider
+    FLAGS.exploration_schedule = PiecewiseSchedule([
+        (0, 1.0),
+        (1e6 / divider, 0.1),
+        (num_iterations / 2, 0.01)],
+        outside_value=0.01)
+    '''
+    FLAGS.lr_schedule = PiecewiseSchedule([
+        (0, 1e-4),
+        (num_iterations / 10, 1e-4),
+        (num_iterations / 2, 5e-5)],
+        outside_value=5e-5)
+    '''
+    FLAGS.discount_factor = 0.5
+    # other differences are ckpt_path, and inenv_finetune
+
+def frozenlake_nac_stage_2_original_schedule_v8():
+    tag = inspect.stack()[0][3]
+    frozenlake_nac_stage_2_meta(tag)
+    FLAGS.discount_factor = 0.5
+
+def frozenlake_nac_from_scratch():
+    tag = inspect.stack()[0][3]
+
+    frozen_dqn_kx(30, tag)
+    FLAGS.hard_Q_loss_weight = -1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.frame_history_len = 1
+    FLAGS.tabular = True
+    FLAGS.discount_factor = 0.5
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+    FLAGS.disable_off_policy_weighting = True

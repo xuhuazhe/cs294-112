@@ -683,7 +683,7 @@ def learn(env_train,
                 if FLAGS.val_set:
                     #eval_valset(q, obs_t_ph, val_set_file, session, gamma)
                     bellman_error = eval_valset(q, obs_t_ph, FLAGS.val_set_file, session, gamma)
-                reward_calc, frame_counter, damage_counter = \
+                reward_calc, frame_counter, damage_counter, damage_inds = \
                     eval_policy(env_test, q, obs_t_ph,
                                 session,
                                 eps, frame_history_len, num_actions, img_c)
@@ -694,6 +694,8 @@ def learn(env_train,
                 print("damage counter %d" % damage_counter)
                 with open(log_file, 'a') as f:
                     print(t, reward_calc, best_reward, file=f)
+                with open(log_file+".damage_indicators", 'a') as f:
+                    print(damage_inds, file=f)
 
             # evaluating with the current environment
             if FLAGS.eval_freq <= 0:
