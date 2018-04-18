@@ -440,7 +440,10 @@ def learn(env_train,
     saver = tf.train.Saver()
 
     if FLAGS.demo_mode == 'hdf':
-        replay_buffer = get_hdf_demo(FLAGS.demo_file_path, replay_buffer)
+        if FLAGS.eval_only:
+            replay_buffer = None
+        else:
+            replay_buffer = get_hdf_demo(FLAGS.demo_file_path, replay_buffer)
         #replay_buffer.fix_action_dist()
     elif FLAGS.demo_mode == 'replay':
         replay_buffer = load_replay_pickle(FLAGS.demo_file_path, FLAGS.dataset_size)

@@ -482,7 +482,9 @@ def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
         f1 = h5py.File(fi, 'r')
         _action = list(f1[action])
         _reward = list(f1[reward])
-        _obs = list(f1[obs])
+        #_obs = list(f1[obs])
+        _obs = np.array(f1[obs])
+
         _terminal = list(f1[terminal])
         assert (len(_action) == len(_reward))
         assert (len(_action) == len(_obs))
@@ -551,7 +553,7 @@ def load_replay_pickle(pickle_dir, step_num, bad_dir=''):
 
 
 def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=4):
-
+    print("enter the eval_valset function")
     def parse_valset(filename):
         action = "A"
         reward = "R"
@@ -572,7 +574,11 @@ def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=
             f1 = h5py.File(fi, 'r')
             _action = list(f1[action])
             _reward = list(f1[reward])
-            _obs = list(f1[obs])
+
+            #_obs = list(f1[obs])
+            _obs = np.array(f1[obs])
+            _obs_out = []
+
             _terminal = list(f1[terminal])
             assert (len(_action) == len(_reward))
             assert (len(_action) == len(_obs))
@@ -582,19 +588,25 @@ def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=
             for i in range(len(_obs)):
                 if FLAGS.human_torcs:
                     if i < len(_obs) - 1:
-                        _obs[i] = TorcsProcessFrame84.aframe(_obs[i], 120, 160, 'resize')
+                        _obs_out.append(TorcsProcessFrame84.aframe(_obs[i], 120, 160, 'resize'))
 
-            obs_list = obs_list + _obs[0:-1]
+            obs_list = obs_list + _obs_out[0:-1]
             action_list = action_list + _action[1:]
             reward_list = reward_list + _reward[1:]
             terminal_list = terminal_list + _terminal[1:]
-
+        #import pdb; pdb.set_trace()
         return obs_list, reward_list, action_list, terminal_list
 
     valset_obs, valset_reward, valset_action, valset_terminal = parse_valset(val_set_file)
     frame_counter = 0
     avg_bellman = 0
+
+    viz_list=[]
+
+    print("before looping")
     for i in range(3, len(valset_obs)-1):
+        print("in evaluation, timestep", i)
+
         input_obs = np.asarray(valset_obs[i+1-frame_history_length:i+1]).reshape(1,  84, 84, frame_history_length)
         next_obs  = np.asarray(valset_obs[i+2-frame_history_length:i+2]).reshape(1,  84, 84, frame_history_length)
 
@@ -605,6 +617,10 @@ def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=
         feed_next_obs  = np.reshape(next_obs, list(next_obs.shape))
 
         q_values = session.run(q, feed_dict={obs_t_ph: feed_input_obs})
+        # TODO: Yang, save those runed actions into the file and analyze it.
+        q_values = np.squeeze(q_values)
+        viz_list.append((q_values, feed_input_obs, action, reward))
+        # end of saving visualization results
         q_act    = q_values[action]
 
         q_next = session.run(q, feed_dict={obs_t_ph: feed_next_obs})
@@ -613,6 +629,12 @@ def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=
         if not valset_terminal[i]:
             frame_counter += 1
             avg_bellman += q_act - q_look_ahead
+
+    if True:
+        print("saving visualization output for validation")
+        with open("q_values_dump.pkl", "w") as f:
+            pickle.dump(viz_list, f)
+
     return avg_bellman/frame_counter
 
 

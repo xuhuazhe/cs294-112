@@ -203,6 +203,10 @@ tf.app.flags.DEFINE_integer('period', 300,
                             """the interval for a group of bad and good""")
 tf.app.flags.DEFINE_integer('bad_period', 0,
                             """how many steps do you want it to be bad?""")
+tf.app.flags.DEFINE_boolean('eval_only', False,
+                            """that ignores the slow hdf reading step""")
+
+
 
 
 def dueling_model(img_in, num_actions, scope, reuse=False):

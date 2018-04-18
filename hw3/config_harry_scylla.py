@@ -6390,8 +6390,15 @@ def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_final(core, e
     FLAGS.method_name = tag + '_' + str(exp_num) + '_new'
     # FLAGS.game_config_fname = 'huazhe.xml'
 
-
-
+    # added by Yang, for evaluation only. (Second evaluation trail / batch)
+    FLAGS.inenv_eval = True
+    FLAGS.ckpt_path = "/backup/hxu/modelRL/torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_final_00_new"
+    FLAGS.eval_freq = 1
+    FLAGS.torcs_path = "/data2/hxu/rlTORCS"
+    # adding the val settings, put for training first
+    FLAGS.val_set = True
+    FLAGS.val_set_file = "/data2/hxu/modelRL/demo_large/linji_torcsTue_Oct_24_21:54:25_PDT_2017.h5"
+    FLAGS.eval_only = True
 
 
 use_this_config = test_test
