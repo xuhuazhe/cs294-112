@@ -638,6 +638,28 @@ def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=
     return avg_bellman/frame_counter
 
 
+def eval_policy_onval_replay(q, obs_t_ph,
+                             session,
+                             replay_buffer):
+
+    num_samples = 100
+    viz_list = []
+    for i in range(num_samples):
+        print("evaluating samples at ", i)
+        package, need_hinge = \
+            replay_buffer.sample(1, 'rl')
+        obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
+            package
+
+        q_values = session.run(q, feed_dict={obs_t_ph: obs_t_batch})
+        # TODO: Yang, save those runed actions into the file and analyze it.
+        q_values = np.squeeze(q_values)
+        viz_list.append((q_values, act_t_batch))
+
+    print("in oneval replay: saving visualization output for validation")
+    with open("q_values_dump.pkl", "w") as f:
+        pickle.dump(viz_list, f)
+
 
 def eval_policy(env, q, obs_t_ph,
                 session,

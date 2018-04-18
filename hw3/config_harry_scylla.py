@@ -4000,6 +4000,16 @@ def torcs_soft_Q_simple_demo_stage_1_rerun(index):
     #FLAGS.autoback = True
     FLAGS.method_name = tag + '_' + index
 
+    # added by Yang, for evaluation only. (Second evaluation trail / batch)
+    FLAGS.inenv_eval = True
+    FLAGS.ckpt_path = "/backup/hxu/modelRL/torcs_soft_Q_simple_demo_stage_1_rerun"
+    FLAGS.eval_freq = 1
+    FLAGS.torcs_path = "/data2/hxu/rlTORCS"
+    # adding the val settings, put for training first
+    FLAGS.val_set = True
+    FLAGS.val_set_file = "/data2/hxu/modelRL/demo_large/linji_torcsTue_Oct_24_21:54:25_PDT_2017.h5"  # only for bellman error
+    FLAGS.eval_only = True
+
 ''' possible path
     /backup/hxu/modelRL/torcs_dqfd_full_demo_stage_1_30_2017-08-04 11:39:00.926601_300000
     /backup/hxu/modelRL/torcs_V_grounding_no_weighting_demo_stage_1_30_2017-08-04 12:11:08.140152_300000
@@ -6023,6 +6033,16 @@ def torcs_soft_Q_demo_stage_1_bad(demo_prefix, num, data_num):
     common_data_size(data_num)
     FLAGS.method_name = tag + '_' + demo_prefix + '_' + str(num) + '_' + str(data_num)
 
+    # added by Yang, for evaluation only. (Second evaluation trail / batch)
+    FLAGS.inenv_eval = True
+    FLAGS.ckpt_path = "/backup/hxu/modelRL/torcs_soft_Q_demo_stage_1_bad_segment__90_150000"
+    FLAGS.eval_freq = 1
+    FLAGS.torcs_path = "/data2/hxu/rlTORCS"
+    # adding the val settings, put for training first
+    FLAGS.val_set = True
+    FLAGS.val_set_file = "/data2/hxu/modelRL/demo_large/linji_torcsTue_Oct_24_21:54:25_PDT_2017.h5"  # only for bellman error
+    FLAGS.eval_only = True
+
 """batch exp for data amount"""
 
 def torcs_cross_entropy_demo_stage_1_amount(num, exp_num):
@@ -6125,6 +6145,17 @@ def torcs_V_grounding_no_weighting_demo_stage_1_amount(num, exp_num):
     FLAGS.autoback = True
     FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
     #FLAGS.game_config_fname = 'huazhe.xml'
+
+
+    # added by Yang, for evaluation only. (Second evaluation trail / batch)
+    FLAGS.inenv_eval = True
+    FLAGS.ckpt_path = "/backup/hxu/modelRL/torcs_V_grounding_no_weighting_demo_stage_1_amount_150000_09_new"
+    FLAGS.eval_freq = 1
+    FLAGS.torcs_path = "/data2/hxu/rlTORCS"
+    # adding the val settings, put for training first
+    FLAGS.val_set = True
+    FLAGS.val_set_file = "/data2/hxu/modelRL/demo_large/linji_torcsTue_Oct_24_21:54:25_PDT_2017.h5" # only for bellman error
+    FLAGS.eval_only = True
 
 def torcs_soft_Q_demo_stage_1_amount(num,exp_num):
     tag = inspect.stack()[0][3]

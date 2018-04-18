@@ -685,7 +685,13 @@ def learn(env_train,
                 eps = 0.05
                 if FLAGS.val_set:
                     #eval_valset(q, obs_t_ph, val_set_file, session, gamma)
+
+                    # commenting this out to run the following line
                     bellman_error = eval_valset(q, obs_t_ph, FLAGS.val_set_file, session, gamma)
+
+                    #  eval on val set only and could deal with all replay buffers
+                    eval_policy_onval_replay(q, obs_t_ph, session, replay_buffer)
+
                 reward_calc, frame_counter, damage_counter, damage_inds = \
                     eval_policy(env_test, q, obs_t_ph,
                                 session,
