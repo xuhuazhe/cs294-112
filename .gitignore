@@ -95,3 +95,6 @@ hw3/config.py
 hw3/test_img
 *swp
 hw3/.sync/*
+*.DS_Store*
+*pkl*
+
