@@ -101,6 +101,9 @@ tf.app.flags.DEFINE_boolean('critic_use_rapid_weighting', False,
                             """""")
 tf.app.flags.DEFINE_boolean('disable_off_policy_weighting', False,
                             """""")
+tf.app.flags.DEFINE_boolean("disable_off_policy_weighting_PG", False,
+                            """""")
+
 tf.app.flags.DEFINE_float('PCL_1_step_weighting', -1.0,
                             """""")
 

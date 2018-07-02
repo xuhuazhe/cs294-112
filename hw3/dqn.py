@@ -270,6 +270,7 @@ def learn(env_train,
         tf.scalar_summary("loss/supervise_hinge_standard", crammer)
         total_error += FLAGS.supervise_hinge_standard_loss_weight * crammer
 
+    # grad = (Q-Q_hat) * grad(Q-V)
     if FLAGS.policy_gradient_soft_1_step > 0:
         node_grad = q_act - Vrapid
         node_no_grad = tf.stop_gradient(q_act - q_soft_ahead)
@@ -278,7 +279,7 @@ def learn(env_train,
         tf.histogram_summary("sign_visualize/policy_gradient", node_no_grad)
         total_error += FLAGS.policy_gradient_soft_1_step * pg1_output
 
-
+    # objective = (Q-V-Q_hat)^2
     if FLAGS.policy_gradient_soft_1_step_surrogate > 0:
         pg1_surrogate = tf.reduce_mean(tf.square(q_act - Vrapid - q_soft_ahead))
         tf.scalar_summary("loss/policy_gradient_soft_1_step_surrogate", pg1_surrogate)
@@ -316,18 +317,24 @@ def learn(env_train,
     if FLAGS.disable_off_policy_weighting:
         weighting_in_use = 1.0
 
+    # grad = grad(Q-V)*(Q-Q_hat)
     if FLAGS.exp_policy_grad_weighting > 0:
         with tf.variable_scope("exp_policy_grad_weighting"):
+            if FLAGS.disable_off_policy_weighting_PG:
+                weighting_in_use_ = weighting_in_use
+            else:
+                weighting_in_use_ = 1.0
+
             node_grad = q_act - Vrapid
             node_no_grad = tf.stop_gradient(q_act - q_soft_ahead, name="q_yStar")
             #node_no_grad = tf.stop_gradient(q_act - Vrapid - q_soft_ahead, name="q_yStar")
 
-            weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting_in_use, name="grad_final")
+            weighted_grad = tf.reduce_mean(node_grad * node_no_grad * weighting_in_use_, name="grad_final")
             total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
 
-            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting_in_use)
+            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad * weighting_in_use_)
             tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
-            tf.histogram_summary("weighting_of_grad", weighting_in_use)
+            tf.histogram_summary("weighting_of_grad", weighting_in_use_)
 
 
     if FLAGS.exp_value_critic_weighting > 0:

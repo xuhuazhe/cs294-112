@@ -6432,4 +6432,204 @@ def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_final(core, e
     FLAGS.eval_only = True
 
 
+# Yang digging out the NAC config
+def torcs_V_grounding_no_weighting_demo_stage_1_amount_revive(num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+def torcs_V_grounding_no_weighting_demo_stage_1_amount_revive_piv(num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+    #FLAGS.game_config_fname = 'huazhe.xml'
+
+    FLAGS.pi_v_model = True
+
+# try advantage learning
+def torcs_V_grounding_no_weighting_demo_stage_1_amount_advantage(num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '0'
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.exp_advantage_diff_learning = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+
+# the advantage second stage.
+def torcs_V_grounding_no_weighting_inenv_stage_2_rerun_advantage(key):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = ''
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000/FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '0'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    # todo: change this line
+    FLAGS.ckpt_path = "/data/yang/code/rl_demonstration/hw3/link_data/torcs_V_grounding_no_weighting_demo_stage_1_amount_advantage_300000_00_new"
+
+    FLAGS.inenv_finetune = True
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.exp_advantage_diff_learning = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+    FLAGS.custom_reward = "reward_ben"
+
+    FLAGS.method_name = tag + '_' + key + '_new'
+
+# run second stage with weighting
+def torcs_V_grounding_no_weighting_inenv_stage_2_rerun_Critic_Weighting(critic_weight):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = ''
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000/FLAGS.torcs_divider
+    FLAGS.eval_freq = -1
+    FLAGS.torcs_demo = False
+    FLAGS.core_num = '0'
+    FLAGS.replay_buffer_size = int(3e5)
+    FLAGS.exploration_schedule = PiecewiseSchedule(
+        [
+            (0, 0.01),
+            (1e6, 0.01),
+            (1e7, 0.01),
+        ], outside_value=0.01
+    )
+    # todo: change this line
+    FLAGS.ckpt_path = "/data/yang/code/rl_demonstration/hw3/link_data/torcs_V_grounding_no_weighting_demo_stage_1_amount_revive_300000_00_new"
+
+    FLAGS.inenv_finetune = True
+
+    FLAGS.exp_value_critic_weighting = float(critic_weight)
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.exp_advantage_diff_learning = 0.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = False
+    FLAGS.disable_off_policy_weighting_PG = True
+
+    FLAGS.custom_reward = "reward_ben"
+
+    FLAGS.method_name = tag + '_' + str(critic_weight) + '_new'
+
+# try advantage learning
+def torcs_V_grounding_no_weighting_demo_stage_1_amount_advantage_nocritic(num, exp_num):
+    tag = inspect.stack()[0][3]
+    print("config name=", tag)
+    FLAGS.torcs_divider = 30
+    # FLAGS.method_name = tag + str(FLAGS.torcs_divider)
+    common_setting()
+    FLAGS.demo_file_path = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+    torcs_dqn_kx(FLAGS.torcs_divider, tag)
+
+    FLAGS.torcs_path = '/data/yang/code/rlTORCS'
+
+    FLAGS.demo_mode = "replay"
+    FLAGS.collect_Q_experience = False
+    FLAGS.eval_freq = 10000
+
+    FLAGS.core_num = '1'
+
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.exp_advantage_diff_learning = 1.0
+    FLAGS.critic_use_rapid_weighting = False
+
+    FLAGS.disable_off_policy_weighting = True
+
+    FLAGS.custom_reward = 'reward_ben'
+    common_data_size(num)
+    FLAGS.autoback = True
+    FLAGS.method_name = tag + '_' + str(num) + '_' + str(exp_num).zfill(2) + '_new'
+
 use_this_config = test_test
