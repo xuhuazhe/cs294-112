@@ -2,15 +2,8 @@ from __future__ import print_function
 import sys
 import gym.spaces
 import itertools
-import numpy as np
-import random
-import tensorflow                as tf
-import tensorflow.contrib.layers as layers
-from collections import namedtuple
 from dqn_utils import *
 import pickle as p
-import os
-import h5py
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -53,19 +46,13 @@ def collect(env,
 
     mean_episode_reward = -float('nan')
     best_mean_episode_reward = -float('inf')
-    best_reward = -float('inf')
     last_obs = env.reset()
     LOG_EVERY_N_STEPS = 10000
 
     log_file = FLAGS.method_name+'.log'
     saver = tf.train.Saver()
 
-    if FLAGS.m_bad > 0:
-        replay_buffer_obs = ReplayBuffer(replay_buffer_size, frame_history_len, num_actions)
-        replay_buffer = ReplayBuffer(int(replay_buffer_size*(np.float(FLAGS.m_bad)/(FLAGS.m_bad+FLAGS.m_good))),
-                                     frame_history_len, num_actions)
-    else:
-        replay_buffer = ReplayBuffer(replay_buffer_size , frame_history_len, num_actions)
+    replay_buffer = ReplayBuffer(replay_buffer_size , frame_history_len, num_actions)
     ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_path)
     if ckpt and ckpt.model_checkpoint_path:
         ckpt_path = ckpt.model_checkpoint_path
@@ -83,30 +70,16 @@ def collect(env,
             break
         if t%10000 == 0:
             print('*'*30)
-            print('Iteration:', t)
+            print(f'Iteration: {t}')
             print('*'*30)
-        if FLAGS.m_bad > 0:
-            eps, should_save = eps_scheduler(t, FLAGS.good_step, FLAGS.m_bad, FLAGS.m_good)
-            idx_obs = replay_buffer_obs.store_frame(last_obs)
-            if should_save:
-                idx = replay_buffer.store_frame(last_obs)
-        else:
-            idx = replay_buffer.store_frame(last_obs)
-            eps = exploration.value(t)
+        idx = replay_buffer.store_frame(last_obs)
+        eps = exploration.value(t)
+        recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
 
-
-        is_greedy = np.random.rand(1) >= eps
-        action_dist_this = np.ones((num_actions), dtype=np.float32) / num_actions
-        if FLAGS.m_bad > 0:
-            recent_obs = replay_buffer_obs.encode_recent_observation()[np.newaxis, ...]
-        else:
-            recent_obs = replay_buffer.encode_recent_observation()[np.newaxis, ...]
         q_values = session.run(q, feed_dict={obs_t_ph: recent_obs})
+
         # TODO: find an appropriate soft_Q_alpha for the sampling
-        #q_values = np.exp((q_values - np.max(q_values)) / FLAGS.soft_Q_alpha)
-        #dist = q_values / np.sum(q_values)
-        #action = np.random.choice(num_actions, p=np.squeeze(dist))
-        if FLAGS.bad_type == 'block':
+        if FLAGS.bad_type == 'block':   # good chunk followed by bad chunk
             if FLAGS.lf_bad_data and t > FLAGS.max_timesteps*FLAGS.final_bad_portion*4:
                 min_action = np.argmin(np.squeeze(q_values))
                 greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
@@ -115,7 +88,7 @@ def collect(env,
                 max_action = np.argmax(np.squeeze(q_values))
                 greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
                 greedy_dist_this[max_action] = 1.0
-        elif FLAGS.bad_type == 'random':
+        elif FLAGS.bad_type == 'random':       # flip a coin
             if FLAGS.lf_bad_data and np.random.rand()<FLAGS.final_bad_portion:
                 min_action = np.argmin(np.squeeze(q_values))
                 greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
@@ -124,7 +97,7 @@ def collect(env,
                 max_action = np.argmax(np.squeeze(q_values))
                 greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
                 greedy_dist_this[max_action] = 1.0
-        elif FLAGS.bad_type == 'segment':
+        elif FLAGS.bad_type == 'segment':         # decided by period
             if t % FLAGS.period < FLAGS.bad_period:
                 min_action = np.argmin(np.squeeze(q_values))
                 greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
@@ -138,7 +111,7 @@ def collect(env,
             greedy_dist_this = np.zeros((num_actions), dtype=np.float32)
             greedy_dist_this[max_action] = 1.0
 
-
+        action_dist_this = np.ones((num_actions), dtype=np.float32) / num_actions
         action_dist_this = eps*action_dist_this + (1-eps)*greedy_dist_this
         action = np.random.choice(num_actions, p=np.squeeze(action_dist_this))
 
@@ -148,19 +121,9 @@ def collect(env,
         if done:
             obs = env.reset()
         # TODO: modify the following 3 lines to add action_dist back in
-        if FLAGS.m_bad > 0:
-            replay_buffer_obs.store_effect(idx_obs, action, reward, done,
-                                           action_dist_this, info)
-            if should_save:
-                replay_buffer.store_effect(idx, action, reward, done,
-                                           action_dist_this, info)
-        else:
-            if 'torcs' in FLAGS.env_id:
-                replay_buffer.store_effect(idx, action, reward, done,
-                                       action_dist_this, info)
-            else:
-                replay_buffer.store_effect(idx, action, reward, done,
-                                           action_dist_this, None)
+        if 'torcs' in FLAGS.env_id:
+            replay_buffer.store_effect(idx, action, reward, done,
+                                   action_dist_this, info)
         last_obs = obs
 
         ### 4. Log progress

@@ -1,15 +1,9 @@
-import argparse
 import gym
 from gym import wrappers
 from gym.envs.registration import register
-import os.path as osp
-import random
-import numpy as np
-import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import tensorflow.contrib.slim as slim
 
-import multistep
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
@@ -20,10 +14,6 @@ import Q_expert
 FLAGS = tf.app.flags.FLAGS
 
 # DQN types
-tf.app.flags.DEFINE_boolean('ddqn', False,
-                            """Enable double Q bellman Update""")
-tf.app.flags.DEFINE_boolean('dueling', False,
-                            """Enable dueling net architecture""")
 tf.app.flags.DEFINE_boolean('tabular', False,
                             """Enable tabular Q function""")
 tf.app.flags.DEFINE_boolean('pi_v_model', False,
@@ -108,13 +98,6 @@ tf.app.flags.DEFINE_float('PCL_1_step_weighting', -1.0,
                             """""")
 
 
-# multistep related
-tf.app.flags.DEFINE_boolean('multistep', False,
-                            """whether we need multistep-run""") # TODO: finish this
-tf.app.flags.DEFINE_boolean('multistep_replay', False,
-                            """multistep_replay is off policy multistep""")
-tf.app.flags.DEFINE_boolean('multistep_urex', False,
-                            """urex loss""")
 
 # resource related
 tf.app.flags.DEFINE_string('core_num', '0',
@@ -210,30 +193,6 @@ tf.app.flags.DEFINE_boolean('eval_only', False,
                             """that ignores the slow hdf reading step""")
 
 
-
-
-def dueling_model(img_in, num_actions, scope, reuse=False):
-    # as described in https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
-    print("*Dueling Net is enabled!*")
-    with slim.arg_scope([layers.convolution2d, layers.fully_connected], outputs_collections="activation_collection"):
-        with tf.variable_scope(scope, reuse=reuse):
-            out = img_in
-            with tf.variable_scope("convnet"):
-                # original architecture
-                out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
-                out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
-                with tf.variable_scope('last_conv'):
-                    out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
-            out = layers.flatten(out)
-            with tf.variable_scope("action_value"):
-                out_adv   = layers.fully_connected(out,     num_outputs=512,         activation_fn=tf.nn.relu)
-                out_adv   = layers.fully_connected(out_adv, num_outputs=num_actions, activation_fn=None)
-                out_value = layers.fully_connected(out,     num_outputs=512,         activation_fn=tf.nn.relu)
-                out_value = layers.fully_connected(out_value, num_outputs=1          , activation_fn=None)
-                Q = out_value + out_adv - tf.reduce_mean(out_adv, 1, keep_dims = True)
-            return Q
-
-
 def tabular_model(state_id, num_actions, scope, reuse=False, nstate=8*5):
     print("*Using tabular Q function*")
     state_id = tf.reshape(state_id, [-1])
@@ -305,9 +264,7 @@ def atari_learn(env,
         return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps
 
     # TODO: better hyper parameters here
-    if FLAGS.dueling:
-        model = dueling_model
-    elif FLAGS.tabular:
+    if FLAGS.tabular:
         model = tabular_model
     else:
         model = atari_model
@@ -346,9 +303,7 @@ def atari_collect(env,
         else:
             return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps*4
 
-    if FLAGS.dueling:
-        model = dueling_model
-    elif FLAGS.tabular:
+    if FLAGS.tabular:
         model = tabular_model
     else:
         model = atari_model
@@ -362,9 +317,6 @@ def atari_collect(env,
         replay_buffer_size=FLAGS.replay_buffer_size,
         frame_history_len=FLAGS.frame_history_len)
     env.close()
-
-def atari_multistep(env):
-    multistep.run(env)
 
 def get_available_gpus():
     from tensorflow.python.client import device_lib
@@ -466,7 +418,6 @@ def main(_):
 
     eval(FLAGS.config)
     flags_to_cmd()
-    #collect_demonstration()
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 
     task = Object()
@@ -487,23 +438,16 @@ def main(_):
                     "detailed_info": True}
         )
 
-    if "frozen" in task.env_id.lower():
-        register(
-            id='frozen-v0',
-            entry_point='frozen_lake_custom:FrozenLakeEnv')
-
     env = get_env(task, seed)
     session = get_session()
 
-    if FLAGS.multistep:
-        multistep.run(env, atari_model)
-    elif FLAGS.learning_stage:
+    if FLAGS.learning_stage:
         if FLAGS.torcs_demo:
             print("warning: using the training env as the testing env! "
                   "It's the user's responsibility to check you are not using it for training")
             env_test = env
             env_train = None
-	    debug_obs = env_test.reset()
+            debug_obs = env_test.reset()
         elif FLAGS.eval_freq > 0:
             env_test = get_env(task, seed, True)
             env_train = env
@@ -515,8 +459,6 @@ def main(_):
     else:
         atari_collect(env, session, num_timesteps=FLAGS.max_timesteps)
 if __name__ == "__main__":
-    #tf.app.run()
-
     # the following line is the same as tf.app.run
     f = tf.app.flags.FLAGS
     flags_passthrough = f._parse_flags()
