@@ -576,7 +576,7 @@ def eval_policy(env, q, obs_t_ph,
 
 def eps_scheduler(t, good_step, m_bad, m_good):
     if m_bad > 0:
-        if t< good_step:
+        if t < good_step:
             should_save = True
             return 0, should_save
         elif (t-good_step) % (m_good+m_bad) < m_good:
