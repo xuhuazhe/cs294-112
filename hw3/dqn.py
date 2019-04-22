@@ -143,6 +143,7 @@ def learn(env_train,
 
 
     # load the pretrained models
+    # now it does not support resume training from the middle
     if (FLAGS.inenv_finetune or FLAGS.inenv_eval) and (not FLAGS.train_from_scratch):
         print("loading model from ", FLAGS.ckpt_path)
         ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_path)
@@ -344,6 +345,10 @@ def learn(env_train,
                     if FLAGS.val_set and bellman_error is not None:
                         summary.value.add(tag='bellman_error', simple_value=bellman_error)
                 summary_writer.add_summary(summary, t)
+
+            if FLAGS.inenv_eval:
+                # this means after training, we re-eval it, so break after we have done evaluation once
+                break
     except KeyboardInterrupt:
         print("Control C pressed. Saving model before exit. ")
         model_save_path = os.path.join(model_store_root_path, FLAGS.method_name)

@@ -67,6 +67,20 @@ class PiecewiseSchedule(object):
         assert self._outside_value is not None
         return self._outside_value
 
+class ConstantSchedule(object):
+    def __init__(self, value):
+        """Value remains constant over time.
+        Parameters
+        ----------
+        value: float
+            Constant value of the schedule
+        """
+        self._v = value
+
+    def value(self, t):
+        """See Schedule.value"""
+        return self._v
+
 class LinearSchedule(object):
     def __init__(self, schedule_timesteps, final_p, initial_p=1.0):
         """Linear interpolation between initial_p and final_p over
