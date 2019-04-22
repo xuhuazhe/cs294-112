@@ -5,21 +5,12 @@ import tensorflow as tf
 import numpy as np
 import random
 import pickle
-import matplotlib.pyplot as plt
 from atari_wrappers import *
 from collections import deque
 import h5py
 import scipy
 
 FLAGS = tf.app.flags.FLAGS
-
-def huber_loss(x, delta=1.0):
-    # https://en.wikipedia.org/wiki/Huber_loss
-    return tf.select(
-        tf.abs(x) < delta,
-        tf.square(x) * 0.5,
-        delta * (tf.abs(x) - 0.5 * delta)
-    )
 
 def sample_n_unique(sampling_f, n):
     """Helper function. Given a function `sampling_f` that returns
@@ -36,20 +27,6 @@ class Schedule(object):
     def value(self, t):
         """Value of the schedule at time t"""
         raise NotImplementedError()
-
-class ConstantSchedule(object):
-    def __init__(self, value):
-        """Value remains constant over time.
-        Parameters
-        ----------
-        value: float
-            Constant value of the schedule
-        """
-        self._v = value
-
-    def value(self, t):
-        """See Schedule.value"""
-        return self._v
 
 def linear_interpolation(l, r, alpha):
     return l + alpha * (r - l)
@@ -114,28 +91,7 @@ class LinearSchedule(object):
         fraction  = min(float(t) / self.schedule_timesteps, 1.0)
         return self.initial_p + fraction * (self.final_p - self.initial_p)
 
-def compute_exponential_averages(variables, decay):
-    """Given a list of tensorflow scalar variables
-    create ops corresponding to their exponential
-    averages
-    Parameters
-    ----------
-    variables: [tf.Tensor]
-        List of scalar tensors.
-    Returns
-    -------
-    averages: [tf.Tensor]
-        List of scalar tensors corresponding to averages
-        of al the `variables` (in order)
-    apply_op: tf.runnable
-        Op to be run to update the averages with current value
-        of variables.
-    """
-    averager = tf.train.ExponentialMovingAverage(decay=decay)
-    apply_op = averager.apply(variables)
-    return [averager.average(v) for v in variables], apply_op
-
-def minimize_and_clip(optimizer, objective, var_list, dueling_list=None, clip_val=10, multiplier=1/np.sqrt(2)):
+def minimize_and_clip(optimizer, objective, var_list, clip_val=10):
     """Minimized `objective` using `optimizer` w.r.t. variables in
     `var_list` while ensure the norm of the gradients for each
     variable is clipped to `clip_val`
@@ -143,23 +99,10 @@ def minimize_and_clip(optimizer, objective, var_list, dueling_list=None, clip_va
     gradients = optimizer.compute_gradients(objective, var_list=var_list)
     for i, (grad, var) in enumerate(gradients):
         if grad is not None:
-            print(var.op.name, "what is var for me!!!!!!!!!!!!")
-            #break
-            if 'q_func/convnet/last_conv' in var.op.name:
-                print('*'*30, 'multiply!')
-                grad = multiplier * grad
-            if FLAGS.optimize_V_only and not("value_only" in var.op.name):
-                print('zero out gradient for', var.op.name)
-                grad = 0.0 * grad
+            print("optimize variable ", var.op.name)
             gradients[i] = (tf.clip_by_norm(grad, clip_val), var)
             tf.histogram_summary("gradients/"+gradients[i][0].op.name, gradients[i][0])
-    #if  FLAGS.dueling:
-    #    gradients_duel = optimizer.compute_gradients(objective, var_list=dueling_list)
-    #    for i, (grad, var) in enumerate(gradients_duel):
-    #        if grad is not None:
-    #            gradients_duel[i] = (multiplier * grad, var)
-    #            tf.histogram_summary("gradients_scaled/"+gradients_duel[i][0].op.name, gradients_duel[i][0])
-    #    gradients = gradients + gradients_duel
+
     return optimizer.apply_gradients(gradients)
 
 def initialize_interdependent_variables(session, vars_list, feed_dict):
@@ -234,70 +177,18 @@ class ReplayBuffer(object):
         self.reward   = None
         self.done     = None
 
-    def fix_action_dist(self):
-        print("Warning: this function should not be called! You should regenerate the dataset")
-        self.num_actions = 9
-        self.action_dist = np.ones([self.size, self.num_actions], dtype=np.float32) / self.num_actions
-
     def can_sample(self, batch_size):
         """Returns true if `batch_size` different transitions can be sampled from the buffer."""
-        if FLAGS.inenv_eval:
-            return True
-        else:
-            return batch_size + 1 <= self.num_in_buffer
-
-    def _encode_observation_batch(self, idxes, plus):
-        obs = [self._encode_observation(idx+plus, True) for idx in idxes]
-
-        img_h, img_w, img_c = self.obs.shape[1], self.obs.shape[2], self.obs.shape[3]
-        framelen=self.frame_history_len
-
-        # fitler out the tuples
-        indexes = []
-        batches = []
-
-        def add_a_batch():
-            # form this batch
-            batch = self.obs[indexes].reshape(-1, framelen, img_h, img_w, img_c)
-            batch = batch.transpose(0, 2, 3, 1, 4)
-            print(batch.shape)
-            batch = batch.reshape(-1, img_h, img_w, framelen*img_c)
-            batches.append(batch)
-
-        for i, tuple in enumerate(obs):
-            if isinstance(tuple, type((1, 1))):
-                indexes += range(tuple[0], tuple[1])
-            else:
-                # size batch*4**H*W*C
-                if len(indexes) > 0:
-                    add_a_batch()
-                    indexes = []
-                batches.append(obs[i].reshape(1, img_h, img_w, framelen*img_c))
-
-        if len(indexes) > 0:
-            add_a_batch()
-
-        return np.concatenate(batches, 0)
-
+        return batch_size + 1 <= self.num_in_buffer
 
     def _encode_sample(self, idxes):
         obs_batch = np.concatenate([self._encode_observation(idx)[None] for idx in idxes], 0)
-        #obs_batch = self._encode_observation_batch(idxes, 0)
         act_batch      = self.action[idxes]
         rew_batch      = self.reward[idxes]
         next_obs_batch = np.concatenate([self._encode_observation(idx + 1)[None] for idx in idxes], 0)
-        #next_obs_batch = self._encode_observation_batch(idxes, 1)
         done_mask      = np.array([1.0 if self.done[idx] else 0.0 for idx in idxes], dtype=np.float32)
-        action_dist_batch = self.action_dist[idxes, :]
 
-        return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask, action_dist_batch
-
-    def sample_onpolicy(self, number_path, total_path):
-        assert(number_path <= total_path)
-        counter = 0
-        for i in range(self.num_in_buffer):
-            obs, act, rew, next_obs, done, action_dist = _encode_sample(i)
-        return [self._encode_sample(idxes), need_hinge]
+        return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask
 
     def sample(self, batch_size, name='rl'):
         """Sample `batch_size` different transitions.
@@ -331,24 +222,23 @@ class ReplayBuffer(object):
         done_mask: np.array
             Array of shape (batch_size,) and dtype np.float32
         """
-        need_hinge = 1
         assert self.can_sample(batch_size)
+
+        #TODO: I am not fully understand what is the meaning of the name
+        num_good_in_buffer = int(self.num_in_buffer*(1-FLAGS.bad_portion))
         if name == 'rl':
             idxes = sample_n_unique(lambda: random.randint(0, self.num_in_buffer - 2), batch_size)
         elif name == 'supervised':
-            idxes = sample_n_unique(lambda: random.randint(0, int(self.num_in_buffer*(1-FLAGS.bad_portion)) - 2), batch_size)
+            idxes = sample_n_unique(lambda: random.randint(0, num_good_in_buffer - 2), batch_size)
         elif name == 'dqfd':
-            p = FLAGS.bad_portion
-            is_bad = np.random.rand(1) <= p
+            is_bad = np.random.rand(1) <= FLAGS.bad_portion
             if is_bad:
-                idxes = sample_n_unique(
-                    lambda: random.randint(int(self.num_in_buffer * (1 - FLAGS.bad_portion)) - 1,
-                                           self.num_in_buffer - 2), batch_size)
-                need_hinge = 0
+                idxes = sample_n_unique(lambda: random.randint(num_good_in_buffer - 1, self.num_in_buffer - 2),
+                                        batch_size)
             else:
-                idxes = sample_n_unique(
-                    lambda: random.randint(0, int(self.num_in_buffer * (1 - FLAGS.bad_portion)) - 2), batch_size)
-        return [self._encode_sample(idxes), need_hinge]
+                idxes = sample_n_unique(lambda: random.randint(0, num_good_in_buffer - 2),
+                                        batch_size)
+        return self._encode_sample(idxes)
 
 
     def encode_recent_observation(self):
@@ -364,7 +254,7 @@ class ReplayBuffer(object):
         assert self.num_in_buffer > 0
         return self._encode_observation((self.next_idx - 1) % self.size)
 
-    def _encode_observation(self, idx, returnIndex=False):
+    def _encode_observation(self, idx):
         end_idx   = idx + 1 # make noninclusive
         start_idx = end_idx - self.frame_history_len
         # this checks if we are using low-dimensional observations, such as RAM
@@ -387,13 +277,10 @@ class ReplayBuffer(object):
             return np.concatenate(frames, 2)
             # this branch returns a H*W*(NC) object
         else:
-            if returnIndex:
-                return (start_idx, end_idx)
-            else:
-                # this optimization has potential to saves about 30% compute time \o/
-                img_h, img_w = self.obs.shape[1], self.obs.shape[2]
-                # from NHWC to HWNC, to H*W*NC
-                return self.obs[start_idx:end_idx].transpose(1, 2, 0, 3).reshape(img_h, img_w, -1)
+            # this optimization has potential to saves about 30% compute time \o/
+            img_h, img_w = self.obs.shape[1], self.obs.shape[2]
+            # from NHWC to HWNC, to H*W*NC
+            return self.obs[start_idx:end_idx].transpose(1, 2, 0, 3).reshape(img_h, img_w, -1)
 
     def store_frame(self, frame):
         """Store a single frame in the buffer at the next available index, overwriting
@@ -415,7 +302,6 @@ class ReplayBuffer(object):
             self.action      = np.empty([self.size],                     dtype=np.int32)
             self.reward      = np.empty([self.size],                     dtype=np.float32)
             self.done        = np.empty([self.size],                     dtype=np.bool)
-            self.action_dist = np.empty([self.size, self.num_actions],   dtype=np.float32)
             self.info        = np.empty([self.size],
                                          dtype={'names':['speed','angle','trackPos', 'trackWidth','damage', 'next_damage', 'stuck'],
                                                 'formats':['f8','f8', 'f8', 'f8', 'i1', 'i1', 'b1']})
@@ -428,7 +314,7 @@ class ReplayBuffer(object):
 
         return ret
 
-    def store_effect(self, idx, action, reward, done, action_dist, info=None):
+    def store_effect(self, idx, action, reward, done, info=None):
         """Store effects of action taken after obeserving frame stored
         at index idx. The reason `store_frame` and `store_effect` is broken
         up into two functions is so that once can call `encode_recent_observation`
@@ -448,44 +334,34 @@ class ReplayBuffer(object):
         self.action[idx] = action
         self.reward[idx] = reward
         self.done[idx]   = done
-        self.action_dist[idx, :] = action_dist
+
         if info is not None:
             self.info[idx] = (info['speed'],info['angle'],info['trackPos'],
                               info['trackWidth'],info['damage'], info['next_damage'], info['is_stuck'])
         else:
             self.info = None
 
-
-
-
 def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
     print("Warning: the num_actions is set as ", num_actions, ". modify if needed")
-
     # sync=True is the updated version. Only set it to false when we use older data
-    # List all groups
-    # print("Keys: %s" % f.keys())
 
     print('Get keys of HDF! Please Wait... Demonstration is huge.')
     action = "A"
     reward = "R"
     obs = "S"
     terminal = "terminal"
-    lives = "lives"
 
     # parse filename into a list, it could be a comma(,) seperated filename list
     filename = filename.split(",")
     filename = [x.strip() for x in filename if x.strip() != ""]
 
-    delta_action_dist = np.zeros((num_actions), dtype=np.float32)
-
     for fi in filename:
         f1 = h5py.File(fi, 'r')
         _action = list(f1[action])
         _reward = list(f1[reward])
-        #_obs = list(f1[obs])
         _obs = np.array(f1[obs])
-
         _terminal = list(f1[terminal])
+
         assert (len(_action) == len(_reward))
         assert (len(_action) == len(_obs))
         assert (len(_action) == len(_terminal))
@@ -496,55 +372,51 @@ def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
             if i % 5000 == 0:
                 print('%d are loaded' % i)
 
-            delta_action_dist[_action[i]]=1.0
-
+            # TODO: we might only need the sync=True and Flags.human_torcs=True case, but not sure yet
             if sync:
                 if FLAGS.human_torcs:
                     if i < len(_obs)-1:
-                        delta_action_dist[_action[i+1]] = 1.0
                         idx = replay_buffer.store_frame(TorcsProcessFrame84.aframe(_obs[i], 120, 160, 'resize'))
-                        replay_buffer.store_effect(idx, _action[i+1], _reward[i+1], _terminal[i+1], delta_action_dist)
+                        replay_buffer.store_effect(idx, _action[i+1], _reward[i+1], _terminal[i+1])
                 else:
                     idx = replay_buffer.store_frame(_obs[i][:, :, 3][..., np.newaxis])
-                    replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i], delta_action_dist)
+                    replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i])
             else:
                 _obs_buffer.append(_obs[i])
                 if i % 4 == 3:
                     max_frame = np.max(np.stack(_obs_buffer), axis=0)
                     max_frame = process_frame84(max_frame)
                     idx = replay_buffer.store_frame(max_frame)
-                    replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i], delta_action_dist)
-            delta_action_dist[_action[i]] = 0.0
+                    replay_buffer.store_effect(idx, _action[i], np.sign(_reward[i]), _terminal[i])
 
     print('Loaded! Almost there! Replay Size is %d' % replay_buffer.num_in_buffer)
     return replay_buffer
 
 
-def load_replay_pickle(pickle_dir, step_num, bad_dir=''):
-    bad_dir = FLAGS.bad_dir
+def load_replay_pickle(pickle_dir, step_num):
     print('loading replay buffer...')
     if FLAGS.bad_portion > 0:
         p = (1-FLAGS.bad_portion)
         with open(pickle_dir, 'r') as f:
             replay_buffer = pickle.load(f)
-        with open(bad_dir, 'r') as f:
+        with open(FLAGS.bad_dir, 'r') as f:
             replay_buffer_bad = pickle.load(f)
         size = replay_buffer.size
-        replay_buffer.obs = np.concatenate((replay_buffer.obs[0:int(size*p)],
-                            replay_buffer_bad.obs[0:size-int(size*p)]))
-        replay_buffer.action = np.concatenate((replay_buffer.action[0:int(size*p)],
-                            replay_buffer_bad.action[0:size - int(size * p)]))
-        replay_buffer.reward = np.concatenate((replay_buffer.reward[0:int(size*p)],
-                            replay_buffer_bad.reward[0:size - int(size * p)]))
-        replay_buffer.done = np.concatenate((replay_buffer.done[0:int(size*p)],
-                            replay_buffer_bad.done[0:size - int(size * p)]))
+        good_size = int(size*p)
+        bad_size = size-int(size*p)
+
+        for attr in ['obs', 'action', 'reward', 'done']:
+            mixed = np.concatenate((getattr(replay_buffer, attr)[0:good_size],
+                                    getattr(replay_buffer_bad, attr)[0:bad_size]))
+            setattr(replay_buffer, attr, mixed)
     else:
         with open(pickle_dir, 'r') as f:
             replay_buffer = pickle.load(f)
-        replay_buffer.obs = replay_buffer.obs[0:step_num]
-        replay_buffer.action = replay_buffer.action[0:step_num]
-        replay_buffer.reward = replay_buffer.reward[0:step_num]
-        replay_buffer.done = replay_buffer.done[0:step_num]
+
+        for attr in ['obs', 'action', 'reward', 'done']:
+            truncated = getattr(replay_buffer, attr)[0:step_num]
+            setattr(replay_buffer, attr, truncated)
+
         replay_buffer.size = step_num
         replay_buffer.num_in_buffer = step_num
     assert(step_num <= 300000)
@@ -552,6 +424,7 @@ def load_replay_pickle(pickle_dir, step_num, bad_dir=''):
     return replay_buffer
 
 
+# TODO: I didn't refactor this function
 def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=4):
     print("enter the eval_valset function")
     def parse_valset(filename):
@@ -638,17 +511,16 @@ def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=
     return avg_bellman/frame_counter
 
 
-def eval_policy_onval_replay(q, obs_t_ph,
+def inspect_q_values(q, obs_t_ph,
                              session,
                              replay_buffer):
-
+    # check the q values on the replay buffer.
     num_samples = 100
     viz_list = []
     for i in range(num_samples):
         print("evaluating samples at ", i)
-        package, need_hinge = \
-            replay_buffer.sample(1, 'rl')
-        obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask, action_dist = \
+        package = replay_buffer.sample(1, 'rl')
+        obs_t_batch, act_t_batch, rew_t_batch, obs_tp1_batch, done_mask = \
             package
 
         q_values = session.run(q, feed_dict={obs_t_ph: obs_t_batch})
@@ -661,11 +533,10 @@ def eval_policy_onval_replay(q, obs_t_ph,
         pickle.dump(viz_list, f)
 
 
+# evaluate a policy in a testing environment
 def eval_policy(env, q, obs_t_ph,
                 session,
                 eps, frame_history_len, num_actions, img_c):
-    # TODO: we could probably use Replay buffer to get rid of frame_history_len issue
-    
     reward_calc = 0
     input_obs = env.reset()
     frame_counter = 0
@@ -682,16 +553,14 @@ def eval_policy(env, q, obs_t_ph,
             action = np.random.choice(num_actions)
 
         obs, reward, done, info = env.step(action)
-        if "torcs" in FLAGS.env_id:
-            if info != {}:
-                #print(info)
-                damage = int(info['damage'])
-                next_damage = int(info['next_damage'])
-                if next_damage - damage > 1:
-                    damage_counter += 1
-                    damage_inds.append(1)
-                else:
-                    damage_inds.append(0)
+        if "torcs" in FLAGS.env_id and info != {}:
+            damage = int(info['damage'])
+            next_damage = int(info['next_damage'])
+            if next_damage - damage > 1:
+                damage_counter += 1
+                damage_inds.append(1)
+            else:
+                damage_inds.append(0)
         input_obs = np.concatenate((input_obs, obs), 2)
         assert(len(env.observation_space.shape) == 3)
         if input_obs.shape[2] > frame_history_len*img_c:
@@ -700,9 +569,8 @@ def eval_policy(env, q, obs_t_ph,
         if done:
             break
         if frame_counter >= 30*60*(60/4):
-        #if frame_counter >= 5 * 60 * (60 / 4):
             # 30mins * 60seconds * 15Hz
-            print("emulator reach 5 mins maximum length")
+            print("emulator reach 30 mins maximum length")
             break
     return reward_calc, frame_counter, damage_counter, damage_inds
 
@@ -740,58 +608,3 @@ def activation_summaries(endpoints):
     print("-"*40 + "\nAll tensors that will be summarized:")
     for act in end_values:
       _activation_summary(act)
-
-def select_exploration(name, exploration, t):
-    if name == "normal":
-        eps = exploration.value(t)
-        return eps
-    elif name == "tiny":
-        eps = FLAGS.tiny_explore
-        return eps
-    else:
-        raise ValueError("explore_method invalid %s" % FLAGS.explore_value_method)
-
-def pathlength(path):
-    return len(path["reward"])
-
-def discount(x, gamma):
-    """
-    Compute discounted sum of future values
-    out[i] = in[i] + gamma * in[i+1] + gamma^2 * in[i+2] + ...
-    """
-    return scipy.signal.lfilter([1],[1,-gamma],x[::-1], axis=0)[::-1]
-
-class NnValueFunction(object):
-    coeffs = None
-
-    def __init__(self, session):
-        self.net = None
-        self.session = session
-
-    def create_net(self, shape):
-        self.x = tf.placeholder(tf.float32, shape=[None, shape], name="x")
-        self.y = tf.placeholder(tf.float32, shape=[None], name="y")
-        hidden1 = tf.nn.relu(dense(self.x, 32, 'value-net-hidden1', 1.0))
-        hidden2 = tf.nn.relu(dense(hidden1, 16, 'value-net-hidden2', 1.0))
-        self.net = dense(hidden2, 1, 'value-net-out', 1.0)
-        self.net = tf.reshape(self.net, (-1,))
-        l2 = (self.net - self.y) * (self.net - self.y)
-        self.train = tf.train.AdamOptimizer().minimize(l2)
-        self.session.run(tf.initialize_all_variables())
-
-    def preproc(self, X):
-        return np.concatenate([np.ones([X.shape[0], 1]), X, np.square(X)/2.0], axis=1)
-
-    def fit(self, X, y):
-        featmat = self.preproc(X)
-        if self.net is None:
-            self.create_net(featmat.shape[1])
-        for _ in range(40):
-            self.session.run(self.train, {self.x: featmat, self.y: y})
-
-    def predict(self, X):
-        if self.net is None:
-            return np.zeros(X.shape[0])
-        else:
-            ret = self.session.run(self.net, {self.x: self.preproc(X)})
-            return np.reshape(ret, (ret.shape[0],))
