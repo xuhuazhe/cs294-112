@@ -149,18 +149,14 @@ def collect(env,
             obs = env.reset()
         # TODO: modify the following 3 lines to add action_dist back in
         if FLAGS.m_bad > 0:
-            replay_buffer_obs.store_effect(idx_obs, action, reward, done,
-                                           action_dist_this, info)
+            replay_buffer_obs.store_effect(idx_obs, action, reward, done, info)
             if should_save:
-                replay_buffer.store_effect(idx, action, reward, done,
-                                           action_dist_this, info)
+                replay_buffer.store_effect(idx, action, reward, done, info)
         else:
             if 'torcs' in FLAGS.env_id:
-                replay_buffer.store_effect(idx, action, reward, done,
-                                       action_dist_this, info)
+                replay_buffer.store_effect(idx, action, reward, done, info)
             else:
-                replay_buffer.store_effect(idx, action, reward, done,
-                                           action_dist_this, None)
+                replay_buffer.store_effect(idx, action, reward, done, None)
         last_obs = obs
 
         ### 4. Log progress
