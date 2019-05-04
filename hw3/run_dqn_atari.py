@@ -224,16 +224,10 @@ def atari_model(img_in, num_actions, scope, reuse=False):
             out = layers.flatten(out)
             with tf.variable_scope("action_value"):
                 out = layers.fully_connected(out, num_outputs=512,         activation_fn=tf.nn.relu)
-                if FLAGS.ddqn:
-                    out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None, biases_initializer=None)
-                    # add a shared bias
-                    shared_bias = tf.get_variable("shared_bias", shape=[1])
-                    out += shared_bias
-                else:
-                    if FLAGS.multistep or FLAGS.pi_v_model:
-                        with tf.variable_scope("value_only"):
-                            value = layers.fully_connected(out, num_outputs=1, activation_fn=None)
-                    out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
+                if FLAGS.multistep or FLAGS.pi_v_model:
+                    with tf.variable_scope("value_only"):
+                        value = layers.fully_connected(out, num_outputs=1, activation_fn=None)
+                out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
             if FLAGS.multistep:
                 return out, value

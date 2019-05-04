@@ -7,7 +7,7 @@ from dqn_utils import *
 TORCS_PATH = '/data/yang/code/rlTORCS'
 CKPT_BASE = "/data/yang/code/rl_demonstration/hw3/link_data"
 TORCS_HUMAN_DEMO_LIST = '/data/hxu/modelRL/hxu_slow_all.txt'
-TORCS_MACHINE_DEMO = '/backup/hxu/modelRL/300000autoback_simple_08_25.p'
+TORCS_MACHINE_DEMO = '/data2/hxu/modelRL/300000autoback_simple_08_25.p'
 # end of resource list
 
 # hierachy of flags, group them into several smaller functionality
@@ -162,4 +162,36 @@ def torcs_human_sal():
 
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.exp_policy_grad_weighting = 1.0
-    FLAGS.core_num = 0
+    FLAGS.core_num = "0"
+
+def torcs_human_cross_entropy():
+    # torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_final
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned()
+    set_stage(stage)
+    set_demo_type("human")
+    set_eval_mode(False)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.core_num = "0"
+
+def torcs_human_dqfd():
+    # torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_final
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned()
+    set_stage(stage)
+    set_demo_type("human")
+    set_eval_mode(False)
+
+    FLAGS.supervise_hinge_DQfD_loss_weight = 1.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.l2_regularization_loss_weight = 1.0e-5
+    FLAGS.core_num = "0"

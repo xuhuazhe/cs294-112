@@ -70,7 +70,7 @@ def collect(env,
             break
         if t%10000 == 0:
             print('*'*30)
-            print(f'Iteration: {t}')
+            print('Iteration: {t}')
             print('*'*30)
         idx = replay_buffer.store_frame(last_obs)
         eps = exploration.value(t)
