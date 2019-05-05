@@ -115,7 +115,7 @@ def minimize_and_clip(optimizer, objective, var_list, clip_val=10):
         if grad is not None:
             print("optimize variable ", var.op.name)
             gradients[i] = (tf.clip_by_norm(grad, clip_val), var)
-            tf.histogram_summary("gradients/"+gradients[i][0].op.name, gradients[i][0])
+            tf.contrib.deprecated.histogram_summary("gradients/"+gradients[i][0].op.name, gradients[i][0])
 
     return optimizer.apply_gradients(gradients)
 
@@ -131,7 +131,7 @@ def initialize_interdependent_variables(session, vars_list, feed_dict):
                 # If using an older version of TensorFlow, uncomment the line
                 # below and comment out the line after it.
                 #session.run(tf.initialize_variables([v]), feed_dict)
-                session.run(tf.initialize_variables([v]), feed_dict)
+                session.run(tf.variables_initializer([v]), feed_dict)
             except tf.errors.FailedPreconditionError:
                 new_vars_left.append(v)
         if len(new_vars_left) >= len(vars_left):
@@ -386,9 +386,9 @@ def get_hdf_demo(filename, replay_buffer, sync=True, num_actions=9):
             if i % 5000 == 0:
                 print('%d are loaded' % i)
 
-            # TODO: we might only need the sync=True and Flags.human_torcs=True case, but not sure yet
+            # TODO: we might only need the sync=True and Flags.can_deal_with_human_demo=True case, but not sure yet
             if sync:
-                if FLAGS.human_torcs:
+                if FLAGS.can_deal_with_human_demo:
                     if i < len(_obs)-1:
                         idx = replay_buffer.store_frame(TorcsProcessFrame84.aframe(_obs[i], 120, 160, 'resize'))
                         replay_buffer.store_effect(idx, _action[i+1], _reward[i+1], _terminal[i+1])
@@ -473,7 +473,7 @@ def eval_valset(q, obs_t_ph, val_set_file, session, gamma, frame_history_length=
             print(len(_obs), '*' * 30)
 
             for i in range(len(_obs)):
-                if FLAGS.human_torcs:
+                if FLAGS.can_deal_with_human_demo:
                     if i < len(_obs) - 1:
                         _obs_out.append(TorcsProcessFrame84.aframe(_obs[i], 120, 160, 'resize'))
 
@@ -605,8 +605,8 @@ def eps_scheduler(t, good_step, m_bad, m_good):
 def _activation_summary(x):
   print(x)
   tensor_name = x.op.name
-  tf.histogram_summary(tensor_name + '/activations', x)
-  tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+  tf.contrib.deprecated.histogram_summary(tensor_name + '/activations', x)
+  tf.contrib.deprecated.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
 
 
 def activation_summaries(endpoints):

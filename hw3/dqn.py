@@ -63,10 +63,10 @@ def learn(env_train,
 
     # visualize inputs
     to_vis_format = lambda batch: tf.expand_dims(tf.transpose(batch[0, :, :, :], perm=[2, 0, 1]), 3)
-    tf.image_summary("observation_now", to_vis_format(obs_t_ph), max_images=4)
-    tf.image_summary("observation_next", to_vis_format(obs_tp1_ph), max_images=4)
-    tf.scalar_summary("env_input/action", act_t_ph[0])
-    tf.scalar_summary("env_input/reward", rew_t_ph[0])
+    tf.contrib.deprecated.image_summary("observation_now", to_vis_format(obs_t_ph), max_images=4)
+    tf.contrib.deprecated.image_summary("observation_next", to_vis_format(obs_tp1_ph), max_images=4)
+    tf.contrib.deprecated.scalar_summary("env_input/action", act_t_ph[0])
+    tf.contrib.deprecated.scalar_summary("env_input/reward", rew_t_ph[0])
 
     # casting to float on GPU ensures lower data transfer times.
     obs_t_float = tf.cast(obs_t_ph, tf.float32) / 255.0
@@ -84,11 +84,11 @@ def learn(env_train,
                     rew_t_ph,
                     done_mask_ph)
 
-    tf.scalar_summary("loss/total", total_error)
+    tf.contrib.deprecated.scalar_summary("loss/total", total_error)
 
     # construct optimization op (with gradient clipping)
     learning_rate = tf.placeholder(tf.float32, (), name="learning_rate")
-    tf.scalar_summary("learning_rate", learning_rate)
+    tf.contrib.deprecated.scalar_summary("learning_rate", learning_rate)
     optimizer = optimizer_spec.constructor(learning_rate=learning_rate, **optimizer_spec.kwargs)
     train_fn = minimize_and_clip(optimizer, total_error,
                                  var_list=q_func_vars,
@@ -101,9 +101,9 @@ def learn(env_train,
         update_target_fn.append(var_target.assign(var))
     update_target_fn = tf.group(*update_target_fn)
 
-    summary_op = tf.merge_all_summaries()
+    summary_op = tf.contrib.deprecated.merge_all_summaries()
     model_save_path = os.path.join(model_store_root_path, FLAGS.method_name)
-    summary_writer = tf.train.SummaryWriter(
+    summary_writer = tf.summary.FileWriter(
         model_save_path,
         graph_def=session.graph.as_graph_def(add_shapes=True))
 
@@ -157,7 +157,6 @@ def learn(env_train,
         saver.restore(session, ckpt_path)
         print('model loaded!!!! %s' % ckpt_path + '*'*30)
         model_initialized = True
-
 
     try:
         for t in itertools.count():
@@ -247,7 +246,7 @@ def learn(env_train,
 
                 # (b)
                 if not model_initialized:
-                    initialize_interdependent_variables(session, tf.all_variables(), {
+                    initialize_interdependent_variables(session, tf.global_variables(), {
                         obs_t_ph: obs_t_batch,
                         obs_tp1_ph: obs_tp1_batch,
                     })

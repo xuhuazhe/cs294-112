@@ -158,12 +158,13 @@ tf.app.flags.DEFINE_string('torcs_path', '/',
 tf.app.flags.DEFINE_boolean('autoback', False, """autoback set up""")
 tf.app.flags.DEFINE_string('custom_reward', '',
                            """""")
+tf.app.flags.DEFINE_boolean('multistep', False, "multistep")
 # torcs_divider not used in Yang's config
 tf.app.flags.DEFINE_integer('torcs_divider', -1,
                             """divider for training time and replay buffer.""")
 tf.app.flags.DEFINE_boolean('torcs_demo', False,
                             """learning from demonstration in torcs environment""")
-tf.app.flags.DEFINE_boolean('human_torcs', False,
+tf.app.flags.DEFINE_boolean('can_deal_with_human_demo', False,
                             """human demonstration for torcs""")
 tf.app.flags.DEFINE_string('game_config_fname', 'quickrace_discrete_single.xml',
                            """""")

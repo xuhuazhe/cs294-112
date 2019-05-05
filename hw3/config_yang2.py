@@ -19,7 +19,7 @@ def set_unconditioned():
     FLAGS.custom_reward = 'reward_ben'
     FLAGS.autoback = True
     # fix the human demonstration of torcs data loading problem, no other usage, should always set to True if we are using torcs
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
 
     FLAGS.torcs_divider = 30
     divider = FLAGS.torcs_divider

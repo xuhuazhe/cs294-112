@@ -622,7 +622,7 @@ def torcs_human_all_cross_entropy_demo_stage_1_yang_new():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -646,7 +646,7 @@ def torcs_human_all_hard_Q_demo_stage_1_yang_new():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -673,7 +673,7 @@ def torcs_human_all_dqfd_full_demo_stage_1_yang_new():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -700,7 +700,7 @@ def torcs_human_all_V_grounding_demo_stage_1_yang_new():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -729,7 +729,7 @@ def torcs_human_all_V_grounding_no_weighting_demo_stage_1_yang_new():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -759,7 +759,7 @@ def torcs_human_all_soft_Q_demo_stage_1_yang_new():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -791,7 +791,7 @@ def torcs_human_all_soft_Q_demo_stage_1_yang_new_PCL(index):
     FLAGS.autoback = True
     FLAGS.torcs_demo = True
     FLAGS.method_name = tag + '_' + index
-    # FLAGS.human_torcs = True
+    # FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -815,7 +815,7 @@ def torcs_human_all_cross_entropy_demo_stage_1_yang_new_second():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -839,7 +839,7 @@ def torcs_human_all_hard_Q_demo_stage_1_yang_new_second():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -866,7 +866,7 @@ def torcs_human_all_dqfd_full_demo_stage_1_yang_new_second():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -893,7 +893,7 @@ def torcs_human_all_V_grounding_demo_stage_1_yang_new_second():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -922,7 +922,7 @@ def torcs_human_all_V_grounding_no_weighting_demo_stage_1_yang_new_second():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -952,7 +952,7 @@ def torcs_human_all_soft_Q_demo_stage_1_yang_new_second():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -982,7 +982,7 @@ def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_decay(num):
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
     # FLAGS.weight_decay = True
     # FLAGS.WEIGHT_DECAY_FACTOR = num
@@ -1010,7 +1010,7 @@ def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_decay(num):
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
     # FLAGS.weight_decay = True
     # FLAGS.WEIGHT_DECAY_FACTOR = num
@@ -1042,7 +1042,7 @@ def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_val():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
     FLAGS.val_set = True
     FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
@@ -1071,7 +1071,7 @@ def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_val():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
     FLAGS.val_set = True
     FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
@@ -1102,7 +1102,7 @@ def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_val():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
     FLAGS.val_set = True
     FLAGS.val_set_file = parse_name('/data/hxu/modelRL/val_set.txt')
@@ -1133,7 +1133,7 @@ def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_all():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -1157,7 +1157,7 @@ def torcs_human_all_hard_Q_demo_stage_1_hxu_slow_all():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -1184,7 +1184,7 @@ def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_all():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -1211,7 +1211,7 @@ def torcs_human_all_V_grounding_demo_stage_1_hxu_slow_all():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -1240,7 +1240,7 @@ def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_all():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -1270,7 +1270,7 @@ def torcs_human_all_soft_Q_demo_stage_1_hxu_slow_all():
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     # FLAGS.game_config_fname = 'huazhe.xml'
 
 
@@ -1296,7 +1296,7 @@ def torcs_human_all_cross_entropy_demo_stage_1_hxu_slow_final(core, exp_num):
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     FLAGS.method_name = tag + '_' + str(exp_num) + '_new'
     # FLAGS.game_config_fname = 'huazhe.xml'
 
@@ -1324,7 +1324,7 @@ def torcs_human_all_dqfd_full_demo_stage_1_hxu_slow_final(core, exp_num):
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     FLAGS.method_name = tag + '_' + str(exp_num) + '_new'
     # FLAGS.game_config_fname = 'huazhe.xml'
 
@@ -1354,7 +1354,7 @@ def torcs_human_all_V_grounding_no_weighting_demo_stage_1_hxu_slow_final(core, e
     FLAGS.custom_reward = 'reward_ben'
     common_data_size(300000)
     FLAGS.autoback = True
-    FLAGS.human_torcs = True
+    FLAGS.can_deal_with_human_demo = True
     FLAGS.method_name = tag + '_' + str(exp_num) + '_new'
     # FLAGS.game_config_fname = 'huazhe.xml'
 

@@ -47,7 +47,7 @@ def generate_losses(q_func,
     # visualize two set of vars
     for setname, set in [("rapid_net", q_func_vars), ("target_net", target_q_func_vars)]:
         for v in set:
-            tf.histogram_summary(setname + "/" + v.op.name + "_weights", v)
+            tf.contrib.deprecated.histogram_summary(setname + "/" + v.op.name + "_weights", v)
     # visualize all activations
     end_points = tf.get_collection("activation_collection")
     activation_summaries(end_points)
@@ -74,22 +74,22 @@ def generate_losses(q_func,
         cross_entropy_loss = tf.nn.softmax_cross_entropy_with_logits(q_rapid_t, tf.one_hot(act_t_ph, num_actions),
                                                                      name='cross_entropy')
         cross_entropy_loss = tf.reduce_mean(cross_entropy_loss)
-        tf.scalar_summary("loss/supervise_cross_ent", cross_entropy_loss)
+        tf.contrib.deprecated.scalar_summary("loss/supervise_cross_ent", cross_entropy_loss)
         total_error += FLAGS.supervise_cross_entropy_loss_weight * cross_entropy_loss
 
     if FLAGS.hard_Q_loss_weight > 0:
         temporal_diff_loss = tf.nn.l2_loss(q_rapid_act - q_hard_ahead) * 2 / batch_size
-        tf.scalar_summary("loss/hard_Q", temporal_diff_loss)
+        tf.contrib.deprecated.scalar_summary("loss/hard_Q", temporal_diff_loss)
         total_error += FLAGS.hard_Q_loss_weight * temporal_diff_loss
 
     if FLAGS.l2_regularization_loss_weight > 0:
         regularization_loss = tf.add_n([tf.reduce_sum(tf.square(reg_weight)) for reg_weight in q_func_vars])
-        tf.scalar_summary("loss/l2_regularization", regularization_loss)
+        tf.contrib.deprecated.scalar_summary("loss/l2_regularization", regularization_loss)
         total_error += FLAGS.l2_regularization_loss_weight * regularization_loss
 
     if FLAGS.soft_Q_loss_weight > 0:
         max_ent_loss = tf.nn.l2_loss(q_rapid_act - q_soft_ahead) * 2 / batch_size
-        tf.scalar_summary("loss/soft_Q", max_ent_loss)
+        tf.contrib.deprecated.scalar_summary("loss/soft_Q", max_ent_loss)
         total_error += FLAGS.soft_Q_loss_weight * max_ent_loss
 
     if FLAGS.supervise_hinge_DQfD_loss_weight > 0:
@@ -102,7 +102,7 @@ def generate_losses(q_func,
             hinge_loss = compute_hinge(act_t_hinge, q_hinge, q_act_hinge, num_actions)
         else:
             hinge_loss = compute_hinge(act_t_ph, q_rapid_t, q_rapid_act, num_actions)
-            tf.scalar_summary("loss/supervise_hinge_DQfD", hinge_loss)
+            tf.contrib.deprecated.scalar_summary("loss/supervise_hinge_DQfD", hinge_loss)
         total_error += FLAGS.supervise_hinge_DQfD_loss_weight * hinge_loss
 
     # grad = grad(Q-V)*(Q-Q_hat)
@@ -115,8 +115,8 @@ def generate_losses(q_func,
             weighted_grad = tf.reduce_mean(node_grad * node_no_grad, name="grad_final")
             total_error += FLAGS.exp_policy_grad_weighting * weighted_grad
 
-            tf.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad)
-            tf.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
+            tf.contrib.deprecated.histogram_summary("sign_visualize/policy_gradient_weighting", node_no_grad)
+            tf.contrib.deprecated.scalar_summary("loss/policy_gradient_soft_1_step", weighted_grad)
 
     if FLAGS.exp_value_critic_weighting > 0:
         # fit a value critic using the Q values
@@ -130,7 +130,7 @@ def generate_losses(q_func,
         y = rew_t_ph - KL + (1 - done_mask_ph) * gamma * V_target_tp1
         y = tf.stop_gradient(y)
         loss = tf.reduce_mean(tf.square(y - V_rapid_t))
-        tf.scalar_summary("loss/exp_value_critic_mean_square_error", loss)
+        tf.contrib.deprecated.scalar_summary("loss/exp_value_critic_mean_square_error", loss)
         total_error += FLAGS.exp_value_critic_weighting * loss
 
     if FLAGS.PCL_1_step_weighting > 0:
@@ -147,7 +147,7 @@ def generate_losses(q_func,
         # the unified PCL, simplified term
         pcl_error = q_rapid_act - (rew_t_ph + (1 - done_mask_ph) * gamma * V_rapid_tp1)
         pcl_error = tf.reduce_mean(tf.square(pcl_error))
-        tf.scalar_summary("loss/PCL_1_step_error", pcl_error)
+        tf.contrib.deprecated.scalar_summary("loss/PCL_1_step_error", pcl_error)
         total_error += FLAGS.PCL_1_step_weighting * pcl_error
 
         # up to now, PCL with 1 step roll out, and unified parameterization, is equal to:
