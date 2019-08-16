@@ -146,7 +146,7 @@ tf.app.flags.DEFINE_boolean('train_from_scratch', False,
 tf.app.flags.DEFINE_integer('target_update_freq', 10000,
                             """""")
 
-tf.app.flags.DEFINE_string('env_id', 'EnduroNoFrameskip-v4',
+tf.app.flags.DEFINE_string('env_id', 'bowling-v4',
                            """""")
 tf.app.flags.DEFINE_string('demo_name','dontuse.p',
                            """collected demonstration time""")
@@ -398,6 +398,7 @@ class Object(object):
     pass
 
 def flags_to_cmd():
+    return "skip the funtion"
     # dict of flags to values
     d = FLAGS.__dict__["__flags"]
     out=[]
@@ -408,7 +409,7 @@ def flags_to_cmd():
 
 def main(_):
     # potential error here
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     default_parameters(num_timesteps=int(4e7))
 
     if not FLAGS.config.endswith(")"):

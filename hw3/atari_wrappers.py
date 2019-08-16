@@ -184,6 +184,7 @@ def wrap_deepmind_ram(env):
 # 5. convert to Gray image and crop a part.
 # 6. clip reward to -1, 0, +1
 def wrap_deepmind(env):
+    print(env.spec.id, '=================')
     assert 'NoFrameskip' in env.spec.id
     env = EpisodicLifeEnv(env)
     env = NoopResetEnv(env, noop_max=30)
