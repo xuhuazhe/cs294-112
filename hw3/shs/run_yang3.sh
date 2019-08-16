@@ -8,6 +8,6 @@ declare -a arr=("torcs_human_sal()")
 
 for i in "${arr[@]}"
 do
-    python run_dqn_atari.py --config $i
+    python run_dqn_atari.py --config $i &
     sleep 30
 done

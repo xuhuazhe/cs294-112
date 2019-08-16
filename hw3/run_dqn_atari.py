@@ -408,14 +408,13 @@ def flags_to_cmd():
 
 def main(_):
     # potential error here
-    import pdb; pdb.set_trace()
     default_parameters(num_timesteps=int(4e7))
 
     if not FLAGS.config.endswith(")"):
         FLAGS.config += "()"
 
     eval(FLAGS.config)
-    flags_to_cmd()
+    # flags_to_cmd()
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.core_num
 
     task = Object()
