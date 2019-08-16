@@ -172,7 +172,7 @@ tf.app.flags.DEFINE_boolean('optimize_V_only', False,
                            """""")
 tf.app.flags.DEFINE_boolean('lf_bad_data', False,
                             """collect bad demonstration for half of all""")
-tf.app.flags.DEFINE_integer('demo_step', 2e6,
+tf.app.flags.DEFINE_integer('demo_step', 2000000,
                             """lfd step number""")
 tf.app.flags.DEFINE_float('WEIGHT_DECAY_FACTOR', 0.0005,
                           """weight decay factor""")
@@ -192,6 +192,8 @@ tf.app.flags.DEFINE_integer('bad_period', 0,
                             """how many steps do you want it to be bad?""")
 tf.app.flags.DEFINE_boolean('eval_only', False,
                             """that ignores the slow hdf reading step""")
+tf.app.flags.DEFINE_integer('lr_schedule', 0, "fake lr schedule")
+tf.app.flags.DEFINE_integer('exploration_schedule', 0, 'fake exlore schedule')
 
 
 def tabular_model(state_id, num_actions, scope, reuse=False, nstate=8*5):
@@ -406,6 +408,7 @@ def flags_to_cmd():
 
 def main(_):
     # potential error here
+    import pdb; pdb.set_trace()
     default_parameters(num_timesteps=int(4e7))
 
     if not FLAGS.config.endswith(")"):
@@ -456,5 +459,5 @@ def main(_):
 if __name__ == "__main__":
     # the following line is the same as tf.app.run
     f = tf.app.flags.FLAGS
-    flags_passthrough = f._parse_flags()
+    flags_passthrough = f.flag_values_dict() # f._parse_flags()
     main(0)
