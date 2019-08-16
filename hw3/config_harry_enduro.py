@@ -165,6 +165,24 @@ def enduro_machine_cross_entropy():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.core_num = "0"
 
+def bowling_dqn():
+    tag = inspect.stack()[0][3]
+
+    stage = "from_scratch"
+
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "BowlingNoFrameskip-v4"
+    set_stage(stage)
+    set_demo_type("no_demo")
+    set_eval_mode(False)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.hard_Q_loss_weight = 1.0
+    FLAGS.core_num = "0"
+
 def torcs_human_cross_entropy():
     tag = inspect.stack()[0][3]
 
