@@ -62,7 +62,7 @@ def set_stage(stage,
         # since torcs only has one instance, we can evaluate in the learning from demo phase, but not from env phase
         FLAGS.eval_freq = 10000
         # this sets train env=None, and test env=one env
-        FLAGS.torcs_demo = True
+        FLAGS.torcs_demo = False
         # 0 if on demonstration, 50000/divider if from the environment.
         FLAGS.learning_starts = 0
 

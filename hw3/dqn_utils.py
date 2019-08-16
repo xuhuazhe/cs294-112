@@ -424,8 +424,8 @@ def load_replay_pickle(pickle_dir, step_num):
                                     getattr(replay_buffer_bad, attr)[0:bad_size]))
             setattr(replay_buffer, attr, mixed)
     else:
-        with open(pickle_dir, 'r') as f:
-            replay_buffer = pickle.load(f)
+        with open(pickle_dir, 'rb') as f:
+            replay_buffer = pickle.load(f, encoding='latin1')
 
         for attr in ['obs', 'action', 'reward', 'done']:
             truncated = getattr(replay_buffer, attr)[0:step_num]
@@ -560,6 +560,7 @@ def eval_policy(env, q, obs_t_ph,
         frame_counter += 1
         is_greedy = np.random.rand(1) >= eps
         if is_greedy and frame_counter >= frame_history_len:
+            # import pdb; pdb.set_trace()
             feed_input_obs = np.reshape(input_obs,[1]+list(input_obs.shape))
             q_values = session.run(q, feed_dict={obs_t_ph: feed_input_obs})
             action = np.argmax(np.squeeze(q_values))

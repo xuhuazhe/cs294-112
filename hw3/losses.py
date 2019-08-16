@@ -71,7 +71,7 @@ def generate_losses(q_func,
     # below is all possible errors
     total_error = 0
     if FLAGS.supervise_cross_entropy_loss_weight > 0:
-        cross_entropy_loss = tf.nn.softmax_cross_entropy_with_logits(q_rapid_t, tf.one_hot(act_t_ph, num_actions),
+        cross_entropy_loss = tf.nn.softmax_cross_entropy_with_logits(logits=q_rapid_t, labels=tf.one_hot(act_t_ph, num_actions),
                                                                      name='cross_entropy')
         cross_entropy_loss = tf.reduce_mean(cross_entropy_loss)
         tf.contrib.deprecated.scalar_summary("loss/supervise_cross_ent", cross_entropy_loss)

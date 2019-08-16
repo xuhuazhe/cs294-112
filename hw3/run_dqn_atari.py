@@ -438,7 +438,6 @@ def main(_):
 
     env = get_env(task, seed)
     session = get_session()
-
     if FLAGS.learning_stage:
         if FLAGS.torcs_demo:
             print("warning: using the training env as the testing env! "

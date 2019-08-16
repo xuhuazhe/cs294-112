@@ -287,7 +287,7 @@ def learn(env_train,
                     bellman_error = eval_valset(q_rapid_t, obs_t_ph, FLAGS.val_set_file, session, gamma)
                     #  eval on val set only and could deal with all replay buffers
                     inspect_q_values(q_rapid_t, obs_t_ph, session, replay_buffer)
-
+                # import pdb; pdb.set_trace()
                 reward_calc, frame_counter, damage_counter, damage_inds = \
                     eval_policy(env_test, q_rapid_t, obs_t_ph, session, eps, frame_history_len, num_actions, img_c)
                 best_reward = np.max([best_reward, reward_calc])

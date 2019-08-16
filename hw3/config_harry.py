@@ -89,7 +89,7 @@ def yang_common_setting(tag=None):
 
 def torcs_dqn_kx(divider, tag):
     yang_common_setting(tag)
-    FLAGS.torcs_demo = True
+    FLAGS.torcs_demo = False
     FLAGS.core_num = '0'
 
     # Q learning specific
