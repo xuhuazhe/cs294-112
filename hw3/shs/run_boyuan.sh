@@ -8,6 +8,6 @@ declare -a arr=("dqn_bowling()")
 
 for i in "${arr[@]}"
 do
-    python3 run_dqn_atari.py --config $i &
+    python3 run_dqn_atari.py --config $i
     sleep 30
 done
