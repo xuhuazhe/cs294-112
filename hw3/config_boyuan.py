@@ -196,12 +196,12 @@ def torcs_human_dqfd():
     FLAGS.l2_regularization_loss_weight = 1.0e-5
     FLAGS.core_num = "0"
 
-def dqn_bowling():
+def dqn_alien():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "BowlingNoFrameskip-v4"
+    FLAGS.env_id = "AlienNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(False)
     FLAGS.supervise_cross_entropy_loss_weight = 0.0
@@ -209,9 +209,8 @@ def dqn_bowling():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
-    FLAGS.method_name = "dqn_bowling"
+    FLAGS.method_name = "dqn_alien"
     FLAGS.core_num = "0"
-
     #Q learning specific
     FLAGS.eval_freq = -1
     FLAGS.demo_mode = "no_demo"
@@ -241,12 +240,12 @@ def dqn_hero():
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
 
-def dqn_doubledunk():
+def dqn_gopher():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "DoubleDunkNoFrameskip-v4"
+    FLAGS.env_id = "GopherNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(False)
     FLAGS.supervise_cross_entropy_loss_weight = 0.0
@@ -254,7 +253,7 @@ def dqn_doubledunk():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
-    FLAGS.method_name = "dqn_doubledunk"
+    FLAGS.method_name = "dqn_gopher"
     FLAGS.core_num = "1"
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -263,12 +262,12 @@ def dqn_doubledunk():
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
 
-def dqn_alien():
+def dqn_asterix():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "AlienNoFrameskip-v4"
+    FLAGS.env_id = "AsterixNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(False)
     FLAGS.supervise_cross_entropy_loss_weight = 0.0
@@ -276,7 +275,7 @@ def dqn_alien():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
-    FLAGS.method_name = "dqn_alien"
+    FLAGS.method_name = "dqn_asterix"
     FLAGS.core_num = "1"
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -285,12 +284,12 @@ def dqn_alien():
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
 
-def dqn_choppercommand():
+def dqn_jamesbond():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "ChopperCommandNoFrameskip-v4"
+    FLAGS.env_id = "JamebondNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(False)
     FLAGS.supervise_cross_entropy_loss_weight = 0.0
@@ -298,7 +297,7 @@ def dqn_choppercommand():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
-    FLAGS.method_name = "dqn_choppercommand"
+    FLAGS.method_name = "dqn_jamesbond"
     FLAGS.core_num = "2"
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -307,12 +306,12 @@ def dqn_choppercommand():
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
 
-def dqn_solaris():
+def dqn_freeway():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "SolarisNoFrameskip-v4"
+    FLAGS.env_id = "FreewayNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(False)
     FLAGS.supervise_cross_entropy_loss_weight = 0.0
@@ -320,8 +319,30 @@ def dqn_solaris():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
-    FLAGS.method_name = "dqn_solaris"
+    FLAGS.method_name = "dqn_freeway"
     FLAGS.core_num = "2"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_icehockey():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "IceHockeyNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_icehockey"
+    FLAGS.core_num = "3"
     #Q learning specific
     FLAGS.eval_freq = -1
     FLAGS.demo_mode = "no_demo"
@@ -351,12 +372,12 @@ def dqn_privateeye():
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
 
-def dqn_icehockey():
+def dqn_atlantis():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "IceHockeyNoFrameskip-v4"
+    FLAGS.env_id = "AtlantisNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(False)
     FLAGS.supervise_cross_entropy_loss_weight = 0.0
@@ -364,8 +385,9 @@ def dqn_icehockey():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
-    FLAGS.method_name = "dqn_icehockey"
-    FLAGS.core_num = "3"
+    FLAGS.method_name = "dqn_atlantis"
+    FLAGS.core_num = "4"
+
     #Q learning specific
     FLAGS.eval_freq = -1
     FLAGS.demo_mode = "no_demo"
