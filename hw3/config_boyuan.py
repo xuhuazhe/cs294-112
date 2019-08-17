@@ -219,7 +219,7 @@ def dqn_bowling():
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
 
-def dqn_bowling():
+def dqn_pong():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
