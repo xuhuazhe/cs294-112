@@ -21,7 +21,7 @@ def set_unconditioned():
     # fix the human demonstration of torcs data loading problem, no other usage, should always set to True if we are using torcs
     FLAGS.can_deal_with_human_demo = True
 
-    FLAGS.torcs_divider = 30
+    FLAGS.torcs_divider = 1
     divider = FLAGS.torcs_divider
 
     # in data collection stage, it should be False
