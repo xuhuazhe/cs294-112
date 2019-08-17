@@ -195,3 +195,105 @@ def torcs_human_dqfd():
     FLAGS.hard_Q_loss_weight = 1.0
     FLAGS.l2_regularization_loss_weight = 1.0e-5
     FLAGS.core_num = "0"
+
+
+# below starts the setting of Atari primitives
+ENDURO_PATH = '/shared/hxu/data1/modelRL/300000enduro_perfect'
+
+# hierachy of flags, group them into several smaller functionality
+# each method takes in previous set flags, instead of use them directly, to be clear about the dependency order
+def set_unconditioned_atari(env):
+    # diff with set_unconditioned_atari:
+    # remove those FLAGS: torcs_path, custom_reward, autoback
+    # set torcs_divider to 1, can_deal_with_human_demo to False
+
+    # fix the human demonstration of torcs data loading problem, no other usage, should always set to True if we are using torcs
+    FLAGS.can_deal_with_human_demo = False
+
+    # TODO: set an appropriate divider for atari
+    FLAGS.torcs_divider = 1
+    divider = FLAGS.torcs_divider
+
+    # in data collection stage, it should be False
+    FLAGS.learning_stage = True
+    FLAGS.batch_size = 32
+    FLAGS.tiny_explore = 0.01
+
+    FLAGS.env_id = env+"NoFrameskip-v4"
+
+    # begin the divider attempt
+    FLAGS.target_update_freq = 10000 / divider
+    FLAGS.replay_buffer_size = int(1e6)
+    FLAGS.max_timesteps = 2 * int(4e7) / divider
+    FLAGS.dataset_size = int(3e5)
+
+    # interaction purpose
+    FLAGS.summary_interval = 10000 / divider
+
+def set_stage_atari(stage,
+              ckpt_base=CKPT_BASE):
+    set_stage(stage, ckpt_base)
+    # we are using atari, so we can always spawn two env, one for train and one for test. So we will always eval in the
+    # environment. That sets eval_freq to positive number. torcs_demo=True will set the eval env to Torcs and train env
+    # to None, which should not be our case.
+    FLAGS.eval_freq = 10000
+    FLAGS.torcs_demo = False
+
+def set_demo_type_atari(type, env):
+    if type == "human":
+        FLAGS.demo_mode = 'hdf'
+        raise
+        # we haven't figure out which old file is for enduro human demo yet
+        FLAGS.demo_file_path = parse_name(TORCS_HUMAN_DEMO_LIST)
+    elif type == "machine":
+        FLAGS.demo_mode = 'replay'
+        if env == "Enduro":
+            FLAGS.demo_file_path = ENDURO_PATH
+        else:
+            raise
+    elif type == "no":
+        FLAGS.demo_mode = 'no_demo'
+        FLAGS.demo_file_path = ''
+    else:
+        raise
+    # TODO: dqfd case is not handled
+
+def set_eval_mode_atari(eval_mode, ckpt_base=CKPT_BASE):
+    set_eval_mode(eval_mode, ckpt_base=CKPT_BASE)
+    # we want the evaluation happen in a separate environment since we are using atari
+    FLAGS.torcs_demo = False
+
+
+def enduro_perfectdemo_cross_entropy():
+    # what's different from huazhe's implementation
+    # FLAGS.can_deal_with_human_demo = True
+    # FLAGS.torcs_divider = 30
+    # FLAGS.eval_frequency
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro")
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 1.0
+    FLAGS.core_num = "0"
+
+
+def enduro_perfectdemo_sal():
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro")
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
