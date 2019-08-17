@@ -210,7 +210,7 @@ def dqn_bowling():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_bowling"
-    FLAGS.core_num = "1"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -219,3 +219,24 @@ def dqn_bowling():
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
 
+def dqn_bowling():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "PongNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_pong"
+    FLAGS.core_num = "0"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
