@@ -3,7 +3,7 @@
 # this is intend to work with config_boyuan.py
 cd ../
 
-declare -a arr=("dqn_pong()")
+declare -a arr=("dqn_hero()")
 # declare -a arr=("torcs_human_sal()" "torcs_human_cross_entropy()" "torcs_human_dqfd()")
 
 for i in "${arr[@]}"
