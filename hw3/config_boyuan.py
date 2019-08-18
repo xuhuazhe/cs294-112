@@ -196,12 +196,12 @@ def torcs_human_dqfd():
     FLAGS.l2_regularization_loss_weight = 1.0e-5
     FLAGS.core_num = "0"
 
-def dqn_bowling():
+def dqn_alien():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "BowlingNoFrameskip-v4"
+    FLAGS.env_id = "AlienNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(False)
     FLAGS.supervise_cross_entropy_loss_weight = 0.0
@@ -209,9 +209,8 @@ def dqn_bowling():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
-    FLAGS.method_name = "dqn_bowling"
+    FLAGS.method_name = "dqn_alien"
     FLAGS.core_num = "0"
-
     #Q learning specific
     FLAGS.eval_freq = -1
     FLAGS.demo_mode = "no_demo"
@@ -219,12 +218,12 @@ def dqn_bowling():
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
 
-def dqn_pong():
+def dqn_hero():
     tag = inspect.stack()[0][3]
     stage = "from_scratch"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "PongNoFrameskip-v4"
+    FLAGS.env_id = "HeroNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(False)
     FLAGS.supervise_cross_entropy_loss_weight = 0.0
@@ -232,8 +231,163 @@ def dqn_pong():
     FLAGS.exp_policy_grad_weighting = 0.0
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
-    FLAGS.method_name = "dqn_pong"
+    FLAGS.method_name = "dqn_hero"
     FLAGS.core_num = "0"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_boxing():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "BoxingNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_boxing"
+    FLAGS.core_num = "1"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_asterix():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "AsterixNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_asterix"
+    FLAGS.core_num = "1"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_jamesbond():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "JamesbondNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_jamesbond"
+    FLAGS.core_num = "2"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_freeway():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "FreewayNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_freeway"
+    FLAGS.core_num = "2"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_icehockey():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "IceHockeyNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_icehockey"
+    FLAGS.core_num = "3"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_privateeye():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "PrivateEyeNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_privateeye"
+    FLAGS.core_num = "3"
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_atlantis():
+    tag = inspect.stack()[0][3]
+    stage = "from_scratch"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "AtlantisNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(False)
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_atlantis"
+    FLAGS.core_num = "4"
+
     #Q learning specific
     FLAGS.eval_freq = -1
     FLAGS.demo_mode = "no_demo"
