@@ -110,6 +110,10 @@ def generate_losses(q_func,
         with tf.variable_scope("exp_policy_grad_weighting"):
             node_grad = q_rapid_act - V_rapid_t
             node_no_grad = tf.stop_gradient(q_rapid_act - q_soft_ahead, name="q_yStar")
+            if FLAGS.exp_policy_grad_weighting_maxclip > 0:
+                node_no_grad = tf.maximum(node_no_grad, 0.0)
+            if FLAGS.exp_policy_grad_weighting_minclip > 0:
+                node_no_grad = tf.minimum(node_no_grad, 0.0)
             # node_no_grad = tf.stop_gradient(q_rapid_act - V_rapid_t - q_soft_ahead, name="q_yStar")
 
             weighted_grad = tf.reduce_mean(node_grad * node_no_grad, name="grad_final")
