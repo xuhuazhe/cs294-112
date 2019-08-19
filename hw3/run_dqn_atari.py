@@ -126,7 +126,7 @@ tf.app.flags.DEFINE_integer('replay_buffer_size', 1000000,
                             """""")
 tf.app.flags.DEFINE_float('discount_factor', 0.99,
                           """the gamma discount factor for reward""")
-tf.app.flags.DEFINE_integer('max_timesteps', int(4e7),
+tf.app.flags.DEFINE_integer('max_timesteps', 300000,
                             """""")
 tf.app.flags.DEFINE_string('config', 'test_test()',
                            """run config name""")
