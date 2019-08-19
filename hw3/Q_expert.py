@@ -70,7 +70,7 @@ def collect(env,
             break
         if t%10000 == 0:
             print('*'*30)
-            print('Iteration: {t}')
+            print('Iteration: {}'.format(t))
             print('*'*30)
         idx = replay_buffer.store_frame(last_obs)
         eps = exploration.value(t)
@@ -141,8 +141,8 @@ def collect(env,
             print("mean reward (100 episodes) %f" % mean_episode_reward)
             print("best mean reward %f" % best_mean_episode_reward)
             print("episodes %d" % len(episode_rewards))
-            if episode_length != []:
-                print("episode length ", episode_length)
+            # if episode_length != []:
+            #     print("episode length ", episode_length)
             sys.stdout.flush()
 
             with open(log_file, 'a') as f:
