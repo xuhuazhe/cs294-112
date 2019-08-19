@@ -114,6 +114,8 @@ def generate_losses(q_func,
                 node_no_grad = tf.maximum(node_no_grad, 0.0)
             if FLAGS.exp_policy_grad_weighting_minclip > 0:
                 node_no_grad = tf.minimum(node_no_grad, 0.0)
+            if FLAGS.debug_with_1 > 0:
+                node_no_grad = -1.0
             # node_no_grad = tf.stop_gradient(q_rapid_act - V_rapid_t - q_soft_ahead, name="q_yStar")
 
             weighted_grad = tf.reduce_mean(node_grad * node_no_grad, name="grad_final")
