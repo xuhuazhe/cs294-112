@@ -433,7 +433,7 @@ def dqn_asterix_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_asterix_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -466,7 +466,7 @@ def dqn_atlantis_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_atlantis_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -499,7 +499,7 @@ def dqn_boxing_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_boxing_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "1"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -532,7 +532,7 @@ def dqn_enduro_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_enduro_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "1"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -565,7 +565,7 @@ def dqn_freeway_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_freeway_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "2"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -598,7 +598,7 @@ def dqn_hero_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_hero_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "2"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -631,7 +631,7 @@ def dqn_icehockey_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_icehockey_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "3"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -664,7 +664,7 @@ def dqn_jamesbond_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_jamesbond_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "3"
 
     #Q learning specific
     FLAGS.eval_freq = -1
