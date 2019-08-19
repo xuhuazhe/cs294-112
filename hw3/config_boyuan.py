@@ -445,7 +445,7 @@ def dqn_asterix_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_asterix'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_asterix')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
@@ -478,7 +478,7 @@ def dqn_atlantis_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_atlantis'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_atlantis')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
@@ -511,7 +511,7 @@ def dqn_boxing_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_boxing'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_boxing')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
@@ -544,7 +544,7 @@ def dqn_enduro_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_enduro'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_enduro')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
@@ -577,7 +577,7 @@ def dqn_freeway_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_freeway'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_freeway')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
@@ -610,7 +610,7 @@ def dqn_hero_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_hero'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_hero')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
@@ -643,7 +643,7 @@ def dqn_icehockey_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_icehockey'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_icehockey')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
@@ -676,7 +676,7 @@ def dqn_jamesbond_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_jamesbond'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_jamesbond')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
@@ -709,7 +709,7 @@ def dqn_privateeye_collect():
     # collect specific
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
-    FLAGS.ckpt_path = '../link_data/dqn_privateeye'
+    FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_privateeye')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
     FLAGS.final_bad_portion = 30 #50 # 70
