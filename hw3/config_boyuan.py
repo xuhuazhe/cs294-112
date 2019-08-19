@@ -5,7 +5,7 @@ from dqn_utils import *
 
 # resources list
 TORCS_PATH = '/data/yang/code/rlTORCS'
-CKPT_BASE = "/data/yang/code/rl_demonstration/hw3/link_data"
+CKPT_BASE = "/home/boyuan/Projects/cs294-112/hw3/link_data"
 TORCS_HUMAN_DEMO_LIST = '/shared/hxu/data1/modelRL/hxu_slow_all.txt'
 TORCS_MACHINE_DEMO = '/data2/hxu/modelRL/300000autoback_simple_08_25.p'
 # end of resource list
@@ -417,3 +417,300 @@ def dqn_enduro():
     FLAGS.collect_Q_experience = True
     FLAGS.learning_starts = 50000
     FLAGS.hard_Q_loss_weight = 1.0
+
+def dqn_asterix_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "AsterixNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_asterix_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_asterix'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_asterix_collect' + '_' + str(FLAGS.final_bad_portion)
+
+def dqn_atlantis_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "AtlantisNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_atlantis_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_atlantis'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_atlantis_collect' + '_' + str(FLAGS.final_bad_portion)
+
+def dqn_boxing_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "BoxingNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_boxing_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_boxing'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_boxing_collect' + '_' + str(FLAGS.final_bad_portion)
+
+def dqn_enduro_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "EnduroNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_enduro_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_enduro'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_enduro_collect' + '_' + str(FLAGS.final_bad_portion)
+
+def dqn_freeway_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "FreewayNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_freeway_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_freeway'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_freeway_collect' + '_' + str(FLAGS.final_bad_portion)
+
+def dqn_hero_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "HeroNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_hero_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_hero'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_hero_collect' + '_' + str(FLAGS.final_bad_portion)
+
+def dqn_icehockey_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "IcehockeyNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_icehockey_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_icehockey'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_icehockey_collect' + '_' + str(FLAGS.final_bad_portion)
+
+def dqn_jamesbond_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "JamesbondNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_jamesbond_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_jamesbond'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_jamesbond_collect' + '_' + str(FLAGS.final_bad_portion)
+
+def dqn_privateeye_collect():
+    tag = inspect.stack()[0][3]
+    stage = "stage2"
+    set_method_name(stage, tag)
+    set_unconditioned()
+    FLAGS.env_id = "PrivateeyeNoFrameskip-v4"
+    set_stage(stage)
+    set_eval_mode(True)
+
+    FLAGS.supervise_cross_entropy_loss_weight = 0.0
+    FLAGS.exp_value_critic_weighting = 0.0
+    FLAGS.exp_policy_grad_weighting = 0.0
+    FLAGS.tiny_explore = 0.01
+    FLAGS.batch_size = 32
+    FLAGS.method_name = "dqn_privateeye_collect"
+    FLAGS.core_num = "4"
+
+    #Q learning specific
+    FLAGS.eval_freq = -1
+    FLAGS.demo_mode = "no_demo"
+    FLAGS.collect_Q_experience = True
+    FLAGS.learning_starts = 50000
+    FLAGS.hard_Q_loss_weight = 1.0
+
+    # collect specific
+    FLAGS.learning_stage = False
+    FLAGS.exploration_schedule = ConstantSchedule(0.01)
+    FLAGS.ckpt_path = '../link_data/dqn_privateeye'
+    FLAGS.bad_type = "random"
+    FLAGS.lf_bad_data = True
+    FLAGS.final_bad_portion = 30 #50 # 70
+    FLAGS.demo_name = 'dqn_privateeye_collect' + '_' + str(FLAGS.final_bad_portion)
