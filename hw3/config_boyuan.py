@@ -621,7 +621,7 @@ def dqn_icehockey_collect():
     stage = "stage2"
     set_method_name(stage, tag)
     set_unconditioned()
-    FLAGS.env_id = "IcehockeyNoFrameskip-v4"
+    FLAGS.env_id = "IceHockeyNoFrameskip-v4"
     set_stage(stage)
     set_eval_mode(True)
 
