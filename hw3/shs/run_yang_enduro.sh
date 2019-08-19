@@ -7,7 +7,9 @@
 cd ../
 
 #declare -a arr=("enduro_perfectdemo_cross_entropy()" "enduro_perfectdemo_sal()")
-declare -a arr=("enduro_perfectdemo_sal()")
+#declare -a arr=("enduro_perfectdemo_sal_divider5()")
+#declare -a arr=("enduro_perfectdemo_sal_divider5_vizbellmanerror()")
+declare -a arr=("enduro_perfectdemo_sal_maxclip()" "enduro_perfectdemo_sal_minclip()")
 
 for i in "${arr[@]}"
 do

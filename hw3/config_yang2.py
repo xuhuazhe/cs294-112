@@ -202,7 +202,7 @@ ENDURO_PATH = '/shared/hxu/data1/modelRL/300000enduro_perfect'
 
 # hierachy of flags, group them into several smaller functionality
 # each method takes in previous set flags, instead of use them directly, to be clear about the dependency order
-def set_unconditioned_atari(env):
+def set_unconditioned_atari(env, divider_in=1):
     # diff with set_unconditioned_atari:
     # remove those FLAGS: torcs_path, custom_reward, autoback
     # set torcs_divider to 1, can_deal_with_human_demo to False
@@ -211,7 +211,7 @@ def set_unconditioned_atari(env):
     FLAGS.can_deal_with_human_demo = False
 
     # TODO: set an appropriate divider for atari
-    FLAGS.torcs_divider = 1
+    FLAGS.torcs_divider = divider_in
     divider = FLAGS.torcs_divider
 
     # in data collection stage, it should be False
@@ -297,3 +297,75 @@ def enduro_perfectdemo_sal():
     FLAGS.exp_value_critic_weighting = 1.0
     FLAGS.exp_policy_grad_weighting = 1.0
     FLAGS.core_num = "0"
+
+def enduro_perfectdemo_sal_divider5():
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro", divider_in=5)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
+
+def enduro_perfectdemo_sal_divider5_vizbellmanerror():
+    # use the soft Q loss to compute the bellman error
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro", divider_in=5)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.soft_Q_loss_weight = 0.00001
+
+def enduro_perfectdemo_sal_maxclip():
+    # use the soft Q loss to compute the bellman error
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro", divider_in=5)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.soft_Q_loss_weight = 0.00001
+    FLAGS.exp_policy_grad_weighting_maxclip = 1.0
+
+
+def enduro_perfectdemo_sal_minclip():
+    # use the soft Q loss to compute the bellman error
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro", divider_in=5)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.soft_Q_loss_weight = 0.00001
+    FLAGS.exp_policy_grad_weighting_minclip = 1.0
