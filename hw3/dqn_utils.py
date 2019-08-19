@@ -427,6 +427,11 @@ def load_replay_pickle(pickle_dir, step_num):
         with open(pickle_dir, 'rb') as f:
             replay_buffer = pickle.load(f, encoding='latin1')
 
+        if FLAGS.debug_reward_0_to_1 > 0:
+            # TODO: debugging
+            replay_buffer.reward[replay_buffer.reward==0.0] = 1.0
+            print("change reward from 0 to 1")
+
         for attr in ['obs', 'action', 'reward', 'done']:
             truncated = getattr(replay_buffer, attr)[0:step_num]
             setattr(replay_buffer, attr, truncated)

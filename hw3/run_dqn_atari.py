@@ -82,6 +82,10 @@ tf.app.flags.DEFINE_float('exp_policy_grad_weighting_maxclip', -1.0,
                             """""")
 tf.app.flags.DEFINE_float('exp_policy_grad_weighting_minclip', -1.0,
                             """""")
+tf.app.flags.DEFINE_float('debug_with_1', -1.0,
+                            """""")
+tf.app.flags.DEFINE_float('debug_reward_0_to_1', -1.0,
+                            """""")
 tf.app.flags.DEFINE_float('ratio_truncate_thres', 10.0,
                             """""")
 
