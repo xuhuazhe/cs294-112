@@ -130,7 +130,7 @@ tf.app.flags.DEFINE_integer('replay_buffer_size', 1000000,
                             """""")
 tf.app.flags.DEFINE_float('discount_factor', 0.99,
                           """the gamma discount factor for reward""")
-tf.app.flags.DEFINE_integer('max_timesteps', 300000,
+tf.app.flags.DEFINE_integer('max_timesteps', 75000,
                             """""")
 tf.app.flags.DEFINE_string('config', 'test_test()',
                            """run config name""")
@@ -304,8 +304,10 @@ def atari_collect(env,
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
         if FLAGS.m_bad > 0:
+            #print(get_wrapper_by_name(env, "Monitor").get_total_steps(), int(num_timesteps * 4 * ((FLAGS.m_good + FLAGS.m_bad)/float(FLAGS.m_bad))))
             return get_wrapper_by_name(env, "Monitor").get_total_steps() >= int(num_timesteps * 4 * ((FLAGS.m_good + FLAGS.m_bad)/float(FLAGS.m_bad)))
         else:
+            #print(get_wrapper_by_name(env, "Monitor").get_total_steps(), num_timesteps*4)
             return get_wrapper_by_name(env, "Monitor").get_total_steps() >= num_timesteps*4
 
     if FLAGS.tabular:
@@ -446,6 +448,7 @@ def main(_):
 
     env = get_env(task, seed)
     session = get_session()
+    print(FLAGS.max_timesteps)
     if FLAGS.learning_stage:
         if FLAGS.torcs_demo:
             print("warning: using the training env as the testing env! "

@@ -70,7 +70,7 @@ def collect(env,
             break
         if t%10000 == 0:
             print('*'*30)
-            print('Iteration: {}'.format(t))
+            print('Iteration: {}, Step: {}'.format(t, get_wrapper_by_name(env, "Monitor").get_total_steps()))
             print('*'*30)
         idx = replay_buffer.store_frame(last_obs)
         eps = exploration.value(t)
@@ -148,12 +148,11 @@ def collect(env,
             with open(log_file, 'a') as f:
                 print(t, mean_episode_reward, best_mean_episode_reward, file=f)
 
-
     # save the replay buffer
     print('save pickle! replay buffer has size: ', replay_buffer.num_in_buffer)
-    FLAGS.Q_expert_path = './link_data/' + str(FLAGS.replay_buffer_size) + '_' + FLAGS.demo_name + '.p'
-    with open(FLAGS.Q_expert_path, 'w') as f:
-        p.dump(replay_buffer, f, protocol=-1)
+    Q_expert_path = '/home/boyuan/Projects/cs294-112/hw3/link_data/' + str(FLAGS.replay_buffer_size) + '_' + FLAGS.demo_name + '.p'
+    import joblib
+    joblib.dump(replay_buffer, Q_expert_path, compress = 3)
 
 
 
