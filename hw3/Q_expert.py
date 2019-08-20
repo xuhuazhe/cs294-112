@@ -70,7 +70,7 @@ def collect(env,
             break
         if t%10000 == 0:
             print('*'*30)
-            print('Iteration: {}'.format(t))
+            print('Iteration: {}, Step: {}'.format(t, get_wrapper_by_name(env, "Monitor").get_total_steps()))
             print('*'*30)
         idx = replay_buffer.store_frame(last_obs)
         eps = exploration.value(t)
