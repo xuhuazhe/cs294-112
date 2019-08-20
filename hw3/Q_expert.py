@@ -151,8 +151,8 @@ def collect(env,
     # save the replay buffer
     print('save pickle! replay buffer has size: ', replay_buffer.num_in_buffer)
     Q_expert_path = '/home/boyuan/Projects/cs294-112/hw3/link_data/' + str(FLAGS.replay_buffer_size) + '_' + FLAGS.demo_name + '.p'
-    with open(Q_expert_path, 'wb') as f:
-        p.dumps(replay_buffer, f, fix_imports=True)
+    import joblib
+    joblib.dump(replay_buffer, Q_expert_path, compress = 3)
 
 
 
