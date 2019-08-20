@@ -429,7 +429,7 @@ def load_replay_pickle(pickle_dir, step_num):
 
         if FLAGS.debug_reward_0_to_1 > 0:
             # TODO: debugging
-            replay_buffer.reward[replay_buffer.reward==0.0] = 1.0
+            replay_buffer.reward[replay_buffer.reward==0.0] = FLAGS.debug_reward_0_to_1
             print("change reward from 0 to 1")
 
         for attr in ['obs', 'action', 'reward', 'done']:

@@ -469,3 +469,83 @@ def enduro_perfectdemo_sal_debug_reward_0_to_1_hasvaluecritic():
 
     FLAGS.soft_Q_loss_weight = 0.00001
     FLAGS.debug_reward_0_to_1 = 1.0
+
+def enduro_perfectdemo_sal_debug_reward_0_to_10():
+    # in theory this should be the same as cross entropy
+    # use the soft Q loss to compute the bellman error
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro", divider_in=5)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.soft_Q_loss_weight = 0.00001
+    FLAGS.debug_reward_0_to_1 = 10.0
+
+def enduro_perfectdemo_sal_debug_reward_0_to_0d1():
+    # in theory this should be the same as cross entropy
+    # use the soft Q loss to compute the bellman error
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro", divider_in=5)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.soft_Q_loss_weight = 0.00001
+    FLAGS.debug_reward_0_to_1 = 0.1
+
+def enduro_perfectdemo_sal_debug_reward_0_to_2():
+    # in theory this should be the same as cross entropy
+    # use the soft Q loss to compute the bellman error
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro", divider_in=5)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.soft_Q_loss_weight = 0.00001
+    FLAGS.debug_reward_0_to_1 = 2.0
+
+def enduro_perfectdemo_sal_debug_reward_0_to_1_divider30():
+    # in theory this should be the same as cross entropy
+    # use the soft Q loss to compute the bellman error
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag)
+    set_unconditioned_atari("Enduro", divider_in=30)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", "Enduro")
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = "0"
+
+    FLAGS.soft_Q_loss_weight = 0.00001
+    FLAGS.debug_reward_0_to_1 = 1.0

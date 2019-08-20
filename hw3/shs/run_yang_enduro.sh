@@ -13,8 +13,10 @@ cd ../
 #declare -a arr=("enduro_perfectdemo_sal_minclip_novaluecritic()")
 #declare -a arr=("enduro_perfectdemo_sal_novaluecritic()")
 #declare -a arr=("enduro_perfectdemo_sal_debug_with_1()")
-declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_1()" "enduro_perfectdemo_sal_debug_reward_0_to_1_hasvaluecritic()")
-
+#declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_1()" "enduro_perfectdemo_sal_debug_reward_0_to_1_hasvaluecritic()")
+#declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_10()" "enduro_perfectdemo_sal_debug_reward_0_to_0d1()")
+#declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_2()")
+declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_1_divider30()")
 
 for i in "${arr[@]}"
 do
