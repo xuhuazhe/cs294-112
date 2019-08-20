@@ -443,6 +443,7 @@ def dqn_asterix_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_asterix')
@@ -476,6 +477,7 @@ def dqn_atlantis_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_atlantis')
@@ -509,6 +511,7 @@ def dqn_boxing_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_boxing')
@@ -542,6 +545,7 @@ def dqn_enduro_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_enduro')
@@ -575,6 +579,7 @@ def dqn_freeway_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_freeway')
@@ -608,6 +613,7 @@ def dqn_alien_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_alien')
@@ -641,6 +647,7 @@ def dqn_hero_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_hero')
@@ -674,6 +681,7 @@ def dqn_icehockey_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_icehockey')
@@ -707,6 +715,7 @@ def dqn_jamesbond_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_jamesbond')
@@ -740,6 +749,7 @@ def dqn_privateeye_collect():
     FLAGS.hard_Q_loss_weight = 1.0
 
     # collect specific
+    FLAGS.max_timesteps = 75000
     FLAGS.learning_stage = False
     FLAGS.exploration_schedule = ConstantSchedule(0.01)
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_privateeye')
