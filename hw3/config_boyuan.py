@@ -449,7 +449,7 @@ def dqn_asterix_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_asterix')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_asterix_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_atlantis_collect():
@@ -483,7 +483,7 @@ def dqn_atlantis_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_atlantis')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_atlantis_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_boxing_collect():
@@ -501,7 +501,7 @@ def dqn_boxing_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_boxing_collect"
-    FLAGS.core_num = "1"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -517,7 +517,7 @@ def dqn_boxing_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_boxing')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_boxing_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_enduro_collect():
@@ -535,7 +535,7 @@ def dqn_enduro_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_enduro_collect"
-    FLAGS.core_num = "1"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -551,7 +551,7 @@ def dqn_enduro_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_enduro')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_enduro_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_freeway_collect():
@@ -569,7 +569,7 @@ def dqn_freeway_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_freeway_collect"
-    FLAGS.core_num = "2"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -585,7 +585,7 @@ def dqn_freeway_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_freeway')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_freeway_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_alien_collect():
@@ -603,7 +603,7 @@ def dqn_alien_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_alien_collect"
-    FLAGS.core_num = "2"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -619,7 +619,7 @@ def dqn_alien_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_alien')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_alien_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_hero_collect():
@@ -637,7 +637,7 @@ def dqn_hero_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_hero_collect"
-    FLAGS.core_num = "2"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -653,7 +653,7 @@ def dqn_hero_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_hero')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_hero_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_icehockey_collect():
@@ -671,7 +671,7 @@ def dqn_icehockey_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_icehockey_collect"
-    FLAGS.core_num = "3"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -687,7 +687,7 @@ def dqn_icehockey_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_icehockey')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_icehockey_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_jamesbond_collect():
@@ -705,7 +705,7 @@ def dqn_jamesbond_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_jamesbond_collect"
-    FLAGS.core_num = "3"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -721,7 +721,7 @@ def dqn_jamesbond_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_jamesbond')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7 #50 # 70
+    FLAGS.final_bad_portion = 0.5 #50 # 70
     FLAGS.demo_name = 'dqn_jamesbond_collect' + '_' + str(FLAGS.final_bad_portion)
 
 def dqn_privateeye_collect():
@@ -739,7 +739,7 @@ def dqn_privateeye_collect():
     FLAGS.tiny_explore = 0.01
     FLAGS.batch_size = 32
     FLAGS.method_name = "dqn_privateeye_collect"
-    FLAGS.core_num = "4"
+    FLAGS.core_num = "0"
 
     #Q learning specific
     FLAGS.eval_freq = -1
@@ -755,5 +755,5 @@ def dqn_privateeye_collect():
     FLAGS.ckpt_path = os.path.join(CKPT_BASE, 'dqn_privateeye')
     FLAGS.bad_type = "random"
     FLAGS.lf_bad_data = True
-    FLAGS.final_bad_portion = 0.7
+    FLAGS.final_bad_portion = 0.5
     FLAGS.demo_name = 'dqn_privateeye_collect' + '_' + str(FLAGS.final_bad_portion)
