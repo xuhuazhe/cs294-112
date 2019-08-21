@@ -109,8 +109,12 @@ def set_demo_type(type):
     elif type == "no":
         FLAGS.demo_mode = 'no_demo'
         FLAGS.demo_file_path = ''
+    elif type == "dqfd":
+        FLAGS.demo_mode = 'dqfd'
+        FLAGS.demo_file_path = parse_name(TORCS_HUMAN_DEMO_LIST)
     else:
         raise
+
     # TODO: dqfd case is not handled
 
 def set_eval_mode(eval_mode, ckpt_base=CKPT_BASE):
@@ -253,6 +257,9 @@ def set_demo_type_atari(type, env):
             raise
     elif type == "no":
         FLAGS.demo_mode = 'no_demo'
+        FLAGS.demo_file_path = ''
+    elif type == 'dqfd':
+        FLAGS.demo_mode = 'dqfd'
         FLAGS.demo_file_path = ''
     else:
         raise
