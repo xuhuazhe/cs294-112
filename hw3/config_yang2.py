@@ -604,6 +604,25 @@ def atari_imperfectdemo_sal_hasvalue(atari_name, imperfect_level, gpu):
     FLAGS.soft_Q_loss_weight = 0.00001
     FLAGS.debug_reward_0_to_1 = 0.5
 
+def atari_imperfectdemo_sal_hasvalue_norewardchange(atari_name, imperfect_level, gpu):
+    # in theory this should be the same as cross entropy
+    # use the soft Q loss to compute the bellman error
+    tag = inspect.stack()[0][3]
+
+    stage = "stage1"
+
+    set_method_name(stage, tag+"_"+atari_name+"_"+str(imperfect_level))
+    set_unconditioned_atari(atari_name, divider_in=5)
+    set_stage_atari(stage)
+    set_demo_type_atari("machine", atari_name, imperfect_level)
+    set_eval_mode_atari(False)
+
+    FLAGS.exp_value_critic_weighting = 1.0
+    FLAGS.exp_policy_grad_weighting = 1.0
+    FLAGS.core_num = str(gpu)
+
+    FLAGS.soft_Q_loss_weight = 0.00001
+
 def atari_imperfectdemo_cross_ent(atari_name, imperfect_level, gpu):
     # in theory this should be the same as cross entropy
     # use the soft Q loss to compute the bellman error

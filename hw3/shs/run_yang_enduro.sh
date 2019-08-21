@@ -29,8 +29,13 @@ done
 '
 
 #config_name="atari_imperfectdemo_sal"
-config_name="atari_imperfectdemo_cross_ent"
-declare -a GAMES=("Alien" "Asterix" "Boxing" "Enduro" "Hero" "IceHockey" "Jamesbond" "PrivateEye")
+#config_name="atari_imperfectdemo_cross_ent"
+config_name="atari_imperfectdemo_sal_hasvalue"
+#config_name="atari_imperfectdemo_sal_hasvalue_norewardchange"
+
+#declare -a GAMES=("Alien" "Asterix" "Boxing" "Enduro" "Hero" "IceHockey" "Jamesbond" "PrivateEye")
+#declare -a GAMES=("Alien" "Enduro" "Jamesbond" "PrivateEye")
+declare -a GAMES=("Boxing" "Hero")
 declare -a IMPERFECT_LEVEL=("0.3" "0.5" "0.7")
 declare -a GPU=(1 2 3 4 5 6)
 
