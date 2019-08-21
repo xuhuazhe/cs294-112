@@ -16,10 +16,35 @@ cd ../
 #declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_1()" "enduro_perfectdemo_sal_debug_reward_0_to_1_hasvaluecritic()")
 #declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_10()" "enduro_perfectdemo_sal_debug_reward_0_to_0d1()")
 #declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_2()")
-declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_1_divider30()")
+#declare -a arr=("enduro_perfectdemo_sal_debug_reward_0_to_1_divider30()")
+
+:'
+declare -a arr=("atari_imperfectdemo_sal('Alien', 0.3, 1)")
 
 for i in "${arr[@]}"
 do
-    python3 run_dqn_atari.py --config $i &
+    python3 run_dqn_atari.py --config "$i" &
     sleep 30
+done
+'
+
+#config_name="atari_imperfectdemo_sal"
+config_name="atari_imperfectdemo_cross_ent"
+declare -a GAMES=("Alien" "Asterix" "Boxing" "Enduro" "Hero" "IceHockey" "Jamesbond" "PrivateEye")
+declare -a IMPERFECT_LEVEL=("0.3" "0.5" "0.7")
+declare -a GPU=(1 2 3 4 5 6)
+
+iGPU=0
+for g in "${GAMES[@]}"
+do
+  for level in "${IMPERFECT_LEVEL[@]}"
+  do
+      gpu_len=${#GPU[@]}
+      this_gpu=${GPU[$((iGPU%$gpu_len))]}
+      cfg="$config_name('$g', $level, $this_gpu)"
+      echo $cfg
+      python3 run_dqn_atari.py --config "$cfg" &
+      sleep 10
+      iGPU=$((iGPU+1))
+  done
 done
