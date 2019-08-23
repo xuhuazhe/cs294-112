@@ -165,6 +165,7 @@ class TorcsProcessFrame84(gym.Wrapper):
 class ClippedRewardsWrapper(gym.Wrapper):
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
+        # assert np.sign(reward) == reward
         return obs, np.sign(reward), done, info
 
 def wrap_deepmind_ram(env):
@@ -173,7 +174,7 @@ def wrap_deepmind_ram(env):
     env = MaxAndSkipEnv(env, skip=4)
     if 'FIRE' in env.unwrapped.get_action_meanings():
         env = FireResetEnv(env)
-    env = ClippedRewardsWrapper(env)
+    # env = ClippedRewardsWrapper(env)
     return env
 
 # In summary, the following wrapper has been applied to the Env
